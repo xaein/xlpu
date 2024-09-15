@@ -1,3 +1,5 @@
+// Test update Common.js
+
 // General utility functions
 
 // Debounce function
