@@ -2,5 +2,12 @@
   "version": "1.0.1",
   "files": {
     "common.js": "pages/common/"
+    "dialogs.js": "pages/common/"
+    "loadsave.js": "pages/common/"
+    "pagination.js": "pages/common/"
+    "tables.js": "pages/common/"
+    "themes.js": "pages/common/"
+    "update.js": "pages/common/"
+    "window.js": "pages/common/"
   }
 }
