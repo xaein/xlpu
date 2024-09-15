@@ -1,6 +1,8 @@
 # xlpu
 
-This is the public repository for updating the files of the xLauncher Plus application. xLauncher Plus is an advanced Electron-based application launcher with a graphical user interface for managing and launching various applications across different platforms.
+This is the public repository for updating the files of the xLauncher Plus application.
+
+xLauncher Plus is an advanced Electron-based application launcher with a graphical user interface for managing and launching various applications across different platforms.
 
 ## Development
 
