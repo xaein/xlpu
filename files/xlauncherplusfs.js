@@ -178,9 +178,13 @@ class FileSystemOperations {
 
     // Write file
     // Writes content to a file and returns true if successful, false otherwise
-    async writeFile(filePath, content) {
+    async writeFile(filePath, content, isBinary = false) {
         try {
-            await fs.writeFile(filePath, content, 'utf8');
+            if (isBinary) {
+                await fs.writeFile(filePath, Buffer.from(content));
+            } else {
+                await fs.writeFile(filePath, content, 'utf8');
+            }
             return true;
         } catch (error) {
             return false;

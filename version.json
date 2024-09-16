@@ -36,7 +36,10 @@
     "save.html": "pages/include/dialog",
     "themedelete.html": "pages/include/dialog",
     "themebuilder.js": "utils",
-    "xltc.js": "utils"
+    "xlaunch.exe": "utils",
+    "xlstitch.exe": "utils",
+    "xltc.js": "utils",
+    "xltcp.exe": "utils"
   },
   "mainFiles": {
     "xlauncherplus.js": true,

@@ -33,9 +33,10 @@ async function updateFiles() {
     for (const [fileName, destinationDir] of Object.entries(versionInfo.files)) {
         updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
         const fileUrl = `${baseUrl}/files/${fileName}`;
-        const fileContent = await fetchFile(fileUrl, 'text');
+        const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
+        const fileContent = await fetchFile(fileUrl, responseType);
         const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
-        const result = await e.Api.invoke('write-file', destinationPath, fileContent);
+        const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
         if (!result) {
             console.error(`Failed to write file: ${fileName} to path: ${destinationPath}`);
         }

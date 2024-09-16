@@ -40,7 +40,7 @@ function safeIpc(channel, handler) {
 safeIpc('get-app-dir', () => __dirname);
 safeIpc('get-file', (event, filePath) => fsOps.getFile(filePath));
 safeIpc('get-file-path', (event, directory, fileName) => fsOps.getFilePath(directory, fileName));
-safeIpc('write-file', (event, filePath, content) => fsOps.writeFile(filePath, content));
+safeIpc('write-file', (event, filePath, content, isBinary = false) => fsOps.writeFile(filePath, content, isBinary));
 safeIpc('write-csv-file', (event, filePath, content) => fsOps.writeFile(filePath, content));
 safeIpc('remove-file', (event, filePath) => fsOps.removeFile(filePath));
 safeIpc('get-variables', () => fsOps.getVariables(utilsDir));
@@ -226,6 +226,8 @@ safeIpc('fetch-url', async (event, url, responseType = 'json') => {
         let data;
         if (responseType === 'text') {
             data = await response.text();
+        } else if (responseType === 'arraybuffer') {
+            data = await response.arrayBuffer();
         } else {
             data = await response.json();
         }
