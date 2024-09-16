@@ -18,7 +18,8 @@ async function fetchFile(url, responseType = 'json') {
 // Fetch version info
 // Fetches the version information from the specified URL
 async function getVersionInfo() {
-    const url = 'https://raw.githubusercontent.com/xaein/xlpu/main/version.json';
+    const baseUrl = window.xldbv.uurl;
+    const url = `${baseUrl}/version.json`;
     return await fetchFile(url, 'json');
 }
 
@@ -28,9 +29,10 @@ async function updateFiles() {
     const versionInfo = await getVersionInfo();
     const appDir = await e.Api.invoke('get-app-dir');
     const updateInfoPreview = document.getElementById('updateInfoPreview');
+    const baseUrl = window.xldbv.uurl;
     for (const [fileName, destinationDir] of Object.entries(versionInfo.files)) {
         updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
-        const fileUrl = `https://raw.githubusercontent.com/xaein/xlpu/main/files/${fileName}`;
+        const fileUrl = `${baseUrl}/files/${fileName}`;
         const fileContent = await fetchFile(fileUrl, 'text');
         const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
         const result = await e.Api.invoke('write-file', destinationPath, fileContent);
@@ -49,7 +51,7 @@ function scrollToLine(element, text) {
     const lines = element.value.split('\n');
     const lineIndex = lines.findIndex(line => line.includes(text));
     if (lineIndex !== -1) {
-        const lineHeight = 10; // Approximate line height in pixels
+        const lineHeight = 20; // Approximate line height in pixels
         element.scrollTop = lineIndex * lineHeight;
     }
 }
