@@ -52,9 +52,24 @@ function scrollToLine(element, text) {
     const lines = element.value.split('\n');
     const lineIndex = lines.findIndex(line => line.includes(text));
     if (lineIndex !== -1) {
-        const lineHeight = 8.5; // Approximate line height in pixels
+        const lineHeight = getLineHeight(element); // Get the approximate line height
         element.scrollTop = lineIndex * lineHeight;
     }
+}
+
+// Get line height
+// This function creates a temporary element to measure the line height
+function getLineHeight(element) {
+    const temp = document.createElement('div');
+    temp.style.position = 'absolute';
+    temp.style.visibility = 'hidden';
+    temp.style.whiteSpace = 'nowrap';
+    temp.style.font = getComputedStyle(element).font;
+    temp.innerText = 'A';
+    document.body.appendChild(temp);
+    const lineHeight = temp.clientHeight;
+    document.body.removeChild(temp);
+    return lineHeight;
 }
 
 // Exposes functions to the global scope
