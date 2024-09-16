@@ -452,7 +452,6 @@
         // Initialize update configuration
         // This function initializes the update configuration section
         async function initializeUpdateConfig() {
-            console.log('Update configuration initialized');
 
             const updateButton = document.getElementById('updateAppButton');
             if (updateButton) {
@@ -461,9 +460,7 @@
 
             try {
                 await js.F.lazyLoadScript('common/update.js');
-                console.log('update.js loaded successfully');
             } catch (error) {
-                console.error('Error loading update.js:', error);
                 return;
             }
 
@@ -487,6 +484,10 @@
                     updateInfoPreview.value += `Files to be updated:\n\n`;
                     const files = Object.keys(versionInfo.files);
                     files.forEach(file => {
+                        updateInfoPreview.value += `- ${file}\n`;
+                    });
+                    const mainFiles = Object.keys(versionInfo.mainFiles);
+                    mainFiles.forEach(file => {
                         updateInfoPreview.value += `- ${file}\n`;
                     });
                     if (updateButton) {

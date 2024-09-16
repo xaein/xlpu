@@ -30,6 +30,9 @@ async function updateFiles() {
     const appDir = await e.Api.invoke('get-app-dir');
     const updateInfoPreview = document.getElementById('updateInfoPreview');
     const baseUrl = window.xldbv.uurl;
+    let mainFilesUpdated = false;
+
+    // Update normal files
     for (const [fileName, destinationDir] of Object.entries(versionInfo.files)) {
         updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
         const fileUrl = `${baseUrl}/files/${fileName}`;
@@ -43,6 +46,31 @@ async function updateFiles() {
         await new Promise(resolve => setTimeout(resolve, 500));
         updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
         scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+    }
+
+    // Update main files
+    for (const [fileName, shouldUpdate] of Object.entries(versionInfo.mainFiles)) {
+        if (shouldUpdate) {
+            mainFilesUpdated = true;
+            updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
+            const fileUrl = `${baseUrl}/files/${fileName}`;
+            const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
+            const fileContent = await fetchFile(fileUrl, responseType);
+            const destinationPath = js.F.joinPath(appDir, fileName);
+            const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
+            if (!result) {
+                console.error(`Failed to write file: ${fileName} to path: ${destinationPath}`);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
+            scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+        }
+    }
+
+    // Display message if main files were updated
+    if (mainFilesUpdated) {
+        updateInfoPreview.value += '\nApplication will need to be reopened for changes to take effect.';
+        scrollToLine(updateInfoPreview, 'Application will need to be reopened for changes to take effect.');
     }
 }
 
