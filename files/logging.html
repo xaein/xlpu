@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+    <meta name="description" content="xLauncher Plus - A Node.js Electron-based app launcher">
+    <meta name="author" content="Xaein Daei">
+    <title>xLauncher Plus</title>
+    <link rel="stylesheet" href="common/styles/base.universal.css">
+    <link rel="stylesheet" href="common/styles/header.css">
+    <link rel="stylesheet" href="common/styles/footer.css">
+    <link rel="stylesheet" href="common/styles/edit.config.css">
+    <link rel="icon" href="common/xlauncherplus.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="headerContainer"></div>
+    <div id="mainContent">
+        <!-- Config content will go here -->
+    </div>
+    <div id="bottomWrapper">
+        <div id="footerContainer" class="footer-container"></div>
+    </div>
+    <div id="dialogContainer"></div>
+
+    <script>
+        // Initialize js.F object
+        let js = { F: {} };
+        window.js = js;
+
+        // Handle script loading and initialization
+        async function handleScriptLoad(scriptName, success) {
+            if (success && typeof window.commonFunctions !== 'undefined') {
+                js.F = { ...window.commonFunctions };
+                
+                try {
+                    const variables = js.F.getData('variables') || {};
+                    const scriptsToLoad = variables.loadScripts || [];
+                    const scriptDirectory = variables.directories?.loadScripts || 'common';
+
+                    await Promise.all(scriptsToLoad.map(script => {
+                        const fullPath = `${scriptDirectory}/${script}`;
+                        return js.F.lazyLoadScript(fullPath);
+                    }));
+                    
+                    js.F.updateJsF();
+                    initializePage();
+
+                } catch (error) {
+                    console.error('Error in handleScriptLoad:', error);
+                }
+            }
+        }
+    </script>
+
+    <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
+
+    <script>
+        // Initialize the page
+        async function initializePage() {
+            js.F.loadTitleBar();
+
+            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbf = js.F.getData('xldbf') || {};
+
+            Promise.all([
+                fetch('include/header.html').then(response => response.text()),
+                fetch('include/footer.html').then(response => response.text()),
+            ]).then(async ([headerHtml, footerHtml]) => {
+                document.getElementById('headerContainer').innerHTML = headerHtml;
+                document.getElementById('footerContainer').innerHTML = footerHtml;
+
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                js.F.setupHeaderNavigation('configuration');
+                js.F.setupFooterButtons('configuration');
+                
+                // Add any additional initialization for the config page here
+            }).catch(error => {
+                console.error('Error initializing page:', error);
+            });
+        }
+
+        // Handle app closing event
+        e.Api.on('app-closing', async () => {
+            await js.F.exitApp();
+        });
+    </script>
+</body>
+</html>
