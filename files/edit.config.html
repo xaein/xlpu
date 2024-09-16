@@ -60,7 +60,6 @@
                     initializePage();
 
                 } catch (error) {
-                    console.error('Error in handleScriptLoad:', error);
                 }
             }
         }
@@ -121,7 +120,6 @@
                     update: updateHtml
                 };
             } catch (error) {
-                console.error('Error fetching config sections:', error);
                 return {};
             }
         }
@@ -174,7 +172,7 @@
             if (action === 'save') {
                 saveConfiguration(true)
                     .then(() => loadConfigSection(pendingSection))
-                    .catch(error => console.error('Error saving configuration:', error));
+                    .catch(error => {});
             } else if (action === 'discard') {
                 loadConfigSection(pendingSection);
             }
@@ -190,7 +188,6 @@
             if (window.configSections && window.configSections[section]) {
                 configDisplay.innerHTML = window.configSections[section];
             } else {
-                console.error(`Config section '${section}' not found`);
                 return;
             }
 
@@ -284,7 +281,6 @@
             const saveButton = document.getElementById('footerLeftButton');
             if (saveButton) {
                 const isDifferent = hasUnsavedChanges();
-                console.log('Is Different:', isDifferent);
                 saveButton.disabled = !isDifferent;
                 saveButton.classList.toggle('disabled', !isDifferent);
             }
@@ -302,7 +298,6 @@
                     case 'general':
                         const xlaunchCfgContent = generateXlaunchCfgContent();
                         await e.Api.invoke('write-file', xlaunchCfgPath, xlaunchCfgContent);
-                        console.log('xlaunch.cfg saved successfully');
                         break;
                     case 'triggercmd':
                         const newConfig = getTriggerCmdConfig();
@@ -312,11 +307,9 @@
                         if (addToPathCheckbox && addToPathCheckbox.checked !== window.xldbv.configOpts.inPath) {
                             if (addToPathCheckbox.checked) {
                                 await e.Api.invoke('add-to-path');
-                                console.log('Added xLauncher to PATH');
                                 window.xldbv.configOpts.inPath = true;
                             } else {
                                 await e.Api.invoke('remove-from-path');
-                                console.log('Removed xLauncher from PATH');
                                 window.xldbv.configOpts.inPath = false;
                             }
                         }
@@ -332,7 +325,6 @@
                     throw new Error('Failed to save xldbv.json');
                 }
 
-                console.log('Configuration saved successfully');
                 saveOriginalConfig(currentSection);
                 updateSaveButtonState();
 
@@ -345,7 +337,6 @@
 
                 return true;
             } catch (error) {
-                console.error('Error saving configuration:', error);
                 return false;
             }
         }
@@ -494,15 +485,12 @@
                         updateButton.disabled = false;
                         if (!updateButton.hasListener) {
                             updateButton.addEventListener('click', async () => {
-                                console.log('Update button clicked. Starting update process...');
                                 try {
                                     await js.F.updateFiles();
                                     updateInfoPreview.value += `\nFiles have been updated successfully.\n`;
                                     window.xldbv.version = versionInfo.version;
                                     js.F.setData('xldbv', window.xldbv);
-                                    console.log(`Updated to version ${versionInfo.version}`);
                                 } catch (error) {
-                                    console.error('Error updating files:', error);
                                     updateInfoPreview.value += `\nError updating files: ${error.message}`;
                                 }
                                 updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
@@ -585,7 +573,6 @@
         // This function populates the configuration fields with the provided config object
         function populateConfigFields(config) {
             if (typeof config !== 'object' || config === null) {
-                console.error('Invalid config object:', config);
                 return;
             }
 
