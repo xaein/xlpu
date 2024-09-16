@@ -49,7 +49,7 @@ function scrollToLine(element, text) {
     const lines = element.value.split('\n');
     const lineIndex = lines.findIndex(line => line.includes(text));
     if (lineIndex !== -1) {
-        const lineHeight = 20; // Approximate line height in pixels
+        const lineHeight = 22; // Approximate line height in pixels
         element.scrollTop = lineIndex * lineHeight;
     }
 }
