@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
@@ -39,6 +39,9 @@
     "xltc.js": "utils"
   },
   "mainFiles": [
+    "xlauncherplus.js",
+    "xlauncherpluseapi.js",
+    "xlauncherplusfs.js",
     "xlauncherplus.js",
     "xlauncherpluseapi.js",
     "xlauncherplusfs.js"

@@ -39,6 +39,22 @@ async function updateFiles() {
         }
         await new Promise(resolve => setTimeout(resolve, 500));
         updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
+        scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+    }
+}
+
+// Scroll to line
+// This function scrolls the given element to the line containing the specified text
+function scrollToLine(element, text) {
+    const lines = element.value.split('\n');
+    const lineIndex = lines.findIndex(line => line.includes(text));
+    if (lineIndex !== -1) {
+        const tempElement = document.createElement('div');
+        tempElement.style.position = 'absolute';
+        tempElement.style.top = `${lineIndex * 20}px`; // Approximate line height
+        element.parentElement.appendChild(tempElement);
+        tempElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.parentElement.removeChild(tempElement);
     }
 }
 
