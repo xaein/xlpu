@@ -504,9 +504,9 @@
                                     console.error('Error updating files:', error);
                                     updateInfoPreview.value += `\nError updating files: ${error.message}`;
                                 }
+                                updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
                             });
                             updateButton.hasListener = true;
-                            updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
                         }
                     }
                 } else {
