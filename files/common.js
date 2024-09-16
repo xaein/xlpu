@@ -156,6 +156,7 @@ function navigateTo(destination) {
             window.location.href = 'edit.config.html';
             break;
         case 'logging':
+            window.location.href = 'logging.html';
             break;
         default:
     }
@@ -228,11 +229,9 @@ function setupFooterButtons(currentPage) {
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'logging') {
-            footerLeftButton.textContent = '';
-            footerLeftButton.onclick = () => {
-                window.location.href = 'main.html';
-            };
-            footerLeftButton.disabled = false;
+            footerLeftButton.textContent = '-----';
+            footerLeftButton.onclick = null;
+            footerLeftButton.disabled = true; // Ensure the button is disabled
         }
         if (footerLeftButton.disabled === true) {
             footerLeftButton.classList.add('disabled');

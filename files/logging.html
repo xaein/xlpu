@@ -10,13 +10,15 @@
     <link rel="stylesheet" href="common/styles/base.universal.css">
     <link rel="stylesheet" href="common/styles/header.css">
     <link rel="stylesheet" href="common/styles/footer.css">
-    <link rel="stylesheet" href="common/styles/edit.config.css">
+    <link rel="stylesheet" href="common/styles/logging.css">
     <link rel="icon" href="common/xlauncherplus.ico" type="image/x-icon">
 </head>
 <body>
     <div id="headerContainer"></div>
     <div id="mainContent">
-        <!-- Config content will go here -->
+        <div id="logContainer" class="log-container">
+            <pre id="logContent" class="log-content"></pre>
+        </div>
     </div>
     <div id="bottomWrapper">
         <div id="footerContainer" class="footer-container"></div>
@@ -56,6 +58,8 @@
     <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
 
     <script>
+        let logRefreshInterval;
+
         // Initialize the page
         async function initializePage() {
             js.F.loadTitleBar();
@@ -72,14 +76,51 @@
 
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                js.F.setupHeaderNavigation('configuration');
-                js.F.setupFooterButtons('configuration');
+                js.F.setupHeaderNavigation('logging');
+                js.F.setupFooterButtons('logging');
                 
-                // Add any additional initialization for the config page here
+                // Load log content
+                loadLogContent();
+
+                // Set interval to refresh log content every 5 seconds
+                logRefreshInterval = setInterval(loadLogContent, 5000);
             }).catch(error => {
                 console.error('Error initializing page:', error);
             });
         }
+
+        // Load log content
+        async function loadLogContent() {
+            try {
+                const { data: logContent, error } = await e.Api.invoke('get-file', 'utils/xlauncher.log');
+                if (error) {
+                    console.error('Error loading log content:', error);
+                    return;
+                }
+                const logPre = document.getElementById('logContent');
+                logPre.innerHTML = colorizeLogContent(logContent);
+                logPre.scrollTop = logPre.scrollHeight; // Scroll to the bottom
+            } catch (error) {
+            }
+        }
+
+        // Colorize log content
+        function colorizeLogContent(logContent) {
+            const lines = logContent.split('\n');
+            const coloredLines = lines.map(line => {
+                if (line.toLowerCase().includes('error')) {
+                    return `<span class="log-error">${line}</span>`;
+                } else {
+                    return `<span class="log-normal">${line}</span>`;
+                }
+            });
+            return coloredLines.join('\n');
+        }
+
+        // Clear interval when navigating away from the logging tab
+        window.addEventListener('beforeunload', () => {
+            clearInterval(logRefreshInterval);
+        });
 
         // Handle app closing event
         e.Api.on('app-closing', async () => {
