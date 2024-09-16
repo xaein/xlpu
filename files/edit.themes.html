@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';">
+    <meta name="description" content="xLauncher Plus - A Node.js Electron-based app launcher">
+    <meta name="author" content="Xaein Daei">
+    <title>xLauncher Plus</title>
+    <link rel="stylesheet" href="common/styles/base.universal.css">
+    <link rel="stylesheet" href="common/styles/header.css">
+    <link rel="stylesheet" href="common/styles/footer.css">
+    <link rel="stylesheet" href="common/styles/edit.themes.p.css">
+    <link rel="stylesheet" href="common/styles/edit.themes.m.css">
+    <link rel="icon" href="common/xlauncherplus.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="headerContainer"></div>
+    <div id="mainContent">
+        <div class="theme-content">
+            <div class="theme-sidebar">
+                <div class="theme-list-outer-container">
+                    <div class="theme-list-inner-container">
+                        <ul id="themeList"></ul>
+                    </div>
+                    <div class="theme-list-controls">
+                        <button id="importThemeButton" class="theme-control-button">Import</button>
+                        <button id="removeThemeButton" class="theme-control-button">Remove</button>
+                    </div>
+                </div>
+            </div>
+            <div class="theme-details">
+                <div class="theme-preview" id="themePreview">
+                    <div class="preview-content">
+                        <div class="preview-titlebar">
+                            <div class="preview-window-title"></div>
+                            <div class="preview-window-controls">
+                                <div class="preview-titlebar-button"></div>
+                                <div class="preview-titlebar-button"></div>
+                                <div class="preview-titlebar-button"></div>
+                            </div>
+                        </div>
+                        <div class="preview-header">
+                            <div class="preview-button-container">
+                                <div class="preview-button"></div>
+                                <div class="preview-button"></div>
+                                <div class="preview-button"></div>
+                                <div class="preview-button"></div>
+                            </div>
+                        </div>
+                        <div class="preview-tab-container">
+                            <div class="preview-category-button"></div>
+                            <div class="preview-tab-wrapper">
+                                <div class="preview-tab active"></div>
+                                <div class="preview-tab"></div>
+                                <div class="preview-tab"></div>
+                                <div class="preview-tab"></div>
+                            </div>
+                        </div>
+                        <div class="preview-table-container">
+                            <div class="preview-table">
+                                <div class="preview-table-header">
+                                    <div class="preview-table-header-cell" style="flex: 0 0 26.6%;"></div>
+                                    <div class="preview-table-header-cell" style="flex: 1;"></div>
+                                </div>
+                                <div class="preview-table-body" id="previewTableBody"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-edit-controls">
+                        <div class="preview-edit-buttons">
+                            <div class="preview-button"></div>
+                            <div class="preview-button"></div>
+                            <div class="preview-button"></div>
+                        </div>
+                        <div class="preview-pagination">
+                            <div class="preview-button"></div>
+                            <div class="preview-button"></div>
+                            <div class="preview-button"></div>
+                        </div>
+                    </div>
+                    <div class="preview-footer">
+                        <div class="preview-footer-left">
+                            <div class="preview-footer-button greenbutton"></div>
+                        </div>
+                        <div class="preview-footer-right">
+                            <div class="preview-footer-button redbutton"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="bottomWrapper">
+        <div id="footerContainer" class="footer-container"></div>
+    </div>
+    <div id="dialogContainer"></div>
+
+    <script>
+        // Initialize js.F object
+        // Create a global object to store functions
+        let js = { F: {} };
+        window.js = js;
+
+        // Handle script loading and initialization
+        // Loads common functions and initializes the page
+        async function handleScriptLoad(scriptName, success) {
+            if (success && typeof window.commonFunctions !== 'undefined') {
+                js.F = { ...window.commonFunctions };
+                
+                try {
+                    const variables = js.F.getData('xldbv') || {};
+                    const scriptsToLoad = variables.loadScripts || [];
+                    const scriptDirectory = variables.directories?.loadScripts || 'common';
+
+                    await Promise.all(scriptsToLoad.map(script => {
+                        const fullPath = `${scriptDirectory}/${script}`;
+                        return js.F.lazyLoadScript(fullPath);
+                    }));
+                    
+                    js.F.updateJsF();
+                    initializePage();
+
+                } catch (error) {
+                    console.error('Error in handleScriptLoad:', error);
+                }
+            }
+        }
+    </script>
+
+    <script src="common/common.js" onload="handleScriptLoad('common.js', true)" onerror="handleScriptLoad('common.js', false)"></script>
+
+    <script>
+        // Initialize the page
+        // Sets up the page structure, loads necessary components, and sets up event listeners
+        async function initializePage() {
+            js.F.loadTitleBar();
+
+            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbf = js.F.getData('xldbf') || {};
+
+            Promise.all([
+                fetch('include/header.html').then(response => response.text()),
+                fetch('include/footer.html').then(response => response.text()),
+            ]).then(async ([headerHtml, footerHtml]) => {
+                document.getElementById('headerContainer').innerHTML = headerHtml;
+                document.getElementById('footerContainer').innerHTML = footerHtml;
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            js.F.setupHeaderNavigation('themes');
+            js.F.setupFooterButtons('themes');
+
+            await js.F.lazyLoadScript('common/themes.js');
+            
+            await js.F.handleResize('themes');
+            await js.F.themePageSetup(); 
+
+            window.addEventListener('resize', async () => {
+                const { height } = await e.Api.invoke('get-window-size');
+                await js.F.handleResize('themes', height);
+                js.F.adjustPreviewTableRows();
+            });
+
+            const importButton = document.getElementById('importThemeButton');
+            if (importButton) {
+                importButton.addEventListener('click', js.F.importTheme);
+            }
+
+            const removeButton = document.getElementById('removeThemeButton');
+            if (removeButton) {
+                removeButton.addEventListener('click', js.F.showDeleteThemeDialog);
+            }
+
+            js.F.updateJsF();
+        }
+
+        // Delete theme
+        // Removes the selected theme file and updates the theme list
+        async function deleteTheme() {
+            const themeToDelete = document.getElementById('themeToDelete').textContent;
+            const themesDir = window.xldbv.directories?.themes || 'themes';
+            
+            try {
+                const relativePath = js.F.joinPath('pages', themesDir);
+                const themeFilePath = await e.Api.invoke('get-file-path', relativePath, `${themeToDelete}.thm`);
+                
+                const result = await e.Api.invoke('remove-file', themeFilePath);
+                if (result) {
+                    await js.F.loadThemeList();
+                    js.F.closeDialog('themeDelete');
+                }
+            } catch (error) {
+                // Error handling (you may want to add specific error handling here)
+            }
+        }
+
+        // Handle app closing event
+        // Performs cleanup operations when the app is closing
+        e.Api.on('app-closing', async () => {
+            await js.F.exitApp();
+        });
+    </script>
+</body>
+</html>
