@@ -24,6 +24,7 @@ async function exitApp() {
         }
     } catch (error) {
     } finally {
+        setData('updateAvailable', false);
         e.Api.send('toMain', 'exit');
     }
 }
@@ -135,7 +136,6 @@ async function loadTitleBar() {
             console.log('updateAvailable is not set');
         }
     } catch (error) {
-        console.error('Error loading title bar:', error);
     }
 }
 
@@ -170,7 +170,22 @@ async function removeFile(filePath) {
             throw new Error('Failed to remove file');
         }
     } catch (error) {
-        // Handle error
+    }
+}
+
+// Set data
+// Stores data in localStorage
+function setData(key, data, fileName = null) {
+    if (fileName) {
+        let existingData = getData(key) || {};
+        existingData[fileName] = data;
+        localStorage.setItem(key, JSON.stringify(existingData));
+    } else {
+        if (typeof data === 'string') {
+            localStorage.setItem(key, data);
+        } else {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
     }
 }
 
@@ -253,22 +268,40 @@ function setupHeaderNavigation(currentPage) {
 function setupSearch(isEnabled) {
     const searchContainer = document.querySelector('.search-container');
     const searchWrapper = document.querySelector('.search-wrapper');
-    const searchInput = document.querySelector('.search-input');
+    const searchInput = document.getElementById('searchInput');
+    const iconCircle = document.querySelector('.icon-circle');
+    let isExpanded = false;
 
-    if (isEnabled) {
-        searchContainer.style.display = 'block';
-        searchInput.addEventListener('input', debounce((event) => {
-            const query = event.target.value.toLowerCase();
-            const items = document.querySelectorAll('.item');
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(query) ? '' : 'none';
-            });
-        }, 300));
-    } else {
-        searchContainer.style.display = 'none';
-        searchInput.value = '';
+    if (!isEnabled) {
+        searchContainer.classList.add('disabled');
+        return;
     }
+
+    function performSearch() {
+        const searchTerm = searchInput.value;
+        const filteredRows = js.F.filterRows(searchTerm);
+        const { mainRowsPerPage } = js.F.getRowVariables();
+        js.F.createTable(1, mainRowsPerPage, false, filteredRows);
+        js.F.updatePagination(false, filteredRows);
+    }
+
+    iconCircle.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+            searchWrapper.style.width = '180px';
+            searchInput.style.width = '140px';
+            searchInput.style.opacity = '1';
+            searchInput.focus();
+        } else {
+            searchWrapper.style.width = '24px';
+            searchInput.style.width = '0';
+            searchInput.style.opacity = '0';
+            searchInput.value = '';
+            performSearch();
+        }
+    });
+
+    searchInput.addEventListener('input', debounce(performSearch, 300));
 }
 
 // Update favorites on exit
@@ -281,7 +314,6 @@ async function updateFavoritesOnExit() {
         const xldbfPath = js.F.getFullPath(utilsDir, 'xldbf.json');
 
         if (!xldbfData || typeof xldbfData !== 'object') {
-            console.error('Invalid xldbf data:', xldbfData);
             return false;
         }
 
@@ -292,18 +324,14 @@ async function updateFavoritesOnExit() {
         );
 
         if (Object.keys(cleanedXldbfData).length === 0) {
-            console.error('No valid favorites data to save');
             return false;
         }
 
         const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
         if (!xldbfResult) {
-            throw new Error('Failed to save xldbf.json');
         }
-        console.log('Favorites saved successfully:', cleanedXldbfData);
         return true;
     } catch (error) {
-        console.error('Error updating favorites:', error);
         return false;
     }
 }
