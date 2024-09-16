@@ -17,6 +17,7 @@ let isFirstRun = false;
 let xldbv;
 let xldbf;
 let isSaveProcessActive = false;
+let updateAvailable = false;
 
 // Initialize preloadedData
 if (typeof preloadedData === 'undefined') {
@@ -151,8 +152,19 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
         if (!data) {
             throw new Error('Failed to load xldbv.json');
         }
-        if (!xldbv) {
+        window.xldbv = js.F.getData('xldbv');
+        if (!window.xldbv) {
             throw new Error('Failed to load xldbv.json');
+        }
+
+        // Check for updates if aupd is set to 'on'
+        if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
+            const updateMessage = await checkForUpdates();
+            const windowTitle = document.querySelector('.window-title');
+            if (windowTitle) {
+                windowTitle.textContent += ' (Update Available)';
+            }
+            js.F.updateStatusMessage(updateMessage);
         }
 
         if (xldbv.xldbFiles && xldbv.xldbFiles.length > 0) {
@@ -174,6 +186,33 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
     } catch (error) {
         js.F.updateStatusMessage(`Error initializing application: ${error.message}`);
         throw error;
+    }
+}
+
+// Check for updates
+async function checkForUpdates() {
+    try {
+        const uurl = window.xldbv.uurl;
+        const response = await e.Api.invoke('fetch-url', `${uurl}/version.json`);
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
+        const latestVersion = response.data;
+        const currentVersion = window.xldbv.version;
+
+        if (latestVersion.version !== currentVersion) {
+            window.updateAvailable = true;
+            js.F.setData('updateAvailable', true);
+            return `Update available: ${latestVersion.version}`;
+        } else {
+            window.updateAvailable = false;
+            js.F.setData('updateAvailable', false);
+            return;
+        }
+    } catch (error) {
+        window.updateAvailable = false;
+        js.F.setData('updateAvailable', false);
+        return `Error checking for updates: ${error.message}`;
     }
 }
 

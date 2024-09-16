@@ -27,6 +27,8 @@
         <div id="fileDisplayArea">
             <div id="loadedFiles"></div>
         </div>
+    </div>
+    <div id="statusMessageContainer">
         <div id="statusMessage"></div>
     </div>
 
@@ -118,7 +120,7 @@
         async function initializePage() {
             const delay = window.delay * 2;
             js.F.loadTitleBar();
-
+            
             try {
                 const isFirstRun = await js.F.initializeFiles();
 
