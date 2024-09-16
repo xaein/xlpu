@@ -497,7 +497,6 @@
                                 try {
                                     await js.F.updateFiles();
                                     updateInfoPreview.value += `\nFiles have been updated successfully.\n`;
-                                    js.F.scrollToLine(updateInfoPreview, `\nFiles have been updated successfully.\n`)
                                     window.xldbv.version = versionInfo.version;
                                     js.F.setData('xldbv', window.xldbv);
                                     console.log(`Updated to version ${versionInfo.version}`);
@@ -507,6 +506,7 @@
                                 }
                             });
                             updateButton.hasListener = true;
+                            updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
                         }
                     }
                 } else {
