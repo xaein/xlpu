@@ -53,7 +53,11 @@ function scrollToLine(element, text) {
     const lineIndex = lines.findIndex(line => line.includes(text));
     if (lineIndex !== -1) {
         const lineHeight = getLineHeight(element); // Get the approximate line height
-        element.scrollTop = lineIndex * lineHeight;
+        const scrollTop = lineIndex * lineHeight;
+        element.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+        });
     }
 }
 
