@@ -1,0 +1,87 @@
+<div id="generalConfig">
+    <p>Favourite Icon Configuration:</p>
+    <div class="form-group compact icon-group">
+        <label for="favouriteIcon">Icon:</label>
+        <select id="favouriteIcon" name="favouriteIcon">
+            <!-- Options will be dynamically populated by JavaScript -->
+        </select>
+    </div>
+    <p class="section-separator">Logging Configuration:</p>
+    <div class="form-group">
+        <label for="dateFormat">Date Format:</label>
+        <select id="dateFormat" name="dateFormat">
+            <option value="dd-MM-yyyy">dd-MM-yyyy</option>
+            <option value="MM-dd-yyyy">MM-dd-yyyy</option>
+            <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+            <option value="dd/MM/yyyy">dd/MM/yyyy</option>
+            <option value="MM/dd/yyyy">MM/dd/yyyy</option>
+            <option value="yyyy/MM/dd">yyyy/MM/dd</option>
+            <option value="dd-MM-yy">dd-MM-yy</option>
+            <option value="MM-dd-yy">MM-dd-yy</option>
+            <option value="yy-MM-dd">yy-MM-dd</option>
+            <option value="dd/MM/yy">dd/MM/yy</option>
+            <option value="MM/dd/yy">MM/dd/yy</option>
+            <option value="yy/MM/dd">yy/MM/dd</option>
+        </select>
+        <label for="timeFormat">Time Format:</label>
+        <select id="timeFormat" name="timeFormat">
+            <option value="HH:mm:ss">HH:mm:ss</option>
+            <option value="HH:mm">HH:mm</option>
+            <option value="hh:mm:ss a">hh:mm:ss a</option>
+            <option value="hh:mm a">hh:mm a</option>
+            <option value="HH:mm:ss.SSS">HH:mm:ss.SSS</option>
+        </select>
+        <label for="construct">Construct:</label>
+        <select id="construct" name="construct">
+            <!-- Options will be dynamically populated by JavaScript -->
+        </select>
+    </div>
+    <div class="form-group compact">
+        <label for="leftEncapsule">Left Encapsule:</label>
+        <select id="leftEncapsule" name="leftEncapsule">
+            <option value="[">[</option>
+            <option value="(">(</option>
+            <option value="{">{</option>
+            <option value="<">&lt;</option>
+            <option value="|">|</option>
+            <option value="/">/</option>
+            <option value="">(None)</option>
+        </select>
+        <label for="rightEncapsule">Right Encapsule:</label>
+        <select id="rightEncapsule" name="rightEncapsule">
+            <option value="]">]</option>
+            <option value=")">)</option>
+            <option value="}">}</option>
+            <option value=">">&gt;</option>
+            <option value="|">|</option>
+            <option value="\">\</option>
+            <option value="">(None)</option>
+        </select>
+        <label for="messageSeperator">Message Separator:</label>
+        <select id="messageSeperator" name="messageSeperator">
+            <option value="-">-</option>
+            <option value="=">=</option>
+            <option value=">">></option>
+            <option value="->">-></option>
+            <option value="=>">=></option>
+            <option value=">>">>></option>
+            <option value="::">::</option>
+            <option value="|">|</option>
+            <option value="•">•</option>
+            <option value=" ">(Space)</option>
+            <option value="">(None)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="maxLogEntries">Maximum Log Entries:</label>
+        <input type="number" id="maxLogEntries" name="maxLogEntries">
+    </div>
+    <div class="form-group">
+        <label for="messagePrefix">Message Prefix:</label>
+        <input type="text" id="messagePrefix" name="messagePrefix">
+    </div>
+    <div class="form-group preview-group">
+        <label for="logFormatPreview">Log Format Preview:</label>
+        <div id="logFormatPreview" class="log-preview"></div>
+    </div>
+</div>

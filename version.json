@@ -1,6 +1,13 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.6",
   "files": {
+    "edit.config.html": "pages",
+    "edit.dbc.html": "pages",
+    "edit.themes.html": "pages",
+    "initialize.html": "pages",
+    "logging.html": "pages",
+    "main.html": "pages",
+    "welcome.html": "pages",
     "common.js": "pages/common",
     "dialogs.js": "pages/common",
     "loadsave.js": "pages/common",
@@ -9,15 +16,6 @@
     "themes.js": "pages/common",
     "update.js": "pages/common",
     "window.js": "pages/common",
-    "themebuilder.js": "utils",
-    "xltc.js": "utils",
-    "edit.config.html": "pages",
-    "edit.dbc.html": "pages",
-    "edit.themes.html": "pages",
-    "initialize.html": "pages",
-    "logging.html": "pages",
-    "main.html": "pages",
-    "welcome.html": "pages",
     "configcon.g.html": "pages/include",
     "configcon.t.html": "pages/include",
     "configcon.u.html": "pages/include",
@@ -36,7 +34,13 @@
     "rowedit.html": "pages/include/dialog",
     "rowremove.html": "pages/include/dialog",
     "save.html": "pages/include/dialog",
-    "themedelete.html": "pages/include/dialog"
+    "themedelete.html": "pages/include/dialog",
+    "themebuilder.js": "utils",
+    "xltc.js": "utils"
   },
-  "mainFiles": []
+  "mainFiles": [
+    "xlauncherplus.js",
+    "xlauncherpluseapi.js",
+    "xlauncherplusfs.js"
+  ]
 }
