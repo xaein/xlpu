@@ -74,7 +74,7 @@ function scrollToLine(element, text) {
     const lines = element.value.split('\n');
     const lineIndex = lines.findIndex(line => line.includes(text));
     if (lineIndex !== -1) {
-        const lineHeight = getLineHeight(element); // Get the approximate line height
+        const lineHeight = getLineHeight(element);
         const scrollTop = lineIndex * lineHeight;
         element.scrollTo({
             top: scrollTop,

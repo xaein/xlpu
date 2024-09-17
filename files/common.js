@@ -45,12 +45,6 @@ function getData(key, fileName = null) {
     }
 }
 
-// Create full path
-// Generates a full file path
-function getFullPath(appDir, directory, fileName) {
-    return joinPath(appDir, directory, fileName);
-}
-
 // Get row variables
 // Retrieves main and edit rows per page
 function getRowVariables() {
@@ -288,9 +282,10 @@ function setupSearch(isEnabled) {
 async function updateFavoritesOnExit() {
     const xldbfData = js.F.getData('xldbf');
     try {
+        const baseDir = await e.Api.invoke('get-app-dir');
         const xldbv = js.F.getData('xldbv');
         const utilsDir = xldbv.directories.utils;
-        const xldbfPath = js.F.getFullPath(utilsDir, 'xldbf.json');
+        const xldbfPath = js.F.joinPath(baseDir, utilsDir, 'xldbf.json');
 
         if (!xldbfData || typeof xldbfData !== 'object') {
             return false;
@@ -307,6 +302,7 @@ async function updateFavoritesOnExit() {
 
         const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
         if (!xldbfResult) {
+            return false;
         }
         return true;
     } catch (error) {
@@ -329,8 +325,9 @@ function updateJsF() {
 async function updateVariablesOnExit() {
     const xldbvData = js.F.getData('xldbv');
     try {
+        const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xldbvData.directories.utils;
-        const xldbvPath = js.F.getFullPath(utilsDir, 'xldbv.json');
+        const xldbvPath = js.F.joinPath(baseDir, utilsDir, 'xldbv.json');
 
         if (!validateXldbvJson(xldbvData)) {
             throw new Error('Invalid xldbv.json structure');
@@ -446,7 +443,6 @@ window.commonFunctions = {
     debounce,
     exitApp,
     getData,
-    getFullPath,
     getRowVariables,
     joinPath,
     lazyLoadScript,

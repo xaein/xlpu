@@ -60,11 +60,13 @@
 
     <script>
         // Common variables
+        // Initialize page-specific variables
         let currentPage = 1;
         let totalPages = 1;
         window.rows = [];
 
         // Initialize js.F object
+        // Create a global object to store functions
         let js = { F: {} };
         window.js = js;
 
@@ -87,7 +89,9 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {}
+                } catch (error) {
+                    // Handle error silently
+                }
             }
         }
     </script>
@@ -144,9 +148,7 @@
                 const removeButton = document.getElementById('removeRowButton');
                 if (editButton) editButton.disabled = true;
                 if (removeButton) removeButton.disabled = true;
-            }).catch(error => {
-                // Handle error silently
-            });
+            }).catch(error => {});
         }
 
         // Load tab buttons

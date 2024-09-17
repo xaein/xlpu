@@ -180,7 +180,7 @@
             const themesDir = window.xldbv.directories?.themes || 'themes';
             
             try {
-                const relativePath = js.F.joinPath('pages', themesDir);
+                const relativePath = js.F.joinPath('pages', themesDir); // Changed from getFullPath to joinPath
                 const themeFilePath = await e.Api.invoke('get-file-path', relativePath, `${themeToDelete}.thm`);
                 
                 const result = await e.Api.invoke('remove-file', themeFilePath);

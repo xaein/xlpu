@@ -19,18 +19,6 @@ if (typeof preloadedData === 'undefined') {
     var preloadedData = {};
 }
 
-// Join path parts
-// Combines path parts and removes duplicate slashes
-function joinPath(...parts) {
-    return parts.join('/').replace(/\/+/g, '/');
-}
-
-// Create full path
-// Generates a full file path from app directory, subdirectory, and filename
-function getFullPath(appDir, directory, fileName) {
-    return joinPath(appDir, directory, fileName);
-}
-
 // Create default config file
 // Generates and writes a default configuration file
 async function createDefaultConfigFile(appDir) {
@@ -44,7 +32,7 @@ messageSeperator=>
 messagePrefix=Launching:
 `;
     try {
-        const configPath = joinPath(appDir, 'utils', 'xlaunch.cfg');
+        const configPath = js.F.joinPath(appDir, 'utils', 'xlaunch.cfg');
         await e.Api.invoke('write-file', configPath, defaultConfig);
         return defaultConfig;
     } catch (error) {
@@ -55,14 +43,21 @@ messagePrefix=Launching:
 // Load file with delay
 // Loads a single file and updates progress with a delay
 async function loadFileWithDelay(appDir, directory, fileName, updateProgress, updateCurrentFile, updateStatusMessage) {
-    const filePath = await e.Api.invoke('get-file-path', directory, fileName);
+    const filePath = js.F.joinPath(appDir, directory, fileName);
     try {
         updateUIForFile(fileName);
 
         const result = await e.Api.invoke('get-file', filePath);
         const data = result.data;
 
-        processAndStoreData(fileName, data);
+        // Check if the file is xldbf.json and if it's empty
+        if (fileName === 'xldbf.json' && (!data || data.trim().length === 0)) {
+            xldbf = {};
+            js.F.setData('xldbf', xldbf);
+            window.xldbf = xldbf;
+        } else {
+            processAndStoreData(fileName, data);
+        }
 
         loadedFiles++;
         js.F.updateProgress(Math.min((loadedFiles / totalFiles) * 100, 100));
@@ -151,15 +146,18 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
         if (!window.xldbv) {
             throw new Error('Failed to load xldbv.json');
         }
+        if (xldbv.xldbFiles.length > 0) {
+            isFirstRun = false;
 
-        // Check for updates if aupd is set to 'on'
-        if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
-            const updateMessage = await checkForUpdates();
-            const windowTitle = document.querySelector('.window-title');
-            if (windowTitle) {
-                windowTitle.textContent += ' (Update Available)';
+            // Check for updates if aupd is set to 'on'
+            if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
+                const updateMessage = await checkForUpdates();
+                const windowTitle = document.querySelector('.window-title');
+                if (windowTitle) {
+                    windowTitle.textContent += ' (Update Available)';
+                }
+                js.F.updateStatusMessage(updateMessage);
             }
-            js.F.updateStatusMessage(updateMessage);
         }
 
         if (xldbv.xldbFiles && xldbv.xldbFiles.length > 0) {
@@ -167,15 +165,18 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
             for (const file of xldbv.xldbFiles) {
                 await loadFileWithDelay(appDir, 'xldb', file, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
             }
-            isFirstRun = false;
+
+            await loadFileWithDelay(appDir, 'utils', 'xlaunch.cfg', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+            await loadFileWithDelay(appDir, 'utils', 'xldbf.json', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+    
+            js.F.setData('tempData', js.F.getData('preloadedData'));
+    
         } else {
             isFirstRun = true;
+
+            js.F.updateCurrentFile('First run startup detected.. Progressing to first-time setup...');
+            js.F.updateProgress(100); // Set progress bar to 100% on first run
         }
-
-        await loadFileWithDelay(appDir, 'utils', 'xlaunch.cfg', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
-        await loadFileWithDelay(appDir, 'utils', 'xldbf.json', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
-
-        js.F.setData('tempData', js.F.getData('preloadedData'));
 
         return isFirstRun;
     } catch (error) {
@@ -341,7 +342,7 @@ async function saveAllData() {
         updateSaveProgress((processedFiles / totalFiles) * 100, fileName.replace('.csv', ''));
         const content = tempData[fileName];
         if (content) {
-            const filePath = getFullPath(appDir, xldbDir, fileName);
+            const filePath = js.F.joinPath(appDir, xldbDir, fileName);
             try {
                 await e.Api.invoke('write-csv-file', filePath, content);
             } catch (error) {
@@ -366,7 +367,7 @@ async function saveAllData() {
         if (!isSaveProcessActive) break;
         updateReloadProgress((processedFiles / totalFiles) * 100, fileName.replace('.csv', ''));
         try {
-            const filePath = getFullPath(appDir, xldbDir, fileName);
+            const filePath = js.F.joinPath(appDir, xldbDir, fileName);
             const { data } = await e.Api.invoke('get-file', filePath);
             newData[fileName] = data;
         } catch (error) {
@@ -380,11 +381,10 @@ async function saveAllData() {
         updateReloadProgress(95, '');
         const mainCSV = window.xldbv.mainCSV;
         try {
-            const mainCSVPath = getFullPath(appDir, utilsDir, mainCSV);
+            const mainCSVPath = js.F.joinPath(appDir, utilsDir, mainCSV);
             const { data: mainCSVData } = await e.Api.invoke('get-file', mainCSVPath);
             newData[mainCSV] = mainCSVData;
-        } catch (error) {
-        }
+        } catch (error) {}
 
         Object.assign(window.tempData, newData);
         js.F.setData('preloadedData', newData);
@@ -410,7 +410,6 @@ async function saveAllData() {
             }
 
             await new Promise(resolve => setTimeout(resolve, delay));
-
         }
 
         updateReloadProgress(100, '');

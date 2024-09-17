@@ -45,5 +45,6 @@
     "xlauncherplus.js": true,
     "xlauncherpluseapi.js": true,
     "xlauncherplusfs.js": true
-  }
+  },
+  "comment": "Test Update"
 }

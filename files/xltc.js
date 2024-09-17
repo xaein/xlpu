@@ -11,7 +11,6 @@ class TriggerCmdGenerator {
 
     async generateCommands() {
         const filePath = path.join(this.appDir, 'utils', this.mainCSV);
-        console.log(`Reading ${this.mainCSV} file...`);
 
         try {
             const fileContent = await fs.readFile(filePath, 'utf8');
@@ -58,7 +57,6 @@ class TriggerCmdGenerator {
                     // Add non-XLauncher commands and new XLauncher commands
                     finalCommands = [...nonXLauncherCommands, ...gamesList];
                 } catch (error) {
-                    console.log('No existing commands.json found or error reading it. Creating new file.');
                     finalCommands = gamesList;
                 }
             } else {
@@ -68,13 +66,10 @@ class TriggerCmdGenerator {
 
             const combinedJson = JSON.stringify(finalCommands, null, 2);
 
-            console.log("Writing TriggerCMD JSON file.");
             await fs.writeFile(jsonFilePath, combinedJson);
 
-            console.log("TriggerCMD commands generated successfully.");
             return true;
         } catch (error) {
-            console.error('Error generating TriggerCMD commands:', error);
             return false;
         }
     }
@@ -86,7 +81,6 @@ class TriggerCmdGenerator {
             const xldbf = JSON.parse(xldbfContent);
             return xldbf.hasOwnProperty(gameName);
         } catch (error) {
-            console.error('Error checking if game is favorited:', error);
             return false;
         }
     }

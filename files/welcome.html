@@ -59,7 +59,9 @@
                     
                     js.F.updateJsF();
                     initializePage();
-                } catch (error) {}
+                } catch (error) {
+                    console.error('Error during script load:', error);
+                }
             }
         }
     </script>
@@ -75,14 +77,13 @@
             // Add event listener to the start button
             document.getElementById('start-button').addEventListener('click', () => {
                 // Navigate to the edit page when the button is clicked
-                window.location.href = 'edit.html';
+                window.location.href = 'edit.dbc.html';
             });
         }
 
-        // Start button event handler
-        // Navigates to the edit page when the start button is clicked
-        document.getElementById('start-button').addEventListener('click', () => {
-            window.location.href = 'edit.html';
+        // Handle app closing event
+        e.Api.on('app-closing', async () => {
+            await js.F.exitApp();
         });
     </script>
 </body>

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json.Linq;
 
 class Program
@@ -9,6 +10,14 @@ class Program
         string sourceDir = @"f:\coding\xlauncherplus";
         string destDir = @"f:\coding\xlpu\files";
         string versionJsonPath = @"f:\coding\xlpu\version.json";
+        string updateComment = "No comment provided";
+
+        // Check for the -c flag and concatenate all following arguments as the comment
+        int commentIndex = Array.IndexOf(args, "-c");
+        if (commentIndex != -1 && commentIndex + 1 < args.Length)
+        {
+            updateComment = string.Join(" ", args.Skip(commentIndex + 1));
+        }
 
         // Ensure the destination directory exists
         if (!Directory.Exists(destDir))
@@ -62,14 +71,16 @@ class Program
             IncrementVersion(versionJson);
         }
 
-        // Update the versionJson with the new sections
-        versionJson["files"] = newFilesSection;
-        versionJson["mainFiles"] = newMainFilesSection;
+        // Update the version and add the comment
+        versionJson["files"] = newFilesSection; // Add new files section
+        versionJson["mainFiles"] = newMainFilesSection; // Add new main files section
+        versionJson["comment"] = updateComment;
 
-        // Write the new version.json content to the file
+        // Write the updated version information back to the file
         File.WriteAllText(versionJsonPath, versionJson.ToString());
 
         Console.WriteLine("Updated version to: " + versionJson["version"]);
+        Console.WriteLine("Included comment: " + updateComment);
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
         Console.WriteLine("");
