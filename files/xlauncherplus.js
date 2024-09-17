@@ -1,4 +1,3 @@
-// test update
 // Electron app dependencies
 const { app, BrowserWindow, ipcMain, dialog, screen } = require('electron');
 
@@ -21,7 +20,6 @@ const FileSystemOperations = require('./xlauncherplusfs');
 const TriggerCmdGenerator = require('./utils/xltc.js');
 
 // Define directories
-// Set paths for pages and utilities
 const pagesDir = path.join(__dirname, 'pages');
 const utilsDir = path.join(__dirname, 'utils');
 const fsOps = new FileSystemOperations(__dirname);
@@ -54,9 +52,8 @@ safeIpc('copy-file', (event, sourcePath, destPath) => fsOps.copyFile(sourcePath,
 safeIpc('check-triggercmd-file', () => fsOps.checkTriggerCmdFile());
 safeIpc('update-xlaunch-config', (event, config) => fsOps.updateXlaunchConfig(config));
 
-// Non-file system related IPC handlers
-// Set up handlers for various non-file system operations
-safeIpc('get-window-size', (event) => BrowserWindow.fromWebContents(event.sender).getContentBounds());
+// Run xlstitch
+// Execute the xlstitch utility
 safeIpc('run-xlstitch', async (event) => {
     const xlstitchPath = path.join(utilsDir, 'xlstitch.exe');
     return new Promise((resolve, reject) => {
@@ -70,10 +67,14 @@ safeIpc('run-xlstitch', async (event) => {
     });
 });
 
+// Open file dialog
+// Show a file open dialog
 safeIpc('open-file-dialog', (event, options) => {
     return dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), options);
 });
 
+// Import theme
+// Import a theme file
 safeIpc('import-theme', async (event, sourcePath, themesDir) => {
     try {
         const fileName = path.basename(sourcePath);
@@ -90,16 +91,19 @@ safeIpc('import-theme', async (event, sourcePath, themesDir) => {
     }
 });
 
+// Launch app
+// Launch an application
 safeIpc('launch-app', (event, appName) => {
     const xlaunchPath = path.join(utilsDir, 'xlaunch.exe');
     exec(`${xlaunchPath} ${appName}`);
 });
 
+// Parse shortcut
+// Parse a shortcut file
 safeIpc('parse-shortcut', (event, filePath) => {
     return new Promise((resolve, reject) => {
         if (typeof filePath !== 'string') {
             const error = new TypeError('The "path" argument must be of type string. Received ' + typeof filePath);
-            console.error('Error in parse-shortcut handler:', error);
             return reject(error);
         }
 
@@ -151,20 +155,20 @@ safeIpc('compile-theme', async (event, themeName, delay) => {
     }
 });
 
+// Generate triggercmd
+// Generate trigger commands
 safeIpc('generate-triggercmd', async (event, configOpts) => {
-    console.log('generate-triggercmd called with configOpts:', configOpts);
     const generator = new TriggerCmdGenerator(__dirname, configOpts);
     try {
         const result = await generator.generateCommands();
-        console.log('Result from generateCommands:', result);
         return result;
     } catch (error) {
-        console.error('Error generating TriggerCMD commands:', error);
         return false;
     }
 });
 
-// Add these new IPC handlers
+// Run xltcp
+// Execute the xltcp utility
 function runXltcp(action) {
     return new Promise((resolve, reject) => {
         const xltcpPath = path.join(__dirname, 'utils', 'xltcp.exe');
@@ -188,37 +192,30 @@ function runXltcp(action) {
     });
 }
 
+// Add to PATH
+// Add the application to the system PATH
 safeIpc('add-to-path', async () => {
     try {
         const result = await runXltcp('add');
-        console.log('Path added:', result);
         return result;
     } catch (error) {
-        console.error('Failed to add to PATH:', error.message);
-        if (error.message === 'elevation_canceled') {
-            console.log('User canceled the elevation request');
-            // Handle this case appropriately in your UI
-        }
         return false;
     }
 });
 
+// Remove from PATH
+// Remove the application from the system PATH
 safeIpc('remove-from-path', async () => {
     try {
         const result = await runXltcp('remove');
-        console.log('Path removed:', result);
         return result;
     } catch (error) {
-        console.error('Failed to remove from PATH:', error.message);
-        if (error.message === 'elevation_canceled') {
-            console.log('User canceled the elevation request');
-            // Handle this case appropriately in your UI
-        }
         return false;
     }
 });
 
-// Add the new IPC handler for fetching version info
+// Fetch URL
+// Fetch data from a URL
 safeIpc('fetch-url', async (event, url, responseType = 'json') => {
     try {
         const fetch = (await import('node-fetch')).default;
@@ -233,24 +230,8 @@ safeIpc('fetch-url', async (event, url, responseType = 'json') => {
         }
         return { ok: response.ok, statusText: response.statusText, data };
     } catch (error) {
-        console.error('Error fetching URL:', error);
         return { ok: false, statusText: error.message };
     }
-});
-
-// Window control handlers
-// Set up handlers for window control operations
-safeIpc('minimize-window', (event) => {
-    BrowserWindow.fromWebContents(event.sender).minimize();
-});
-
-safeIpc('maximize-window', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    win.isMaximized() ? win.unmaximize() : win.maximize();
-});
-
-safeIpc('close-window', (event) => {
-    BrowserWindow.fromWebContents(event.sender).close();
 });
 
 // Setup logging
@@ -275,6 +256,29 @@ function setupLogging(webContents) {
     });
 }
 
+// Window size
+// Get the size of the window
+safeIpc('get-window-size', (event) => BrowserWindow.fromWebContents(event.sender).getContentBounds());
+
+// Minimize window
+// Minimize the application window
+safeIpc('minimize-window', (event) => {
+    BrowserWindow.fromWebContents(event.sender).minimize();
+});
+
+// Maximize window
+// Maximize or unmaximize the application window
+safeIpc('maximize-window', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    win.isMaximized() ? win.unmaximize() : win.maximize();
+});
+
+// Close window
+// Close the application window
+safeIpc('close-window', (event) => {
+    BrowserWindow.fromWebContents(event.sender).close();
+});
+
 // Create window
 // Sets up and creates the main application window
 function createWindow() {
@@ -291,7 +295,7 @@ function createWindow() {
         minWidth: 800,
         minHeight: 600,
         webPreferences: {
-            preload: path.join(__dirname, 'xlauncherpluseapi.js')
+            preload: path.join(__dirname, 'xlauncherpluseapi.js'),
         },
         resizable: true,
         title: "xLauncher Plus",

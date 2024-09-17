@@ -38,7 +38,6 @@
 
     <script>
         // Initialize js object
-        // Creates a global js object with an empty F property
         let js = { F: {} };
         window.js = js;
 
@@ -60,14 +59,12 @@
                     
                     js.F.updateJsF();
                     initializePage();
-                } catch (error) {
-                    // Error handling (empty as per previous instructions)
-                }
+                } catch (error) {}
             }
         }
     </script>
     
-   <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
+    <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
     
     <script>
         // Page initialization

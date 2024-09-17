@@ -45,22 +45,6 @@ function getData(key, fileName = null) {
     }
 }
 
-// Set data
-// Stores data in localStorage
-function setData(key, data, fileName = null) {
-    if (fileName) {
-        let existingData = getData(key) || {};
-        existingData[fileName] = data;
-        localStorage.setItem(key, JSON.stringify(existingData));
-    } else {
-        if (typeof data === 'string') {
-            localStorage.setItem(key, data);
-        } else {
-            localStorage.setItem(key, JSON.stringify(data));
-        }
-    }
-}
-
 // Create full path
 // Generates a full file path
 function getFullPath(appDir, directory, fileName) {
@@ -123,17 +107,13 @@ async function loadTitleBar() {
             e.Api.invoke('close-window');
         });
 
-        // Retrieve update status from localStorage
         const updateAvailable = js.F.getData('updateAvailable');
 
-        // Update title bar if an update is available
         if (updateAvailable) {
             const windowTitle = document.querySelector('.window-title');
             if (windowTitle) {
                 windowTitle.textContent += ' (Update Available)';
             }
-        } else {
-            console.log('updateAvailable is not set');
         }
     } catch (error) {
     }
@@ -231,7 +211,7 @@ function setupFooterButtons(currentPage) {
         } else if (currentPage === 'logging') {
             footerLeftButton.textContent = '-----';
             footerLeftButton.onclick = null;
-            footerLeftButton.disabled = true; // Ensure the button is disabled
+            footerLeftButton.disabled = true;
         }
         if (footerLeftButton.disabled === true) {
             footerLeftButton.classList.add('disabled');
@@ -316,7 +296,6 @@ async function updateFavoritesOnExit() {
             return false;
         }
 
-        // Ensure xldbfData is in the correct format
         const cleanedXldbfData = Object.fromEntries(
             Object.entries(xldbfData)
                 .filter(([key, value]) => typeof key === 'string' && typeof value === 'boolean')
@@ -373,7 +352,6 @@ function validateXldbvJson(data) {
         return false;
     }
 
-    // Add version to the required string fields
     const requiredStringFields = ['version', 'config', 'logfile', 'mainCSV', 'favourite'];
     const requiredObjectFields = ['directories', 'rows', 'configOpts'];
     const requiredArrayFields = ['xldbFiles', 'loadScripts'];
@@ -384,7 +362,6 @@ function validateXldbvJson(data) {
         }
     }
 
-    // Validate version format (optional, but recommended)
     const versionRegex = /^\d+\.\d+\.\d+$/;
     if (!versionRegex.test(data.version)) {
         return false;
@@ -413,7 +390,6 @@ function validateXldbvJson(data) {
         return false;
     }
 
-    // Validate the configOpts section
     const configOptsValidValues = {
         aupd: ['on', 'off', true, false],
         tcag: ['on', 'off', true, false],
@@ -428,22 +404,18 @@ function validateXldbvJson(data) {
 
     for (const [field, validValues] of Object.entries(configOptsValidValues)) {
         if (!(field in data.configOpts)) {
-            // Set a default value
             if (field === 'inPath') {
                 data.configOpts[field] = false;
             } else {
                 data.configOpts[field] = field === 'aupd' || field === 'tcag' ? 'off' : validValues[0];
             }
         } else if (field === 'aupd' || field === 'tcag') {
-            // Special handling for aupd and tcag
             if (typeof data.configOpts[field] === 'boolean') {
-                // Convert boolean to string
                 data.configOpts[field] = data.configOpts[field] ? 'on' : 'off';
             } else if (typeof data.configOpts[field] !== 'string' || !validValues.includes(data.configOpts[field])) {
                 data.configOpts[field] = 'off';
             }
         } else if (field === 'inPath') {
-            // Special handling for inPath
             if (typeof data.configOpts[field] !== 'boolean') {
                 data.configOpts[field] = false;
             }

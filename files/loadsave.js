@@ -1,15 +1,10 @@
 // File loading and saving functions
 
-// Get transition duration
-// Retrieves transition duration from CSS variable and converts to milliseconds
+// Initialize local variables
 const transitionDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000 || 300;
-
-// Set global delay
-// Calculates and sets the global delay variable
 const delay = transitionDuration * 2;
 window.delay = delay;
 
-// Initialize local variables
 let totalFiles = 1;
 let loadedFiles = 0;
 let previousFile = '';

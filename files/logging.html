@@ -30,7 +30,11 @@
         let js = { F: {} };
         window.js = js;
 
+        // Log refresh interval
+        let logRefreshInterval;
+
         // Handle script loading and initialization
+        // Loads common functions and initializes the page
         async function handleScriptLoad(scriptName, success) {
             if (success && typeof window.commonFunctions !== 'undefined') {
                 js.F = { ...window.commonFunctions };
@@ -48,9 +52,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {
-                    console.error('Error in handleScriptLoad:', error);
-                }
+                } catch (error) {}
             }
         }
     </script>
@@ -58,9 +60,8 @@
     <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
 
     <script>
-        let logRefreshInterval;
-
         // Initialize the page
+        // Sets up the title bar, header, footer, and log content refresh
         async function initializePage() {
             js.F.loadTitleBar();
 
@@ -84,27 +85,29 @@
 
                 // Set interval to refresh log content every 5 seconds
                 logRefreshInterval = setInterval(loadLogContent, 5000);
-            }).catch(error => {
-                console.error('Error initializing page:', error);
-            });
+            }).catch(error => {});
+
         }
 
         // Load log content
+        // Fetches and displays the log content, and scrolls to the bottom
         async function loadLogContent() {
             try {
-                const { data: logContent, error } = await e.Api.invoke('get-file', 'utils/xlauncher.log');
+                const appDir = await e.Api.invoke('get-app-dir');
+                const logFilePath = js.F.joinPath(appDir, 'utils', 'xlauncher.log');
+                const { data: logContent, error } = await e.Api.invoke('get-file', logFilePath);
                 if (error) {
-                    console.error('Error loading log content:', error);
                     return;
                 }
                 const logPre = document.getElementById('logContent');
                 logPre.innerHTML = colorizeLogContent(logContent);
                 logPre.scrollTop = logPre.scrollHeight; // Scroll to the bottom
-            } catch (error) {
-            }
+            } catch (error) {};
+
         }
 
         // Colorize log content
+        // Adds color to log lines based on their content
         function colorizeLogContent(logContent) {
             const lines = logContent.split('\n');
             const coloredLines = lines.map(line => {

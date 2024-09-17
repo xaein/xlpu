@@ -1,13 +1,10 @@
+// Theme-related functions
+
 // Global variables
 window.currentTheme = window.xldbv.currentTheme || 'green light';
-
-// Near the top of the file
 const transitionDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000 || 300;
 const delay = transitionDuration;
-
 let isThemePageSetupRunning = false;
-
-// Theme management and application
 
 // Apply selected theme
 // Applies the currently selected theme if different from the current one
@@ -108,12 +105,8 @@ async function importTheme() {
         if (importResult && importResult.success) {
             await loadThemeList();
             await selectTheme(importResult.themeName);
-        } else {
-            console.error('Failed to import theme:', importResult ? importResult.error : 'Unknown error');
         }
-    } catch (error) {
-        console.error('Error in importTheme:', error);
-    }
+    } catch (error) {}
 }
 
 // Load theme data
@@ -163,8 +156,7 @@ async function loadThemeList() {
             
             selectTheme(window.xldbv.currentTheme);
         }
-    } catch (error) {
-    }
+    } catch (error) {}
 }
 
 // Preview theme
@@ -172,7 +164,6 @@ async function loadThemeList() {
 async function previewTheme(themeName) {
     const preview = document.getElementById('themePreview');
     if (!preview) {
-        console.error('Preview element not found');
         return;
     }
     try {
@@ -185,7 +176,6 @@ async function previewTheme(themeName) {
         js.F.adjustPreviewTableRows();
 
     } catch (error) {
-        console.error('Error in previewTheme:', error);
         preview.innerHTML = '<p>Error loading theme preview</p>';
     }
 }

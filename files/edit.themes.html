@@ -98,7 +98,6 @@
 
     <script>
         // Initialize js.F object
-        // Create a global object to store functions
         let js = { F: {} };
         window.js = js;
 
@@ -121,9 +120,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {
-                    console.error('Error in handleScriptLoad:', error);
-                }
+                } catch (error) {}
             }
         }
     </script>
@@ -191,9 +188,7 @@
                     await js.F.loadThemeList();
                     js.F.closeDialog('themeDelete');
                 }
-            } catch (error) {
-                // Error handling (you may want to add specific error handling here)
-            }
+            } catch (error) {}
         }
 
         // Handle app closing event

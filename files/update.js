@@ -10,7 +10,6 @@ async function fetchFile(url, responseType = 'json') {
         }
         return response.data;
     } catch (error) {
-        console.error(`Error fetching file from ${url}:`, error);
         throw error;
     }
 }
@@ -40,9 +39,7 @@ async function updateFiles() {
         const fileContent = await fetchFile(fileUrl, responseType);
         const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
         const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-        if (!result) {
-            console.error(`Failed to write file: ${fileName} to path: ${destinationPath}`);
-        }
+        if (!result) {}
         await new Promise(resolve => setTimeout(resolve, 500));
         updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
         scrollToLine(updateInfoPreview, `✔ ${fileName}`);
@@ -58,9 +55,6 @@ async function updateFiles() {
             const fileContent = await fetchFile(fileUrl, responseType);
             const destinationPath = js.F.joinPath(appDir, fileName);
             const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-            if (!result) {
-                console.error(`Failed to write file: ${fileName} to path: ${destinationPath}`);
-            }
             await new Promise(resolve => setTimeout(resolve, 500));
             updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
             scrollToLine(updateInfoPreview, `✔ ${fileName}`);

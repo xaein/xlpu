@@ -30,18 +30,15 @@
 
     <script>
         // Initialize global variables
-        // Set up common variables used throughout the page
         let currentPage = 1;
         let totalPages = 1;
         window.rows = [];
 
         // Initialize page-specific variables
-        // Set up variables specific to the main page
         let selectedApp = null;
         let mainCSVFile = '';
 
         // Initialize js.F object
-        // Create a global js object with an empty F property
         let js = { F: {} };
         window.js = js;
 
@@ -64,9 +61,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {
-                    // Error handling (empty as per previous instructions)
-                }
+                } catch (error) {}
             }
         }
     </script>
@@ -134,10 +129,6 @@
             });
 
             window.xldbf = js.F.getData('xldbf') || {};
-
-            e.Api.on('app-closing', async () => {
-                await js.F.exitApp();
-            });
         }
 
         // Update launch button state
@@ -172,7 +163,6 @@
         }
 
         // Handle app closing event
-        // Executes the exitApp function when the app is closing
         e.Api.on('app-closing', async () => {
             await js.F.exitApp();
         });
