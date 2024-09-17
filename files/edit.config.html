@@ -469,9 +469,9 @@
             try {
                 const versionInfo = await js.F.getVersionInfo();
                 const currentVersion = window.xldbv.version;
-                const latestVersion = versionInfo.version;
-                if (currentVersion !== latestVersion) {
-                    updateInfoPreview.value += `New version available: ${latestVersion}\n\n`;
+                if (currentVersion !== versionInfo.version) {
+                    updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
+                    updateInfoPreview.value += `Update Comment: ${versionInfo.comment}\n\n`;
                     updateInfoPreview.value += `Files to be updated:\n\n`;
                     const files = Object.keys(versionInfo.files);
                     files.forEach(file => {
