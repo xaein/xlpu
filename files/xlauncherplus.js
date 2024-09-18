@@ -73,6 +73,13 @@ safeIpc('open-file-dialog', (event, options) => {
     return dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), options);
 });
 
+// Open help file
+// Opens the xlauncher_plus_help.html file in the default browser
+safeIpc('open-external', (event, helpFilePath) => {
+    const fullPath = path.join(__dirname, helpFilePath);
+    require('electron').shell.openExternal(`file://${fullPath}`);
+});
+
 // Import theme
 // Import a theme file
 safeIpc('import-theme', async (event, sourcePath, themesDir) => {

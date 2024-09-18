@@ -102,8 +102,6 @@
         // Initialize the page
         // Sets up the page structure, loads necessary components, and sets up event listeners
         async function initializePage() {
-            js.F.loadTitleBar();
-
             window.xldbv = js.F.getData('xldbv') || {};
             window.xldbf = js.F.getData('xldbf') || {};
             window.tempData = js.F.getData('tempData') || {};
@@ -276,12 +274,6 @@
                 }
             });
         }
-
-        // Handle app closing event
-        // Performs cleanup operations when the app is closing
-        e.Api.on('app-closing', async () => {
-            await js.F.exitApp();
-        });
     </script>
 </body>
 </html>

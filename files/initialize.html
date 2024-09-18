@@ -116,7 +116,6 @@
         // Sets up the initial state of the application and handles first-time setup
         async function initializePage() {
             const delay = window.delay * 2;
-            js.F.loadTitleBar();
             
             try {
                 const isFirstRun = await js.F.initializeFiles();
@@ -140,7 +139,7 @@
             } catch (error) {
                 js.F.updateStatusMessage(`Error initializing application: ${error.message}`);
             }
-        }
+        }      
     </script>
 </body>
 </html>

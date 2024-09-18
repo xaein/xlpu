@@ -79,8 +79,6 @@
         // Page initialization
         // This function initializes the page by loading necessary components and setting up handlers
         async function initializePage() {
-            js.F.loadTitleBar();
-
             window.xldbv = js.F.getData('xldbv') || {};
 
             Promise.all([
@@ -765,11 +763,6 @@
                 }, 5000);
             }
         }
-
-        // App closing event handler
-        e.Api.on('app-closing', async () => {
-            await js.F.exitApp();
-        });
     </script>
 </body>
 </html>

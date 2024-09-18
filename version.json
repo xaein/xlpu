@@ -1,5 +1,6 @@
 {
   "version": "1.0.1",
+  "comment": "Test Update",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
@@ -45,6 +46,5 @@
     "xlauncherplus.js": true,
     "xlauncherpluseapi.js": true,
     "xlauncherplusfs.js": true
-  },
-  "comment": "Test Update"
+  }
 }

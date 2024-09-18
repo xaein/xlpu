@@ -91,6 +91,10 @@ async function loadTitleBar() {
         const titlebarHtml = await response.text();
         document.body.insertAdjacentHTML('afterbegin', titlebarHtml);
 
+        document.querySelector('.help-button').addEventListener('click', () => {
+            openHelpFile();
+        });
+
         document.querySelector('.minimize-button').addEventListener('click', () => {
             e.Api.invoke('minimize-window');
         });
@@ -134,6 +138,13 @@ function navigateTo(destination) {
             break;
         default:
     }
+}
+
+// Open help file
+// Opens the xlauncher_plus_help.html file in the default browser
+function openHelpFile() {
+    const helpFilePath = 'help/xlauncher_plus_help.html'; // Update this path as needed
+    e.Api.invoke('open-external', helpFilePath);
 }
 
 // Remove file
@@ -437,6 +448,25 @@ async function writeFile(filePath, content) {
     } catch (error) {
     }
 }
+
+        
+// Add event listener for F1 key press
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'F1') {
+        event.preventDefault();
+        openHelpFile();
+    }
+});
+
+// Handle app closing event
+e.Api.on('app-closing', async () => {
+    await js.F.exitApp();
+});
+
+// Load title bar when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    loadTitleBar();
+});
 
 // Export common functions
 window.commonFunctions = {

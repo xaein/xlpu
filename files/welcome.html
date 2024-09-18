@@ -72,19 +72,13 @@
         // Page initialization
         // Sets up the title bar buttons and start button event listener
         async function initializePage() {
-            js.F.loadTitleBar();
-
+            
             // Add event listener to the start button
             document.getElementById('start-button').addEventListener('click', () => {
                 // Navigate to the edit page when the button is clicked
                 window.location.href = 'edit.dbc.html';
             });
         }
-
-        // Handle app closing event
-        e.Api.on('app-closing', async () => {
-            await js.F.exitApp();
-        });
     </script>
 </body>
 </html>

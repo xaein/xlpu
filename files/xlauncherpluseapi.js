@@ -22,7 +22,8 @@ contextBridge.exposeInMainWorld('e', {
                 'open-file-dialog', 'parse-shortcut', 'read-directory', 'read-themes-directory',
                 'remove-file', 'rename-file', 'run-xlstitch', 'update-favs', 'update-vars',
                 'write-csv-file', 'write-file', 'check-triggercmd-file', 'update-xlaunch-config',
-                'generate-triggercmd', 'add-to-path', 'remove-from-path', 'fetch-url'
+                'generate-triggercmd', 'add-to-path', 'remove-from-path', 'fetch-url',
+                'open-external'
             ];
             if (validChannels.includes(channel)) {
                 return ipcRenderer.invoke(channel, ...args);

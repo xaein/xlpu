@@ -211,17 +211,6 @@ function lazyLoadStylesheet(href) {
 async function rowAdd() {
     const appNameInput = document.getElementById('appNameInput');
     const appCmdInput = document.getElementById('appCmdInput');
-    const dropZone = document.getElementById('dropZone');
-
-    console.log('appNameInput:', appNameInput);
-    console.log('appCmdInput:', appCmdInput);
-    console.log('dropZone:', dropZone);
-
-    if (!appNameInput || !appCmdInput || !dropZone) {
-        console.error('One or more elements are missing');
-        return;
-    }
-
     const appName = appNameInput.value.trim().toLowerCase();
     const appCmd = appCmdInput.value.trim().toLowerCase();
 

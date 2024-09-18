@@ -49,6 +49,7 @@ class Program
             versionJson = new JObject
             {
                 ["version"] = currentVersion,
+                ["comment"] = updateComment,
                 ["files"] = new JObject(),
                 ["mainFiles"] = new JObject()
             };
@@ -72,9 +73,9 @@ class Program
         }
 
         // Update the version and add the comment
-        versionJson["files"] = newFilesSection; // Add new files section
-        versionJson["mainFiles"] = newMainFilesSection; // Add new main files section
         versionJson["comment"] = updateComment;
+        versionJson["files"] = newFilesSection;
+        versionJson["mainFiles"] = newMainFilesSection;
 
         // Write the updated version information back to the file
         File.WriteAllText(versionJsonPath, versionJson.ToString());
@@ -97,10 +98,6 @@ class Program
             if ((isBaseFolder && (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase) && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))) ||
                 (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))))
             {
-                if (fileName.Equals("updater.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue; // Skip copying updater.exe
-                }
 
                 string relativePath = GetRelativePath(rootSourceDir, srcFile);
                 string destFilePath = Path.Combine(destFolder, fileName); // Copy all files directly into destFolder
@@ -128,7 +125,8 @@ class Program
         {
             string folderName = Path.GetFileName(srcSubFolder);
             if (!folderName.Equals("node_modules", StringComparison.OrdinalIgnoreCase) &&
-                !folderName.Equals("dist", StringComparison.OrdinalIgnoreCase))
+                !folderName.Equals("dist", StringComparison.OrdinalIgnoreCase) &&
+                !folderName.Equals("help", StringComparison.OrdinalIgnoreCase)) 
             {
                 filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir);
             }

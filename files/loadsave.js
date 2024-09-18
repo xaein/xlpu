@@ -19,27 +19,6 @@ if (typeof preloadedData === 'undefined') {
     var preloadedData = {};
 }
 
-// Create default config file
-// Generates and writes a default configuration file
-async function createDefaultConfigFile(appDir) {
-    const defaultConfig = `maxLogEntries=1001
-dateFormat=dd-MM-yy
-timeFormat=HH:mm:ss
-construct=timeFormat dateFormat
-leftEncapsule=[
-rightEncapsule=]
-messageSeperator=>
-messagePrefix=Launching:
-`;
-    try {
-        const configPath = js.F.joinPath(appDir, 'utils', 'xlaunch.cfg');
-        await e.Api.invoke('write-file', configPath, defaultConfig);
-        return defaultConfig;
-    } catch (error) {
-        throw error;
-    }
-}
-
 // Load file with delay
 // Loads a single file and updates progress with a delay
 async function loadFileWithDelay(appDir, directory, fileName, updateProgress, updateCurrentFile, updateStatusMessage) {
@@ -152,10 +131,6 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
             // Check for updates if aupd is set to 'on'
             if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
                 const updateMessage = await checkForUpdates();
-                const windowTitle = document.querySelector('.window-title');
-                if (windowTitle) {
-                    windowTitle.textContent += ' (Update Available)';
-                }
                 js.F.updateStatusMessage(updateMessage);
             }
         }
@@ -195,9 +170,12 @@ async function checkForUpdates() {
         }
         const latestVersion = response.data;
         const currentVersion = window.xldbv.version;
-
         if (latestVersion.version !== currentVersion) {
             window.updateAvailable = true;
+            const windowTitle = document.querySelector('.window-title');
+            if (windowTitle) {
+                windowTitle.textContent += ' (Update Available)';
+            }
             js.F.setData('updateAvailable', true);
             return `Update available: ${latestVersion.version}`;
         } else {
@@ -402,10 +380,8 @@ async function saveAllData() {
                     tcao: window.xldbv.configOpts.tcao
                 };
                 const result = await e.Api.invoke('generate-triggercmd', configOpts);
-                console.log('Result from generate-triggercmd:', result);
                 updateReloadProgress(99, 'Generated TriggerCMD File');
             } catch (error) {
-                console.error('Error running xltc.js:', error);
                 updateReloadProgress(99, 'Error Generating TriggerCMD File');
             }
 
