@@ -60,6 +60,7 @@
                     initializePage();
 
                 } catch (error) {
+                    console.error('Error in handleScriptLoad:', error);
                 }
             }
         }
@@ -118,6 +119,7 @@
                     update: updateHtml
                 };
             } catch (error) {
+                console.error('Error fetching config sections:', error);
                 return {};
             }
         }
@@ -170,7 +172,7 @@
             if (action === 'save') {
                 saveConfiguration(true)
                     .then(() => loadConfigSection(pendingSection))
-                    .catch(error => {});
+                    .catch(error => console.error('Error saving configuration:', error));
             } else if (action === 'discard') {
                 loadConfigSection(pendingSection);
             }
@@ -186,6 +188,7 @@
             if (window.configSections && window.configSections[section]) {
                 configDisplay.innerHTML = window.configSections[section];
             } else {
+                console.error(`Config section '${section}' not found`);
                 return;
             }
 
@@ -279,6 +282,7 @@
             const saveButton = document.getElementById('footerLeftButton');
             if (saveButton) {
                 const isDifferent = hasUnsavedChanges();
+                console.log('Is Different:', isDifferent);
                 saveButton.disabled = !isDifferent;
                 saveButton.classList.toggle('disabled', !isDifferent);
             }
@@ -290,12 +294,22 @@
             try {
                 const xldbvData = js.F.getData('xldbv');
                 const utilsDir = xldbvData.directories.utils;
-                const xlaunchCfgPath = js.F.getFullPath(utilsDir, 'xlaunch.cfg');
+                const xlaunchCfgPath = js.F.joinPath(utilsDir, 'xlaunch.cfg');
+                console.log('xlaunchCfgPath: ' + xlaunchCfgPath);
+                console.log('currentSection: ' + currentSection);
 
                 switch (currentSection) {
                     case 'general':
-                        const xlaunchCfgContent = generateXlaunchCfgContent();
+                        const generalConfig = getGeneralConfig();
+                        const xlaunchCfgContent = generateXlaunchCfgContent(generalConfig);
                         await e.Api.invoke('write-file', xlaunchCfgPath, xlaunchCfgContent);
+                        // Log the favourite icon value and its index
+                        const favouriteIconSelect = document.getElementById('favouriteIcon');
+                        const favouriteIconIndex = favouriteIconSelect.selectedIndex;
+                        console.log('Favourite Icon:', generalConfig.favouriteIcon);
+                        console.log('Favourite Icon Index:', favouriteIconIndex);
+                        // Update xldbv with the new favourite icon
+                        xldbvData.favourite = generalConfig.favouriteIcon;
                         break;
                     case 'triggercmd':
                         const newConfig = getTriggerCmdConfig();
@@ -305,14 +319,17 @@
                         if (addToPathCheckbox && addToPathCheckbox.checked !== window.xldbv.configOpts.inPath) {
                             if (addToPathCheckbox.checked) {
                                 await e.Api.invoke('add-to-path');
+                                console.log('Added xLauncher to PATH');
                                 window.xldbv.configOpts.inPath = true;
                             } else {
                                 await e.Api.invoke('remove-from-path');
+                                console.log('Removed xLauncher from PATH');
                                 window.xldbv.configOpts.inPath = false;
                             }
                         }
                         break;
                     case 'update':
+                        // Handle update configuration saving if needed
                         break;
                 }
 
@@ -323,9 +340,10 @@
                     throw new Error('Failed to save xldbv.json');
                 }
 
+                console.log('Configuration saved successfully');
                 saveOriginalConfig(currentSection);
                 updateSaveButtonState();
-
+                console.log('Showing save dialog: ' + skipSaveDialog);
                 if (!skipSaveDialog) {
                     await js.F.showDialog('configSave', currentSection);
                     setTimeout(async () => {
@@ -335,6 +353,7 @@
 
                 return true;
             } catch (error) {
+                console.error('Error saving configuration:', error);
                 return false;
             }
         }
@@ -441,6 +460,7 @@
         // Initialize update configuration
         // This function initializes the update configuration section
         async function initializeUpdateConfig() {
+            console.log('Update configuration initialized');
 
             const updateButton = document.getElementById('updateAppButton');
             if (updateButton) {
@@ -449,7 +469,9 @@
 
             try {
                 await js.F.lazyLoadScript('common/update.js');
+                console.log('update.js loaded successfully');
             } catch (error) {
+                console.error('Error loading update.js:', error);
                 return;
             }
 
@@ -467,31 +489,29 @@
             try {
                 const versionInfo = await js.F.getVersionInfo();
                 const currentVersion = window.xldbv.version;
-                if (currentVersion !== versionInfo.version) {
-                    updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
-                    updateInfoPreview.value += `Update Comment: ${versionInfo.comment}\n\n`;
+                const latestVersion = versionInfo.version;
+                if (currentVersion !== latestVersion) {
+                    updateInfoPreview.value += `New version available: ${latestVersion}\n\n`;
                     updateInfoPreview.value += `Files to be updated:\n\n`;
                     const files = Object.keys(versionInfo.files);
                     files.forEach(file => {
-                        updateInfoPreview.value += `- ${file}\n`;
-                    });
-                    const mainFiles = Object.keys(versionInfo.mainFiles);
-                    mainFiles.forEach(file => {
                         updateInfoPreview.value += `- ${file}\n`;
                     });
                     if (updateButton) {
                         updateButton.disabled = false;
                         if (!updateButton.hasListener) {
                             updateButton.addEventListener('click', async () => {
+                                console.log('Update button clicked. Starting update process...');
                                 try {
                                     await js.F.updateFiles();
                                     updateInfoPreview.value += `\nFiles have been updated successfully.\n`;
                                     window.xldbv.version = versionInfo.version;
                                     js.F.setData('xldbv', window.xldbv);
+                                    console.log(`Updated to version ${versionInfo.version}`);
                                 } catch (error) {
+                                    console.error('Error updating files:', error);
                                     updateInfoPreview.value += `\nError updating files: ${error.message}`;
                                 }
-                                updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
                             });
                             updateButton.hasListener = true;
                         }
@@ -571,6 +591,7 @@
         // This function populates the configuration fields with the provided config object
         function populateConfigFields(config) {
             if (typeof config !== 'object' || config === null) {
+                console.error('Invalid config object:', config);
                 return;
             }
 

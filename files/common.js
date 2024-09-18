@@ -59,7 +59,7 @@ function getRowVariables() {
 // Join path
 // Combines path segments and removes duplicate slashes
 function joinPath(...parts) {
-    return parts.join('/').replace(/\/+/g, '/');
+    return parts.join('/').replace(/\\/g, '/').replace(/\/+/g, '/');
 }
 
 // Lazy load script
@@ -206,7 +206,8 @@ function setupFooterButtons(currentPage) {
         } else if (currentPage === 'configuration') {
             footerLeftButton.textContent = 'Save';
             footerLeftButton.onclick = async () => {
-                await js.F.saveConfiguration();
+                const currentSection = document.querySelector('.config-item.selected')?.dataset.config || 'general';
+                await js.F.saveConfiguration(currentSection);
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'logging') {
@@ -332,17 +333,21 @@ function updateJsF() {
 async function updateVariablesOnExit() {
     const xldbvData = js.F.getData('xldbv');
     try {
+        console.log('Updating variables on exit');
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xldbvData.directories.utils;
         const xldbvPath = js.F.joinPath(baseDir, utilsDir, 'xldbv.json');
+        console.log('xldbvPath: ' + xldbvPath);
 
         if (!validateXldbvJson(xldbvData)) {
+            console.log('Invalid xldbv.json structure');
             throw new Error('Invalid xldbv.json structure');
         }
         const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, xldbvData);
         if (!xldbvResult) {
             throw new Error('Failed to save xldbv.json');
         }
+        console.log('xldbv.json saved successfully');
         return true;
     } catch (error) {
         return false;
@@ -356,9 +361,11 @@ function validateXldbvJson(data) {
         return false;
     }
 
-    const requiredStringFields = ['version', 'config', 'logfile', 'mainCSV', 'favourite'];
+    const requiredStringFields = [
+        'version', 'config', 'logfile', 'mainCSV', 'uurl', 'favourite', 'currentTheme'
+    ];
     const requiredObjectFields = ['directories', 'rows', 'configOpts'];
-    const requiredArrayFields = ['xldbFiles', 'loadScripts'];
+    const requiredArrayFields = ['loadScripts', 'xldbFiles'];
 
     for (const field of requiredStringFields) {
         if (typeof data[field] !== 'string') {
@@ -395,11 +402,11 @@ function validateXldbvJson(data) {
     }
 
     const configOptsValidValues = {
-        aupd: ['on', 'off', true, false],
-        tcag: ['on', 'off', true, false],
         tcuo: ['keep', 'overwrite'],
         tcao: ['all', 'favourited'],
-        inPath: [true, false]
+        tcag: ['on', 'off', true, false],
+        inPath: [true, false],
+        aupd: ['on', 'off', true, false]
     };
 
     if (!data.configOpts) {
@@ -408,24 +415,20 @@ function validateXldbvJson(data) {
 
     for (const [field, validValues] of Object.entries(configOptsValidValues)) {
         if (!(field in data.configOpts)) {
-            if (field === 'inPath') {
-                data.configOpts[field] = false;
-            } else {
-                data.configOpts[field] = field === 'aupd' || field === 'tcag' ? 'off' : validValues[0];
-            }
-        } else if (field === 'aupd' || field === 'tcag') {
+            return false;
+        } else if (field === 'tcag' || field === 'aupd') {
             if (typeof data.configOpts[field] === 'boolean') {
                 data.configOpts[field] = data.configOpts[field] ? 'on' : 'off';
             } else if (typeof data.configOpts[field] !== 'string' || !validValues.includes(data.configOpts[field])) {
-                data.configOpts[field] = 'off';
+                return false;
             }
         } else if (field === 'inPath') {
             if (typeof data.configOpts[field] !== 'boolean') {
-                data.configOpts[field] = false;
+                return false;
             }
         } else {
             if (typeof data.configOpts[field] !== 'string' || !validValues.includes(data.configOpts[field])) {
-                data.configOpts[field] = validValues[0];
+                return false;
             }
         }
     }

@@ -179,6 +179,7 @@ class FileSystemOperations {
     // Write file
     // Writes content to a file and returns true if successful, false otherwise
     async writeFile(filePath, content, isBinary = false) {
+        console.log('Writing file to: ' + filePath);
         try {
             if (isBinary) {
                 await fs.writeFile(filePath, Buffer.from(content));
