@@ -185,9 +185,7 @@ function setupFooterButtons(currentPage) {
         if (currentPage === 'launchlist') {
             footerLeftButton.textContent = 'Launch';
             footerLeftButton.onclick = () => {
-                if (js.F.launchApp) {
-                    js.F.launchApp();
-                }
+                js.F.launchApp();
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'databasecontrol') {
@@ -208,9 +206,7 @@ function setupFooterButtons(currentPage) {
         } else if (currentPage === 'configuration') {
             footerLeftButton.textContent = 'Save';
             footerLeftButton.onclick = async () => {
-                if (js.F.saveConfiguration) {
-                    await js.F.saveConfiguration();
-                }
+                await js.F.saveConfiguration();
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'logging') {
