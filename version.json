@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "comment": "Full Test Update",
+  "version": "1.0.2",
+  "comment": "This is a multi-line comment.\nSecond line of the comment.\nThird line.",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",

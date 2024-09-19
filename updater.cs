@@ -7,6 +7,12 @@ class Program
 {
     static void Main(string[] args)
     {
+        if (args.Length == 0)
+        {
+            DisplayHelp();
+            return;
+        }
+
         string sourceDir = @"f:\coding\xlauncherplus";
         string destDir = @"f:\coding\xlpu\files";
         string versionJsonPath = @"f:\coding\xlpu\version.json";
@@ -17,6 +23,8 @@ class Program
         if (commentIndex != -1 && commentIndex + 1 < args.Length)
         {
             updateComment = string.Join(" ", args.Skip(commentIndex + 1));
+            // Replace literal "\n" with actual newline characters
+            updateComment = updateComment.Replace("\\n", "\n");
         }
 
         // Ensure the destination directory exists
@@ -90,6 +98,20 @@ class Program
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
         Console.WriteLine("");
+    }
+
+    static void DisplayHelp()
+    {
+        Console.WriteLine("XLauncher Plus Updater");
+        Console.WriteLine("Usage: updater.exe [options]");
+        Console.WriteLine();
+        Console.WriteLine("Options:");
+        Console.WriteLine("  -f              Force a full update, copying all files");
+        Console.WriteLine("  -c <comment>    Add a comment to the version.json file");
+        Console.WriteLine();
+        Console.WriteLine("Examples:");
+        Console.WriteLine("  updater.exe -c Updated UI components");
+        Console.WriteLine("  updater.exe -f -c Major update with full file refresh");
     }
 
     static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)
