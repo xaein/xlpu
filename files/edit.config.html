@@ -100,6 +100,7 @@
 
             await js.F.setupConfigList();
             setupConfigListHandlers();
+            setupConfigurationListeners();
         }
 
         // Fetch configuration sections
@@ -150,15 +151,16 @@
         // Save the original configuration
         // This function saves the original configuration for the specified section
         function saveOriginalConfig(section) {
+            console.log('Saving original config for section:', section);
             switch (section) {
                 case 'general':
-                    originalGeneralConfig = js.F.getGeneralConfig();
+                    originalGeneralConfig = js.F.getConfig(section);
                     break;
                 case 'triggercmd':
-                    originalTriggerCmdConfig = js.F.getTriggerCmdConfig();
+                    originalTriggerCmdConfig = js.F.getConfig(section);
                     break;
                 case 'update':
-                    originalUpdateConfig = js.F.getUpdateConfig();
+                    originalUpdateConfig = js.F.getConfig(section);
                     break;
             }
         }
@@ -188,11 +190,11 @@
         function hasUnsavedChanges() {
             switch (currentSection) {
                 case 'general':
-                    return !js.F.isEqual(originalGeneralConfig, js.F.getGeneralConfig());
+                    return !js.F.isEqual(originalGeneralConfig, js.F.getConfig(currentSection));
                 case 'triggercmd':
-                    return !js.F.isEqual(originalTriggerCmdConfig, js.F.getTriggerCmdConfig());
+                    return !js.F.isEqual(originalTriggerCmdConfig, js.F.getConfig(currentSection));
                 case 'update':
-                    return !js.F.isEqual(originalUpdateConfig, js.F.getUpdateConfig());
+                    return !js.F.isEqual(originalUpdateConfig, js.F.getConfig(currentSection));
                 default:
                     return false;
             }
@@ -212,33 +214,11 @@
         // Save configuration
         // This function saves the current configuration
         async function saveConfiguration(skipSaveDialog = false) {
+            console.log('Saving configuration for section:', currentSection);
             try {
-                let config;
-                switch (currentSection) {
-                    case 'general':
-                        config = js.F.getGeneralConfig();
-                        js.F.setData('xlaunchConfig', config);
-                        break;
-                    case 'triggercmd':
-                        config = js.F.getTriggerCmdConfig();
-                        window.xldbv.configOpts = { ...window.xldbv.configOpts, ...config };
-                        break;
-                    case 'update':
-                        config = js.F.getUpdateConfig();
-                        window.xldbv.configOpts = { ...window.xldbv.configOpts, ...config };
-                        break;
-                    default:
-                        return false;
-                }
-
-                const saved = await js.F.setData('xldbv', window.xldbv);
-                if (!saved) {
-                    throw new Error('Failed to save xldbv.json');
-                }
-
-                saveOriginalConfig(currentSection);
-                updateSaveButtonState();
-
+                const baseDir = await e.Api.invoke('get-app-dir');
+                const utilsDir = window.xldbv.directories.utils;
+                let xlaunchCfgPath = js.F.joinPath(baseDir, utilsDir, 'xlaunch.cfg');
                 if (!skipSaveDialog) {
                     await js.F.showDialog('configSave', currentSection);
                     setTimeout(async () => {
@@ -246,8 +226,43 @@
                     }, 5000);
                 }
 
+                if (currentSection === 'general') {
+                    console.log('Saving general configuration');
+                    let config = js.F.getConfig(currentSection);
+                    js.F.setData('xlaunchConfig', config);
+                    const xlaunchCfgContent = js.F.generateXlaunchCfgContent();
+                    await e.Api.invoke('write-file', xlaunchCfgPath, xlaunchCfgContent);
+                } else if (currentSection === 'triggercmd') {
+                    console.log('Saving triggercmd configuration');
+                    let config = js.F.getConfig(currentSection);
+                    const addToPathCheckbox = document.getElementById('addToPath');
+                    if (addToPathCheckbox && addToPathCheckbox.checked !== window.xldbv.configOpts.inPath) {
+                        if (addToPathCheckbox.checked) {
+                            await e.Api.invoke('add-to-path');
+                            window.xldbv.configOpts.inPath = true;
+                        } else {
+                            await e.Api.invoke('remove-from-path');
+                            window.xldbv.configOpts.inPath = false;
+                        }
+                        js.F.setData('xldbv', config);
+                        window.xldbv = config;
+                    }
+                } else if (currentSection === 'update') {
+                    let config = js.F.getConfig(currentSection);
+                    const autoUpdateValue = document.getElementById('autoUpdate')?.checked ? 'on' : 'off';
+                    config.configOpts.aupd = autoUpdateValue;
+                    js.F.setData('xldbv', config);
+                } else {
+                    return false;
+                }
+
+                saveOriginalConfig(currentSection);
+                updateSaveButtonState();
+                js.F.updateVariablesOnExit();
+
                 return true;
             } catch (error) {
+                console.error('Error saving configuration:', error);
                 return false;
             }
         }
@@ -273,14 +288,14 @@
         function setupConfigurationListeners() {
             const configElements = [
                 'dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
-                'rightEncapsule', 'messageSeperator', 'maxLogEntries', 'favouriteIcon'
+                'rightEncapsule', 'messageSeperator', 'maxLogEntries'
             ];
 
             configElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('change', () => {
-                        updateLogFormatPreview();
+                        js.F.updateLogFormatPreview();
                         updateSaveButtonState();
                     });
                 }
@@ -289,9 +304,30 @@
             const messagePrefixInput = document.getElementById('messagePrefix');
             if (messagePrefixInput) {
                 messagePrefixInput.addEventListener('input', js.F.debounce(() => {
-                    updateLogFormatPreview();
+                    js.F.updateLogFormatPreview();
                     updateSaveButtonState();
                 }, 300));
+            }
+
+            // Add listener for favorite icon selection
+            const favouriteIconContainer = document.getElementById('favouriteIconContainer');
+            if (favouriteIconContainer) {
+                favouriteIconContainer.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('favourite-icon')) {
+                        updateSaveButtonState();
+                    }
+                });
+            }
+
+            // Add listeners for TriggerCMD and Update sections
+            const triggerCmdElements = document.querySelectorAll('input[name="triggerCMDUpdateOption"], input[name="triggerCMDAppsOption"], #autoGenerateTriggerCMD, #addToPath');
+            triggerCmdElements.forEach(element => {
+                element.addEventListener('change', updateSaveButtonState);
+            });
+
+            const updateElement = document.getElementById('autoUpdateOnLaunch');
+            if (updateElement) {
+                updateElement.addEventListener('change', updateSaveButtonState);
             }
         }
 

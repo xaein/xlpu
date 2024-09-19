@@ -140,36 +140,37 @@ function loadConfigSection(section) {
     js.F.updateSaveButtonState();
 }
 
-// Get general configuration
-// This function retrieves the current general configuration
-function getGeneralConfig() {
-    const config = {};
-    config.dateFormat = document.getElementById('dateFormat').value;
-    config.timeFormat = document.getElementById('timeFormat').value;
-    config.construct = document.getElementById('construct').value === '1' ? 'timeFormat dateFormat' : 'dateFormat timeFormat';
-    config.leftEncapsule = `'${document.getElementById('leftEncapsule').value}'`;
-    config.rightEncapsule = `'${document.getElementById('rightEncapsule').value}'`;
-    config.messageSeperator = `'${document.getElementById('messageSeperator').value}'`;
-    config.messagePrefix = `'${document.getElementById('messagePrefix').value}'`;
-    config.maxLogEntries = document.getElementById('maxLogEntries').value;
-    return config;
-}
-
-// Get TriggerCMD configuration
-// This function retrieves the current TriggerCMD configuration
-function getTriggerCmdConfig() {
-    return {
-        tcuo: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'overwrite',
-        tcao: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'all'
-    };
-}
-
-// Get update configuration
-// This function retrieves the current update configuration
-function getUpdateConfig() {
-    return {
-        updateChannel: document.querySelector('input[name="updateChannel"]:checked')?.value || 'stable'
-    };
+// Get configuration
+// This function retrieves the current configuration for the specified section
+function getConfig(section) {
+    switch (section) {
+        case 'general':
+            return {
+                dateFormat: document.getElementById('dateFormat').value,
+                timeFormat: document.getElementById('timeFormat').value,
+                construct: document.getElementById('construct').value === '1' ? 'timeFormat dateFormat' : 'dateFormat timeFormat',
+                leftEncapsule: `'${document.getElementById('leftEncapsule').value}'`,
+                rightEncapsule: `'${document.getElementById('rightEncapsule').value}'`,
+                messageSeperator: `'${document.getElementById('messageSeperator').value}'`,
+                messagePrefix: `'${document.getElementById('messagePrefix').value}'`,
+                maxLogEntries: document.getElementById('maxLogEntries').value,
+                favouriteIcon: document.querySelector('.favourite-icon.selected')?.getAttribute('data-icon') || ''
+            };
+        case 'triggercmd':
+            return {
+                tcuo: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'overwrite',
+                tcao: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'all',
+                tcag: document.getElementById('autoGenerateTriggerCMD')?.checked ? 'on' : 'off',
+                inPath: document.getElementById('addToPath')?.checked || false
+            };
+        case 'update':
+            return {
+                aupd: document.getElementById('autoUpdateOnLaunch')?.checked ? 'on' : 'off'
+            };
+        default:
+            console.error(`Invalid configuration section: ${section}`);
+            return {};
+    }
 }
 
 // Initialize general configuration
@@ -177,157 +178,156 @@ function getUpdateConfig() {
 function initializeGeneralConfig() {
     const xlaunchConfig = js.F.getData('xlaunchConfig');
     populateConfigFields(xlaunchConfig);
-    setupConfigurationListeners();
+    js.F.setupConfigurationListeners();
     setupDateTimeFormatHandlers();
     populateFavouriteIcons();
     updateLogFormatPreview();
 }
 
-        // Initialize TriggerCMD configuration
-        // This function initializes the TriggerCMD configuration section
-        function initializeTriggerCmdConfig() {
-            if (!window.xldbv.configOpts) {
-                window.xldbv.configOpts = { tcuo: 'overwrite', tcao: 'all', tcag: 'on', inPath: false };
-            }
+// Initialize TriggerCMD configuration
+// This function initializes the TriggerCMD configuration section
+function initializeTriggerCmdConfig() {
+    if (!window.xldbv.configOpts) {
+        window.xldbv.configOpts = { tcuo: 'overwrite', tcao: 'all', tcag: 'on', inPath: false };
+    }
 
-            const updateOptionRadios = document.getElementsByName('triggerCMDUpdateOption');
-            const appsOptionRadios = document.getElementsByName('triggerCMDAppsOption');
-            const autoGenerateCheckbox = document.getElementById('autoGenerateTriggerCMD');
-            const addToPathCheckbox = document.getElementById('addToPath');
+    const updateOptionRadios = document.getElementsByName('triggerCMDUpdateOption');
+    const appsOptionRadios = document.getElementsByName('triggerCMDAppsOption');
+    const autoGenerateCheckbox = document.getElementById('autoGenerateTriggerCMD');
+    const addToPathCheckbox = document.getElementById('addToPath');
 
-            if (updateOptionRadios.length > 0) {
-                const tcuoValue = window.xldbv.configOpts.tcuo;
-                const tcuoElement = document.querySelector(`input[name="triggerCMDUpdateOption"][value="${tcuoValue}"]`);
-                if (tcuoElement) {
-                    tcuoElement.checked = true;
-                }
-            }
-
-            if (appsOptionRadios.length > 0) {
-                const tcaoValue = window.xldbv.configOpts.tcao;
-                const tcaoElement = document.querySelector(`input[name="triggerCMDAppsOption"][value="${tcaoValue}"]`);
-                if (tcaoElement) {
-                    tcaoElement.checked = true;
-                }
-            }
-
-            if (autoGenerateCheckbox) {
-                const tcagValue = window.xldbv.configOpts.tcag;
-                autoGenerateCheckbox.checked = tcagValue === 'on' || tcagValue === true;
-            }
-
-            if (addToPathCheckbox) {
-                addToPathCheckbox.checked = window.xldbv.configOpts.inPath;
-            }
-
-            originalTriggerCmdConfig = getTriggerCmdConfig();
-
-            function saveAndUpdateTriggerCmdConfig() {
-                updateSaveButtonState();
-            }
-
-            if (updateOptionRadios.length > 0) {
-                updateOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
-            }
-            if (appsOptionRadios.length > 0) {
-                appsOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
-            }
-            if (autoGenerateCheckbox) {
-                autoGenerateCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
-            }
-            if (addToPathCheckbox) {
-                addToPathCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
-            }
-
-            const updateTriggerCMDButton = document.getElementById('updateTriggerCMDFile');
-            if (updateTriggerCMDButton) {
-                updateTriggerCMDButton.addEventListener('click', runXltcScript);
-            }
-
-            updateSaveButtonState();
+    if (updateOptionRadios.length > 0) {
+        const tcuoValue = window.xldbv.configOpts.tcuo;
+        const tcuoElement = document.querySelector(`input[name="triggerCMDUpdateOption"][value="${tcuoValue}"]`);
+        if (tcuoElement) {
+            tcuoElement.checked = true;
         }
+    }
 
-        // Initialize update configuration
-        // This function initializes the update configuration section
-        async function initializeUpdateConfig() {
+    if (appsOptionRadios.length > 0) {
+        const tcaoValue = window.xldbv.configOpts.tcao;
+        const tcaoElement = document.querySelector(`input[name="triggerCMDAppsOption"][value="${tcaoValue}"]`);
+        if (tcaoElement) {
+            tcaoElement.checked = true;
+        }
+    }
 
-            const updateButton = document.getElementById('updateAppButton');
+    if (autoGenerateCheckbox) {
+        const tcagValue = window.xldbv.configOpts.tcag;
+        autoGenerateCheckbox.checked = tcagValue === 'on' || tcagValue === true;
+    }
+
+    if (addToPathCheckbox) {
+        addToPathCheckbox.checked = window.xldbv.configOpts.inPath;
+    }
+
+    originalTriggerCmdConfig = getConfig('triggercmd');
+
+    function saveAndUpdateTriggerCmdConfig() {
+        js.F.updateSaveButtonState();
+    }
+
+    if (updateOptionRadios.length > 0) {
+        updateOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
+    }
+    if (appsOptionRadios.length > 0) {
+        appsOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
+    }
+    if (autoGenerateCheckbox) {
+        autoGenerateCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
+    }
+    if (addToPathCheckbox) {
+        addToPathCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
+    }
+
+    const updateTriggerCMDButton = document.getElementById('updateTriggerCMDFile');
+    if (updateTriggerCMDButton) {
+        updateTriggerCMDButton.addEventListener('click', runXltcScript);
+    }
+
+    js.F.updateSaveButtonState();
+}
+
+// Initialize update configuration
+// This function initializes the update configuration section
+async function initializeUpdateConfig() {
+    const updateButton = document.getElementById('updateAppButton');
+    if (updateButton) {
+        updateButton.disabled = true;
+    }
+
+    try {
+        await js.F.lazyLoadScript('common/update.js');
+    } catch (error) {
+        return;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
+    if (autoUpdateCheckbox) {
+        const aupdValue = window.xldbv.configOpts.aupd;
+        autoUpdateCheckbox.checked = aupdValue === 'on' || aupdValue === true;
+    }
+
+    const updateInfoPreview = document.getElementById('updateInfoPreview');
+    updateInfoPreview.value = `Checking for updates. Please wait...\n\n`;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    try {
+        const versionInfo = await js.F.getVersionInfo();
+        const currentVersion = window.xldbv.version;
+        if (currentVersion !== versionInfo.version) {
+            updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
+            updateInfoPreview.value += `Update Comment: ${versionInfo.comment}\n\n`;
+            updateInfoPreview.value += `Files to be updated:\n\n`;
+            const files = Object.keys(versionInfo.files);
+            files.forEach(file => {
+                updateInfoPreview.value += `- ${file}\n`;
+            });
+            const mainFiles = Object.keys(versionInfo.mainFiles);
+            mainFiles.forEach(file => {
+                updateInfoPreview.value += `- ${file}\n`;
+            });
             if (updateButton) {
-                updateButton.disabled = true;
-            }
-
-            try {
-                await js.F.lazyLoadScript('common/update.js');
-            } catch (error) {
-                return;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
-            if (autoUpdateCheckbox) {
-                const aupdValue = window.xldbv.configOpts.aupd;
-                autoUpdateCheckbox.checked = aupdValue === 'on' || aupdValue === true;
-            }
-
-            const updateInfoPreview = document.getElementById('updateInfoPreview');
-            updateInfoPreview.value = `Checking for updates. Please wait...\n\n`;
-            await new Promise(resolve => setTimeout(resolve, 300));
-            try {
-                const versionInfo = await js.F.getVersionInfo();
-                const currentVersion = window.xldbv.version;
-                if (currentVersion !== versionInfo.version) {
-                    updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
-                    updateInfoPreview.value += `Update Comment: ${versionInfo.comment}\n\n`;
-                    updateInfoPreview.value += `Files to be updated:\n\n`;
-                    const files = Object.keys(versionInfo.files);
-                    files.forEach(file => {
-                        updateInfoPreview.value += `- ${file}\n`;
-                    });
-                    const mainFiles = Object.keys(versionInfo.mainFiles);
-                    mainFiles.forEach(file => {
-                        updateInfoPreview.value += `- ${file}\n`;
-                    });
-                    if (updateButton) {
-                        updateButton.disabled = false;
-                        if (!updateButton.hasListener) {
-                            updateButton.addEventListener('click', async () => {
-                                try {
-                                    await js.F.updateFiles();
-                                    updateInfoPreview.value += `\nFiles have been updated successfully.\n`;
-                                    window.xldbv.version = versionInfo.version;
-                                    js.F.setData('xldbv', window.xldbv);
-                                } catch (error) {
-                                    updateInfoPreview.value += `\nError updating files: ${error.message}`;
-                                }
-                                updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
-                            });
-                            updateButton.hasListener = true;
+                updateButton.disabled = false;
+                if (!updateButton.hasListener) {
+                    updateButton.addEventListener('click', async () => {
+                        try {
+                            await js.F.updateFiles();
+                            updateInfoPreview.value += `\nFiles have been updated successfully.\n`;
+                            window.xldbv.version = versionInfo.version;
+                            js.F.setData('xldbv', window.xldbv);
+                        } catch (error) {
+                            updateInfoPreview.value += `\nError updating files: ${error.message}`;
                         }
-                    }
-                } else {
-                    updateInfoPreview.value += `You are using the latest version.\n`;
+                        updateInfoPreview.scrollTop = updateInfoPreview.scrollHeight;
+                    });
+                    updateButton.hasListener = true;
                 }
-            } catch (error) {
-                updateInfoPreview.value += `Error fetching version info: ${error.message}\n`;
             }
-
-            saveOriginalConfig('update');
-
-            function saveAndUpdateConfig() {
-                const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
-                if (autoUpdateCheckbox) {
-                    window.xldbv.configOpts.aupd = autoUpdateCheckbox.checked ? 'on' : 'off';
-                }
-                updateSaveButtonState();
-            }
-
-            if (autoUpdateCheckbox) {
-                autoUpdateCheckbox.addEventListener('change', saveAndUpdateConfig);
-            }
-
-            updateSaveButtonState();
+        } else {
+            updateInfoPreview.value += `You are using the latest version.\n`;
         }
+    } catch (error) {
+        updateInfoPreview.value += `Error fetching version info: ${error.message}\n`;
+    }
+
+    js.F.saveOriginalConfig('update');
+
+    function saveAndUpdateConfig() {
+        const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
+        if (autoUpdateCheckbox) {
+            window.xldbv.configOpts.aupd = autoUpdateCheckbox.checked ? 'on' : 'off';
+        }
+        js.F.updateSaveButtonState();
+    }
+
+    if (autoUpdateCheckbox) {
+        autoUpdateCheckbox.addEventListener('change', saveAndUpdateConfig);
+    }
+
+    js.F.updateSaveButtonState();
+}
 
 // Populate configuration fields
 // This function populates the configuration fields with the provided config object
@@ -526,6 +526,28 @@ async function runXltcScript() {
     }
 }
 
+// Generate xlaunch.cfg content
+// This function generates the content for the xlaunch.cfg file
+function generateXlaunchCfgContent() {
+    const constructValue = document.getElementById('construct').value;
+    const construct = constructValue === '0' ? 'dateFormat timeFormat' : 'timeFormat dateFormat';
+
+    const configBuild = {
+        maxLogEntries: document.getElementById('maxLogEntries').value,
+        dateFormat: document.getElementById('dateFormat').value,
+        timeFormat: document.getElementById('timeFormat').value,
+        construct: construct,
+        leftEncapsule: `'${document.getElementById('leftEncapsule').value}'`,
+        rightEncapsule: `'${document.getElementById('rightEncapsule').value}'`,
+        messageSeperator: `'${document.getElementById('messageSeperator').value}'`,
+        messagePrefix: `'${document.getElementById('messagePrefix').value}'`,
+    };
+
+    return Object.entries(configBuild)
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+}
+
 // Expose functions to the global scope
 window.configurationFunctions = {
     fetchFile,
@@ -534,19 +556,17 @@ window.configurationFunctions = {
     fetchConfigSections,
     setupConfigList,
     loadConfigSection,
-    getGeneralConfig,
-    getTriggerCmdConfig,
-    getUpdateConfig,
+    getConfig,
     initializeGeneralConfig,
     initializeTriggerCmdConfig,
     initializeUpdateConfig,
     populateConfigFields,
-    setupConfigurationListeners,
     setupDateTimeFormatHandlers,
     populateFavouriteIcons,
     formatDate,
     updateLogFormatPreview,
     updateSelectedConfigItem,
     runXltcScript,
-    setAndLogValue
+    setAndLogValue,
+    generateXlaunchCfgContent
 };

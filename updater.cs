@@ -63,31 +63,36 @@ class Program
         Console.WriteLine("Starting update process...");
         Console.WriteLine("");
 
-        // Process files and directories
-        bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir);
+        bool forceFullUpdate = args.Contains("-f");
 
-        // Increment the version number if files were changed
-        if (filesChanged)
+        // Process files and directories
+        bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate);
+
+        if (filesChanged || forceFullUpdate)
         {
             IncrementVersion(versionJson);
         }
 
-        // Update the version and add the comment
-        versionJson["comment"] = updateComment;
-        versionJson["files"] = newFilesSection;
-        versionJson["mainFiles"] = newMainFilesSection;
+        // Create a new JObject with the desired property order
+        var orderedVersionJson = new JObject
+        {
+            ["version"] = versionJson["version"],
+            ["comment"] = updateComment,
+            ["files"] = newFilesSection,
+            ["mainFiles"] = newMainFilesSection
+        };
 
         // Write the updated version information back to the file
-        File.WriteAllText(versionJsonPath, versionJson.ToString());
+        File.WriteAllText(versionJsonPath, orderedVersionJson.ToString());
 
-        Console.WriteLine("Updated version to: " + versionJson["version"]);
+        Console.WriteLine("Updated version to: " + orderedVersionJson["version"]);
         Console.WriteLine("Included comment: " + updateComment);
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
         Console.WriteLine("");
     }
 
-    static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir)
+    static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)
     {
         bool filesChanged = false;
 
@@ -98,10 +103,9 @@ class Program
             if ((isBaseFolder && (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase) && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))) ||
                 (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))))
             {
-
                 string relativePath = GetRelativePath(rootSourceDir, srcFile);
                 string destFilePath = Path.Combine(destFolder, fileName); // Copy all files directly into destFolder
-                if (!File.Exists(destFilePath) || !FilesAreEqual(srcFile, destFilePath))
+                if (forceFullUpdate || !File.Exists(destFilePath) || !FilesAreEqual(srcFile, destFilePath))
                 {
                     File.Copy(srcFile, destFilePath, true);
 
@@ -128,14 +132,14 @@ class Program
                 !folderName.Equals("dist", StringComparison.OrdinalIgnoreCase) &&
                 !folderName.Equals("help", StringComparison.OrdinalIgnoreCase)) 
             {
-                filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir);
+                filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir, forceFullUpdate);
             }
         }
 
         return filesChanged;
     }
 
-    static void IncrementVersion(JObject versionJson)
+    static bool IncrementVersion(JObject versionJson)
     {
         string version = versionJson["version"]?.ToString() ?? "1.0.0";
         var versionParts = version.Split(new char[] { '.' });
@@ -144,14 +148,18 @@ class Program
         int minor = int.Parse(versionParts[1]);
         int patch = int.Parse(versionParts[2]);
 
+        bool minorIncremented = false;
+
         patch++;
-        if (patch >= 10)
+        if (patch > 99)
         {
             patch = 0;
             minor++;
+            minorIncremented = true;
         }
 
         versionJson["version"] = $"{major}.{minor}.{patch}";
+        return minorIncremented;
     }
 
     static string GetRelativePath(string baseDir, string filePath)

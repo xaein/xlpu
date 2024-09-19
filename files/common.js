@@ -206,8 +206,7 @@ function setupFooterButtons(currentPage) {
         } else if (currentPage === 'configuration') {
             footerLeftButton.textContent = 'Save';
             footerLeftButton.onclick = async () => {
-                const currentSection = document.querySelector('.config-item.selected')?.dataset.config || 'general';
-                await js.F.saveConfiguration(currentSection);
+                await js.F.saveConfiguration();
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'logging') {
