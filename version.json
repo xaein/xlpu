@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.1",
   "comment": "Full Update",
   "files": {
     "edit.config.html": "pages",
@@ -10,6 +10,7 @@
     "main.html": "pages",
     "welcome.html": "pages",
     "common.js": "pages/common",
+    "configuration.js": "pages/common",
     "dialogs.js": "pages/common",
     "loadsave.js": "pages/common",
     "pagination.js": "pages/common",
