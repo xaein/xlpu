@@ -154,7 +154,7 @@ function getConfig(section) {
                 messageSeperator: `'${document.getElementById('messageSeperator').value}'`,
                 messagePrefix: `'${document.getElementById('messagePrefix').value}'`,
                 maxLogEntries: document.getElementById('maxLogEntries').value,
-                favouriteIcon: document.querySelector('.favourite-icon.selected')?.getAttribute('data-icon') || ''
+                favourite: document.getElementById('favouriteIcon').value
             };
         case 'triggercmd':
             return {
@@ -164,11 +164,9 @@ function getConfig(section) {
                 inPath: document.getElementById('addToPath')?.checked || false
             };
         case 'update':
-            return {
-                aupd: document.getElementById('autoUpdateOnLaunch')?.checked ? 'on' : 'off'
-            };
+            const checkUpdateValue = document.getElementById('checkUpdate').checked;
+            return { autoUpdate: checkUpdateValue };
         default:
-            console.error(`Invalid configuration section: ${section}`);
             return {};
     }
 }
@@ -256,15 +254,7 @@ async function initializeUpdateConfig() {
         updateButton.disabled = true;
     }
 
-    try {
-        await js.F.lazyLoadScript('common/update.js');
-    } catch (error) {
-        return;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
+    const autoUpdateCheckbox = document.getElementById('checkUpdate');
     if (autoUpdateCheckbox) {
         const aupdValue = window.xldbv.configOpts.aupd;
         autoUpdateCheckbox.checked = aupdValue === 'on' || aupdValue === true;
@@ -272,13 +262,19 @@ async function initializeUpdateConfig() {
 
     const updateInfoPreview = document.getElementById('updateInfoPreview');
     updateInfoPreview.value = `Checking for updates. Please wait...\n\n`;
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 100));
     try {
         const versionInfo = await js.F.getVersionInfo();
         const currentVersion = window.xldbv.version;
         if (currentVersion !== versionInfo.version) {
             updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
-            updateInfoPreview.value += `Update Comment: ${versionInfo.comment}\n\n`;
+            
+            // Check if versionInfo.comment exists and is not empty before adding it
+            if (versionInfo.comment && typeof versionInfo.comment === 'string' && versionInfo.comment.trim() !== '') {
+                updateInfoPreview.value += `Update Comment:\n\n`;
+                updateInfoPreview.value += `${versionInfo.comment}\n\n`;
+            }
+
             updateInfoPreview.value += `Files to be updated:\n\n`;
             const files = Object.keys(versionInfo.files);
             files.forEach(file => {
@@ -315,7 +311,7 @@ async function initializeUpdateConfig() {
     js.F.saveOriginalConfig('update');
 
     function saveAndUpdateConfig() {
-        const autoUpdateCheckbox = document.getElementById('autoUpdateOnLaunch');
+        const autoUpdateCheckbox = document.getElementById('checkUpdate');
         if (autoUpdateCheckbox) {
             window.xldbv.configOpts.aupd = autoUpdateCheckbox.checked ? 'on' : 'off';
         }
@@ -398,7 +394,7 @@ function populateFavouriteIcons() {
     
     const xldbv = js.F.getData('xldbv') || {};
     
-    const favouriteSymbols = xldbv['favourite.symbols']
+    const favouriteSymbols = xldbv.favourite_symbols || '';
     const currentFavourite = xldbv.favourite || '';
 
     const symbols = favouriteSymbols.split(' ');

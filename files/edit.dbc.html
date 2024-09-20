@@ -123,7 +123,9 @@
                 document.getElementById('headerContainer').innerHTML = headerHtml;
                 document.getElementById('footerContainer').innerHTML = footerHtml;
                 document.getElementById('paginationContainer').innerHTML = paginationHtml;
-
+                js.F.lazyLoadScript('common/pagination.js');
+                js.F.updateJsF();
+                
                 await new Promise(resolve => setTimeout(resolve, 100));
 
                 js.F.setupHeaderNavigation('databasecontrol');

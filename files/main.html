@@ -72,7 +72,7 @@
         // Initialize main page
         // Sets up the page structure, loads necessary components, and sets up event listeners
         async function initializePage() {
-            window.xldbv = js.F.getData('xldbv') || {};
+                        window.xldbv = js.F.getData('xldbv') || {};
             window.xldbf = js.F.getData('xldbf') || {};
             const preloadedData = js.F.getData('preloadedData');
             
@@ -103,7 +103,9 @@
                 document.getElementById('headerContainer').innerHTML = headerHtml;
                 document.getElementById('paginationWrapper').innerHTML = paginationHtml;
                 document.getElementById('footerContainer').innerHTML = footerHtml;
-
+                js.F.lazyLoadScript('common/pagination.js');
+                js.F.updateJsF();
+                
                 await new Promise(resolve => setTimeout(resolve, 100));
 
                 js.F.setupHeaderNavigation('launchlist');

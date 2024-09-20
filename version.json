@@ -1,6 +1,6 @@
 {
-  "version": "1.0.2",
-  "comment": "This is a multi-line comment.\nSecond line of the comment.\nThird line.",
+  "version": "1.0.1",
+  "comment": "Full Update\nTest of new features\nTons of bug fixes also :)",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
@@ -16,7 +16,6 @@
     "pagination.js": "pages/common",
     "tables.js": "pages/common",
     "themes.js": "pages/common",
-    "update.js": "pages/common",
     "window.js": "pages/common",
     "configcon.g.html": "pages/include",
     "configcon.t.html": "pages/include",

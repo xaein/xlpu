@@ -23,8 +23,8 @@ class Program
         if (commentIndex != -1 && commentIndex + 1 < args.Length)
         {
             updateComment = string.Join(" ", args.Skip(commentIndex + 1));
-            // Replace literal "\n" with actual newline characters
-            updateComment = updateComment.Replace("\\n", "\n");
+            // Replace literal "\n", " | ", and "|" with actual newline characters
+            updateComment = updateComment.Replace("\\n", "\n").Replace(" | ", "\n").Replace("|", "\n");
         }
 
         // Ensure the destination directory exists
@@ -108,10 +108,13 @@ class Program
         Console.WriteLine("Options:");
         Console.WriteLine("  -f              Force a full update, copying all files");
         Console.WriteLine("  -c <comment>    Add a comment to the version.json file");
+        Console.WriteLine("                  Use '|' to separate lines in the comment");
+        Console.WriteLine("                  For best results, use \" \" around the comment");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  updater.exe -c Updated UI components");
-        Console.WriteLine("  updater.exe -f -c Major update with full file refresh");
+        Console.WriteLine("  updater.exe -c \"Updated UI components\"");
+        Console.WriteLine("  updater.exe -c \"Line 1 | Line 2 | Line 3\"");
+        Console.WriteLine("  updater.exe -f -c \"Major update|Fixed bug #123|Added new feature\"");
     }
 
     static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)

@@ -332,21 +332,17 @@ function updateJsF() {
 async function updateVariablesOnExit() {
     const xldbvData = js.F.getData('xldbv');
     try {
-        console.log('Updating variables on exit');
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xldbvData.directories.utils;
         const xldbvPath = js.F.joinPath(baseDir, utilsDir, 'xldbv.json');
-        console.log('xldbvPath: ' + xldbvPath);
 
         if (!validateXldbvJson(xldbvData)) {
-            console.log('Invalid xldbv.json structure');
             throw new Error('Invalid xldbv.json structure');
         }
         const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, xldbvData);
         if (!xldbvResult) {
             throw new Error('Failed to save xldbv.json');
         }
-        console.log('xldbv.json saved successfully');
         return true;
     } catch (error) {
         return false;

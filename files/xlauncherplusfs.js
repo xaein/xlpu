@@ -179,7 +179,6 @@ class FileSystemOperations {
     // Write file
     // Writes content to a file and returns true if successful, false otherwise
     async writeFile(filePath, content, isBinary = false) {
-        console.log('Writing file to: ' + filePath);
         try {
             if (isBinary) {
                 await fs.writeFile(filePath, Buffer.from(content));
@@ -231,7 +230,6 @@ class FileSystemOperations {
             await fs.writeFile(configPath, content.trim(), 'utf8');
             return true;
         } catch (error) {
-            console.error('Error updating xlaunch.cfg:', error);
             return false;
         }
     }
