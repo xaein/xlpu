@@ -72,21 +72,16 @@ async function convertJsonToScss(jsonFilePath, scssFilePath) {
 // Compile Sass
 // Compiles a single Sass file to CSS
 async function compileSass(file, includePath) {
-    return new Promise((resolve, reject) => {
-        sass.render({
-            file: file,
-            includePaths: [includePath],
-            outputStyle: 'compressed'
-        }, (err, result) => {
-            if (err) {
-                console.error(`Error compiling Sass file ${file}:`, err);
-                reject(err);
-            }
-            else {
-                resolve(result);
-            }
+    try {
+        const result = await sass.compileAsync(file, {
+            loadPaths: [includePath],
+            style: 'compressed'
         });
-    });
+        return result;
+    } catch (error) {
+        console.error(`Error compiling Sass file ${file}:`, error);
+        throw error;
+    }
 }
 
 // Clean directory

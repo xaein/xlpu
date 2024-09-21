@@ -84,10 +84,10 @@ async function compileAndApplyTheme() {
 // Allows user to import a theme file and apply it
 async function importTheme() {
     try {
-        const themesDir = window.xldbv.directories?.themes || 'themes';
+        const defaultDir = await e.Api.invoke('get-desktop-dir');
         const result = await e.Api.invoke('open-file-dialog', {
             title: 'Select Theme File',
-            defaultPath: themesDir,
+            defaultPath: defaultDir,
             filters: [
                 { name: 'Theme Files', extensions: ['thm'] },
                 { name: 'All Files', extensions: ['*'] }

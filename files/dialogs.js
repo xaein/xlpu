@@ -272,69 +272,18 @@ async function rowRemove() {
     document.getElementById('appToRemove').textContent = appName;
 }
 
-// Setup drag and drop
-// Configures drag and drop functionality for file inputs
-function setupDragAndDrop(dialog) {
-    const dropZone = dialog.querySelector('.drop-zone');
-    const appNameInput = dialog.querySelector('#appNameInput');
-    const appCmdInput = dialog.querySelector('#appCmdInput');
-    const dropFade = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000;
-
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight(e) {
-        dropZone.classList.add('drag-over');
-    }
-
-    function unhighlight(e) {
-        dropZone.classList.remove('drag-over');
-    }
-
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    async function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        if (files.length > 0) {
-            const file = files[0];
-            if (window.e && window.e.Api && typeof window.e.Api.invoke === 'function') {
-                try {
-                    const shortcutInfo = await window.e.Api.invoke('parse-shortcut', file.path);
-                    handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
-                    dropZone.classList.add('file-accepted');
-                    dropZone.classList.remove('file-rejected');
-                } catch (error) {
-                    dropZone.classList.add('file-rejected');
-                    dropZone.classList.remove('file-accepted');
-                }
-            } else {
-                dropZone.classList.add('file-rejected');
-                dropZone.classList.remove('file-accepted');
+// Helper function to handle circular references in JSON.stringify
+function getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return "[Circular]";
             }
-            setTimeout(() => {
-                dropZone.classList.add('fade-out');
-                setTimeout(() => {
-                    dropZone.classList.remove('file-accepted', 'file-rejected', 'fade-out');
-                }, dropFade);
-            }, 2000); // Delay before starting the fade-out
+            seen.add(value);
         }
-    }
+        return value;
+    };
 }
 
 // Show delete theme dialog
@@ -394,7 +343,7 @@ async function showDialog(dialogName, sectionName) {
         }
 
         if (dialogName === 'rowAdd') {
-            setupDragAndDrop(dialog);
+            // No need for setupDragAndDrop in this case
         }
 
         if (dialogName === 'rowRemove') {
@@ -579,6 +528,33 @@ function updateVariables(operation, data) {
     window.xldbv = xldbv;
 }
 
+// Select application file
+// Opens a file dialog to select an application and populates the input fields
+async function selectApplicationFile() {
+    try {
+        const defaultDir = await e.Api.invoke('get-desktop-dir');  // Get a default directory
+        const result = await e.Api.invoke('open-file-dialog', {
+            title: 'Select Application File',
+            defaultPath: defaultDir,
+            properties: ['openFile'],
+            filters: [
+                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs'] }
+            ]
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0];
+            const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
+            
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
+        }
+    } catch (error) {
+        console.error('Error selecting application file:', error);
+    }
+}
+
 // Export dialog functions
 window.dialogFunctions = {
     categoryAdd,
@@ -593,7 +569,7 @@ window.dialogFunctions = {
     rowAdd,
     rowEdit,
     rowRemove,
-    setupDragAndDrop,
+    selectApplicationFile,
     showDeleteThemeDialog,
     showDialog,
     showRowEditDialog,

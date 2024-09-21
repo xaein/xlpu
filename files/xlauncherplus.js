@@ -5,6 +5,7 @@ const { app, BrowserWindow, ipcMain, dialog, screen } = require('electron');
 const path = require('path');
 const util = require('util');
 const { exec } = require('child_process');
+const fs = require('fs').promises; // Add this line at the top of the file
 
 // Node.js core module methods
 const execPromise = util.promisify(exec);
@@ -73,6 +74,12 @@ safeIpc('open-file-dialog', (event, options) => {
     return dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), options);
 });
 
+// Get desktop directory
+// Get the desktop directory
+ipcMain.handle('get-desktop-dir', () => {
+    return path.join(app.getPath('home'), 'Desktop');  // Default to the Desktop
+});
+
 // Open help file
 // Opens the xlauncher_plus_help.html file in the default browser
 safeIpc('open-external', (event, helpFilePath) => {
@@ -107,45 +114,39 @@ safeIpc('launch-app', (event, appName) => {
 
 // Parse shortcut
 // Parse a shortcut file
-safeIpc('parse-shortcut', (event, filePath) => {
-    return new Promise((resolve, reject) => {
-        if (typeof filePath !== 'string') {
-            const error = new TypeError('The "path" argument must be of type string. Received ' + typeof filePath);
-            return reject(error);
-        }
+safeIpc('parse-shortcut', async (event, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const fileName = path.basename(filePath, ext);
 
-        const fileName = path.basename(filePath, path.extname(filePath));
-        if (filePath.toLowerCase().endsWith('.lnk')) {
-            windowsShortcuts.query(filePath, (error, shortcut) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve({
-                        name: fileName,
-                        target: shortcut.target
-                    });
-                }
+    switch (ext) {
+        case '.lnk':
+            return new Promise((resolve, reject) => {
+                windowsShortcuts.query(filePath, (error, shortcut) => {
+                    if (error) reject(error);
+                    else resolve({ name: fileName, target: shortcut.target });
+                });
             });
-        } else if (filePath.toLowerCase().endsWith('.url')) {
-            fsOps.getFile(filePath).then(({ data, error }) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    const urlMatch = data.match(/URL=(.+)/);
-                    if (urlMatch && urlMatch[1]) {
-                        resolve({
-                            name: fileName,
-                            target: urlMatch[1]
-                        });
-                    } else {
-                        reject(new Error('Invalid URL shortcut file'));
-                    }
+        case '.url':
+            try {
+                const content = await fsOps.getFile(filePath);
+                if (content.error) {
+                    throw new Error(content.error);
                 }
-            });
-        } else {
-            reject(new Error('Unsupported file type'));
-        }
-    });
+                const urlMatch = content.data.match(/URL=(.+)/);
+                if (urlMatch && urlMatch[1]) {
+                    return { name: fileName, target: urlMatch[1] };
+                }
+                return { name: fileName, target: "Invalid URL shortcut" };
+            } catch (error) {
+                throw new Error(`Error reading .url file: ${error.message}`);
+            }
+        case '.exe':
+        case '.bat':
+        case '.vbs':
+            return { name: fileName, target: filePath };
+        default:
+            throw new Error('Unsupported file type');
+    }
 });
 
 // Compile theme

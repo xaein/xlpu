@@ -1,15 +1,19 @@
 <div id="rowAddDialog" class="launch-dialog">
     <div class="dialog-content">
         <div class="app-name-label">Add Application:</div>
-        <div class="drop-zone-container">
-            <div class="drop-zone">
-                <p>Drag & Drop Shortcut Here</p>
-            </div>
-            <div class="input-container">
-                <label for="appNameInput">Name:</label>
-                <input type="text" id="appNameInput" class="add-row-input" placeholder="Enter app name">
-                <label for="appCmdInput">Command:</label>
-                <input type="text" id="appCmdInput" class="add-row-input" placeholder="Enter command">
+        <div class="input-container">
+            <div class="input-row">
+                <button id="selectFileButton" class="select-file-button" onclick="js.F.selectApplicationFile()">Select File</button>
+                <div class="input-fields">
+                    <div class="input-field">
+                        <label for="appNameInput">Name:</label>
+                        <input type="text" id="appNameInput" class="add-row-input" placeholder="Enter app name">
+                    </div>
+                    <div class="input-field">
+                        <label for="appCmdInput">Command:</label>
+                        <input type="text" id="appCmdInput" class="add-row-input" placeholder="Enter command">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
