@@ -125,19 +125,32 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
         if (!window.xldbv) {
             throw new Error('Failed to load xldbv.json');
         }
-        if (xldbv.xldbFiles.length > 0) {
-            isFirstRun = false;
 
+        // Check for updates if aupd is set to 'on'
+        if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
+            const updateMessage = await checkForUpdates();
+            js.F.updateStatusMessage(updateMessage);
+        }
+
+        // Check firstRun status
+        if (window.xldbv.firstRun === 1) {
+            js.F.updateCurrentFile('First run startup detected.. Progressing to first-time setup...');
+            js.F.updateProgress(100); // Set progress bar to 100% on first run
+            return true; // Return true for first run
+        } else if (window.xldbv.firstRun === 2) {
+            js.F.updateCurrentFile('Setup Was not completed. Continuing setup...');
+            js.F.updateProgress(100); // Set progress bar to 100% on continuing setup
+            return true; // Return true for continuing setup
+        } else {
             // Check for updates if aupd is set to 'on'
             if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
                 const updateMessage = await checkForUpdates();
                 js.F.updateStatusMessage(updateMessage);
             }
-        }
 
-        if (xldbv.xldbFiles && xldbv.xldbFiles.length > 0) {
-            await loadFileWithDelay(appDir, 'utils', xldbv.mainCSV, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
-            for (const file of xldbv.xldbFiles) {
+            // Load other files
+            await loadFileWithDelay(appDir, 'utils', window.xldbv.mainCSV, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+            for (const file of window.xldbv.xldbFiles) {
                 await loadFileWithDelay(appDir, 'xldb', file, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
             }
 
@@ -146,14 +159,8 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
     
             js.F.setData('tempData', js.F.getData('preloadedData'));
     
-        } else {
-            isFirstRun = true;
-
-            js.F.updateCurrentFile('First run startup detected.. Progressing to first-time setup...');
-            js.F.updateProgress(100); // Set progress bar to 100% on first run
+            return false; // Return false for non-first run
         }
-
-        return isFirstRun;
     } catch (error) {
         js.F.updateStatusMessage(`Error initializing application: ${error.message}`);
         throw error;
@@ -336,6 +343,7 @@ async function saveAllData() {
         try {
             await e.Api.invoke('run-xlstitch');
         } catch (error) {
+            console.error('Error running xlstitch:', error);
         }
         await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -389,6 +397,18 @@ async function saveAllData() {
         }
 
         updateReloadProgress(100, '');
+
+        // Check if firstRun is 2 and change it to 0
+        if (window.xldbv.firstRun === 2) {
+            window.xldbv.firstRun = 0;
+            if (js.F.validateXldbvJson(window.xldbv)) {
+                js.F.setData('xldbv', window.xldbv);
+                await js.F.updateVariablesOnExit();
+                js.F.setupHeaderNavigation('databasecontrol');
+            } else {
+                console.error('Error: Invalid xldbv data after updating firstRun');
+            }
+        }
 
         js.F.updateSaveButtonState();
     }

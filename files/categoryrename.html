@@ -1,11 +1,11 @@
 <div id="categoryRenameDialog" class="launch-dialog">
     <div class="dialog-content">
         <div class="app-name-label">Rename Category:</div>
-        <div class="app-name" id="currentCategoryName">Current Category Name</div>
+        <p>Change the name of <span class="app-name" id="currentCategoryName"></span> to:</p>
         <input type="text" id="newCategoryNameInput" class="add-category-input" placeholder="Enter new category name">
     </div>
     <div class="dialog-footer">
-        <button class="close-button" onclick="js.F.closeDialog('categoryRename')">Cancel</button>
         <button class="ok-button" onclick="js.F.categoryRename()">OK</button>
+        <button class="close-button" onclick="js.F.closeDialog('categoryRename')">Cancel</button>
     </div>
 </div>

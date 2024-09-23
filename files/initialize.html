@@ -118,20 +118,31 @@
             const delay = window.delay * 2;
             
             try {
-                const isFirstRun = await js.F.initializeFiles();
+                await js.F.initializeFiles();
+                window.xldbv = js.F.getData('xldbv');
+                window.xldbf = js.F.getData('xldbf');
+
+                const firstRun = window.xldbv.firstRun;
 
                 setTimeout(() => {
-                    if (isFirstRun) {
+                    if (firstRun === 1) {
                         js.F.updateCurrentFile('Welcome to xLauncher Plus! Preparing your first-time setup...');
+                    } else if (firstRun === 2) {
+                        js.F.updateCurrentFile('Resuming First-Time Setup... Proceeding to Database Control');
                     } else {
                         js.F.updateCurrentFile('Loading Completed');
                     }
                 }, delay);
 
-                window.xldbv = js.F.getData('xldbv');
-                window.xldbf = js.F.getData('xldbf');
+                let nextPage;
+                if (firstRun === 1) {
+                    nextPage = 'welcome.html';
+                } else if (firstRun === 2) {
+                    nextPage = 'edit.dbc.html';
+                } else {
+                    nextPage = 'main.html';
+                }
 
-                const nextPage = isFirstRun ? 'welcome.html' : 'main.html';
                 setTimeout(() => {
                     window.location.href = nextPage;
                 }, delay + 500);

@@ -124,6 +124,12 @@ async function confirmRowRemove() {
         window.tempData[fileName] = window.tempData[fileName].split('\n')
             .filter(row => row.split(',')[0].trim() !== appName)
             .join('\n');
+
+        // Check if the file is empty after removing the row
+        if (window.tempData[fileName].trim() === '') {
+            window.tempData[fileName] = ' , \n'; // Add the blank entry
+        }
+
         js.F.setData('tempData', window.tempData);
     }
 
@@ -214,6 +220,9 @@ async function rowAdd() {
     const appName = appNameInput.value.trim().toLowerCase();
     const appCmd = appCmdInput.value.trim().toLowerCase();
 
+    appNameInput.value = '';
+    appCmdInput.value = '';
+
     if (!appName || !appCmd) {
         return;
     }
@@ -230,6 +239,12 @@ async function rowAdd() {
         window.tempData[fileName] = '';
     }
     window.tempData[fileName] += `${appName},${appCmd}\n`;
+
+    window.tempData[fileName] = window.tempData[fileName]
+        .split('\n')
+        .filter(line => line !== ' , ')
+        .join('\n');
+
     js.F.setData('tempData', window.tempData);
 
     await js.F.loadFileData(fileName);
@@ -340,10 +355,6 @@ async function showDialog(dialogName, sectionName) {
                     js.F.categoryAdd();
                 }
             });
-        }
-
-        if (dialogName === 'rowAdd') {
-            // No need for setupDragAndDrop in this case
         }
 
         if (dialogName === 'rowRemove') {
@@ -457,7 +468,7 @@ async function showRowEditDialog() {
 // Show save dialog
 // Displays the save dialog and initiates the save process
 async function showSaveDialog() {
-    await lazyLoadDialog('save');
+    await lazyLoadDialog('databasesave');
     await lazyLoadStylesheet('common/styles/loadsave.css');
     await js.F.lazyLoadScript('common/loadsave.js');
     

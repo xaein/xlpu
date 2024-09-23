@@ -24,8 +24,8 @@
                     <span>Category:</span>
                     <div class="category-button-wrapper">
                         <button id="addCategoryButton" class="category-button add-button" onclick="js.F.showDialog('categoryAdd')">+</button>
-                        <button id="renameCategoryButton" class="category-button rename-button" onclick="js.F.showDialog('categoryRename')">Rename</button>
-                        <button id="removeCategoryButton" class="category-button remove-button" onclick="js.F.showDialog('categoryRemove')">-</button>
+                        <button id="renameCategoryButton" class="category-button rename-button" onclick="js.F.showDialog('categoryRename')" disabled>Rename</button>
+                        <button id="removeCategoryButton" class="category-button remove-button" onclick="js.F.showDialog('categoryRemove')" disabled>-</button>
                     </div>
                 </div>
                 <div id="tabListContainer">
@@ -48,7 +48,7 @@
     <div id="bottomContainer">
         <div id="editControlsContainer">
             <div class="edit-buttons">
-                <button id="addRowButton" onclick="js.F.showDialog('rowAdd')">+</button>
+                <button id="addRowButton" onclick="js.F.showDialog('rowAdd')" disabled>+</button>
                 <button id="editRowButton" onclick="js.F.showRowEditDialog()" disabled>Edit</button>
                 <button id="removeRowButton" onclick="js.F.showDialog('rowRemove')" disabled>-</button>
             </div>
@@ -124,7 +124,6 @@
                 document.getElementById('footerContainer').innerHTML = footerHtml;
                 document.getElementById('paginationContainer').innerHTML = paginationHtml;
                 js.F.lazyLoadScript('common/pagination.js');
-                js.F.updateJsF();
                 
                 await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -148,17 +147,22 @@
                 const removeButton = document.getElementById('removeRowButton');
                 if (editButton) editButton.disabled = true;
                 if (removeButton) removeButton.disabled = true;
+                js.F.updateJsF();
             }).catch(error => {});
         }
 
         // Load tab buttons
         // Creates and populates tab buttons based on available xldbFiles
         function loadTabButtons(newCategoryName = null) {
+            const tabList = document.getElementById('tabList');
+            const addRowButton = document.getElementById('addRowButton');
+            const renameCategoryButton = document.getElementById('renameCategoryButton');
+            const removeCategoryButton = document.getElementById('removeCategoryButton');
+
             if (!window.xldbv || !window.xldbv.xldbFiles || !Array.isArray(window.xldbv.xldbFiles)) {
                 return;
             }
 
-            const tabList = document.getElementById('tabList');
             if (!tabList) {
                 return;
             }
@@ -166,6 +170,7 @@
             while (tabList.firstChild) {
                 tabList.removeChild(tabList.firstChild);
             }
+
 
             let newTabButton = null;
 
@@ -189,6 +194,18 @@
 
             if (newCategoryName && newTabButton) {
                 selectTab(newCategoryName, { currentTarget: newTabButton });
+            }
+
+            // Enable buttons if categories are available
+            const hasCategories = window.xldbv.xldbFiles.length > 0;
+            if (hasCategories) {
+                if (addRowButton) addRowButton.disabled = false;
+                if (renameCategoryButton) renameCategoryButton.disabled = false;
+                if (removeCategoryButton) removeCategoryButton.disabled = false;
+            } else {
+                if (addRowButton) addRowButton.disabled = true;
+                if (renameCategoryButton) renameCategoryButton.disabled = true;
+                if (removeCategoryButton) removeCategoryButton.disabled = true;
             }
         }
 
@@ -275,6 +292,27 @@
                     return true;
                 }
             });
+        }
+
+        // Show confirm dialog
+        // Displays the database confirmation dialog and stores the pending navigation
+        function showConfirmDialog(destination) {
+            js.F.showDialog('databaseConfirm');
+            window.pendingNavigation = destination;
+        }
+
+        // Handle database changes
+        // Processes user's choice to save or discard changes, then navigates
+        async function databaseChanges(action) {
+            js.F.closeDialog('databaseConfirm');
+            if (action === 'save') {
+                js.F.setData('tempData', window.tempData);
+                await js.F.showSaveDialog();
+                js.F.navigateTo(window.pendingNavigation);
+            } else {
+                js.F.navigateTo(window.pendingNavigation);
+            }
+            window.pendingNavigation = null;
         }
     </script>
 </body>

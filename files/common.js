@@ -222,8 +222,8 @@ function setupFooterButtons(currentPage) {
     }
 }
 
-// Set up navigation
-// Adds click event listeners to header buttons
+// Setup header navigation
+// Configures navigation buttons and handles unsaved changes in database control
 function setupHeaderNavigation(currentPage) {
     const headerButtons = document.querySelectorAll('#headerContainer button');
     headerButtons.forEach(button => {
@@ -233,8 +233,21 @@ function setupHeaderNavigation(currentPage) {
             button.disabled = true;
         } else {
             button.disabled = false;
+            
+            // Disable Launch List button if firstRun is not 0
+            if (destination === 'launchlist' && window.xldbv.firstRun !== 0) {
+                button.disabled = true;
+            }
+            
             button.addEventListener('click', () => {
-                navigateTo(destination);
+                if (currentPage === 'databasecontrol') {
+                    const saveButton = document.getElementById('footerLeftButton');
+                    if (saveButton && !saveButton.disabled) {
+                        js.F.showConfirmDialog(destination)
+                        return;
+                    }
+                }
+                js.F.navigateTo(destination);
                 setupFooterButtons(destination);
             });
         }
@@ -370,6 +383,11 @@ function validateXldbvJson(data) {
 
     const versionRegex = /^\d+\.\d+\.\d+$/;
     if (!versionRegex.test(data.version)) {
+        return false;
+    }
+
+    // Check for firstRun variable
+    if (typeof data.firstRun !== 'number' || ![0, 1, 2].includes(data.firstRun)) {
         return false;
     }
 

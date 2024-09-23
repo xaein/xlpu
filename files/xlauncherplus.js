@@ -54,15 +54,18 @@ safeIpc('check-triggercmd-file', () => fsOps.checkTriggerCmdFile());
 safeIpc('update-xlaunch-config', (event, config) => fsOps.updateXlaunchConfig(config));
 
 // Run xlstitch
-// Execute the xlstitch utility
+// Execute the xlstitch utility with elevated permissions
 safeIpc('run-xlstitch', async (event) => {
     const xlstitchPath = path.join(utilsDir, 'xlstitch.exe');
+    const options = {
+        name: 'xLauncherPlus'
+    };
     return new Promise((resolve, reject) => {
-        exec(xlstitchPath, (error) => {
+        sudo.exec(`"${xlstitchPath}"`, options, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             } else {
-                resolve();
+                resolve(stdout.trim());
             }
         });
     });

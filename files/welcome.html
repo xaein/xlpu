@@ -72,12 +72,31 @@
         // Page initialization
         // Sets up the title bar buttons and start button event listener
         async function initializePage() {
-            
-            // Add event listener to the start button
-            document.getElementById('start-button').addEventListener('click', () => {
-                // Navigate to the edit page when the button is clicked
-                window.location.href = 'edit.dbc.html';
-            });
+            window.xldbv = js.F.getData('xldbv')
+            document.getElementById('start-button').addEventListener('click', handleStartButtonClick);
+        }
+
+        // Handle start button click
+        // Changes firstRun to 2 and navigates to edit.dbc.html
+        async function handleStartButtonClick() {
+            try {
+                // Update firstRun value
+                window.xldbv.firstRun = 2;
+                console.log('Updating firstRun to 2');
+                // Validate and save the updated xldbv
+                if (js.F.validateXldbvJson(window.xldbv)) {
+                    js.F.setData('xldbv', window.xldbv);
+                    await js.F.updateVariablesOnExit();
+                    
+                    // Navigate to the edit page
+                    window.location.href = 'edit.dbc.html';
+                } else {
+                    throw new Error('Invalid xldbv data');
+                }
+            } catch (error) {
+                console.error('Error updating firstRun:', error);
+                // You might want to show an error message to the user here
+            }
         }
     </script>
 </body>
