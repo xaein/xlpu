@@ -36,7 +36,7 @@
 
         // Initialize page-specific variables
         let selectedApp = null;
-        let mainCSVFile = '';
+        let mainXLFCFile = '';
 
         // Initialize js.F object
         let js = { F: {} };
@@ -76,20 +76,23 @@
             window.xldbf = js.F.getData('xldbf') || {};
             const preloadedData = js.F.getData('preloadedData');
             
-            if (!window.xldbv || !window.xldbv.mainCSV) {
+            if (!window.xldbv || !window.xldbv.mainXLFC) {
                 return;
             }
             
             const mainRowsPerPage = window.xldbv.rows?.main || 20;
             
-            mainCSVFile = window.xldbv.mainCSV;
+            mainXLFCFile = window.xldbv.mainXLFC;
 
-            let content = preloadedData[mainCSVFile];
+            let content = preloadedData[mainXLFCFile];
             if (!content) {
                 return;
             }
 
-            window.rows = content.split('\n').filter(row => row.trim() !== '');
+            const parsedData = JSON.parse(content);
+            window.rows = Object.entries(parsedData)
+                .map(([appName, command]) => `${appName},${command}`)
+                .sort((a, b) => a.localeCompare(b));
             
             if (window.rows.length === 0) {
                 return;

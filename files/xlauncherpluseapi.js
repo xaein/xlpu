@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('e', {
                 'import-theme', 'launch-app', 'maximize-window', 'minimize-window',
                 'open-file-dialog', 'parse-shortcut', 'read-directory', 'read-themes-directory',
                 'remove-file', 'rename-file', 'run-xlstitch', 'update-favs', 'update-vars',
-                'write-csv-file', 'write-file', 'check-triggercmd-file', 'update-xlaunch-config',
+                'write-file', 'check-triggercmd-file', 'update-xlaunch-config',
                 'generate-triggercmd', 'add-to-path', 'remove-from-path', 'fetch-url',
                 'open-external', 'get-desktop-dir'
             ];
@@ -56,8 +56,5 @@ contextBridge.exposeInMainWorld('e', {
         log: (...args) => console.log(...args),
         // Expose console.error
         error: (...args) => console.error(...args),
-        // New methods
-        getDroppedFilePath: (file) => ipcRenderer.invoke('get-dropped-file-path', file),
-        parseShortcut: (filePath) => ipcRenderer.invoke('parse-shortcut', filePath)
     }
 });

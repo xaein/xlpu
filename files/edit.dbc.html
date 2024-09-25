@@ -89,9 +89,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {
-                    // Handle error silently
-                }
+                } catch (error) {}
             }
         }
     </script>
@@ -175,7 +173,7 @@
             let newTabButton = null;
 
             window.xldbv.xldbFiles.forEach((fileName, index) => {
-                const categoryName = fileName.replace('.csv', '');
+                const categoryName = fileName.replace('.xlfc', '');
                 const button = document.createElement('button');
                 button.className = 'tablinks';
                 button.textContent = categoryName;
@@ -217,11 +215,11 @@
             });
             event.currentTarget.classList.add('active');
 
-            js.F.loadFileData(`${categoryName}.csv`);
+            js.F.loadFileData(`${categoryName}.xlfc`);
         }
 
         // Load file data
-        // Loads and parses CSV data for the selected file
+        // Loads and parses JSON data for the selected file
         function loadFileData(fileName) {
             const fileData = window.tempData[fileName];
             
@@ -229,11 +227,10 @@
                 throw new Error(`No temp data found for file: ${fileName}`);
             }
 
-            window.rows = fileData.split('\n')
-                .filter(row => row.trim() !== '' && row !== ',')
-                .map(row => row.split(','))
-                .sort((a, b) => a[0].localeCompare(b[0]))
-                .map(row => row.join(','));
+            const parsedData = JSON.parse(fileData);
+            window.rows = Object.entries(parsedData)
+                .map(([appName, command]) => `${appName},${command}`)
+                .sort((a, b) => a.localeCompare(b));
 
             const editRowsPerPage = window.xldbv.rows?.edit || 10;
 

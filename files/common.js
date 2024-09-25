@@ -17,12 +17,8 @@ async function exitApp() {
     setData('xldbf', window.xldbf);
 
     try {
-        const variablesUpdated = await updateVariablesOnExit();
-        const favoritesUpdated = await updateFavoritesOnExit();
-
-        if (!variablesUpdated || !favoritesUpdated) {
-        }
-    } catch (error) {
+        await updateVariablesOnExit();
+        await updateFavoritesOnExit();
     } finally {
         setData('updateAvailable', false);
         e.Api.send('toMain', 'exit');
@@ -114,6 +110,7 @@ async function loadTitleBar() {
             }
         }
     } catch (error) {
+        // Error handling removed
     }
 }
 
@@ -156,6 +153,7 @@ async function removeFile(filePath) {
             throw new Error('Failed to remove file');
         }
     } catch (error) {
+        // Error handling removed
     }
 }
 
@@ -370,7 +368,7 @@ function validateXldbvJson(data) {
     }
 
     const requiredStringFields = [
-        'version', 'config', 'logfile', 'mainCSV', 'uurl', 'favourite', 'currentTheme'
+        'version', 'config', 'logfile', 'mainXLFC', 'uurl', 'favourite', 'currentTheme'
     ];
     const requiredObjectFields = ['directories', 'rows', 'configOpts'];
     const requiredArrayFields = ['loadScripts', 'xldbFiles'];
@@ -458,6 +456,7 @@ async function writeFile(filePath, content) {
             throw new Error('Failed to write file');
         }
     } catch (error) {
+        // Error handling removed
     }
 }
 

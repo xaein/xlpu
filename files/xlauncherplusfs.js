@@ -10,6 +10,13 @@ class FileSystemOperations {
         this.appDir = appDir;
     }
 
+    // Check TRIGGERcmd file
+    checkTriggerCmdFile() {
+        const userHomeDir = os.homedir();
+        const filePath = path.join(userHomeDir, '.TRIGGERcmdData', 'commands.json');
+        return fs.existsSync(filePath);
+    }
+
     // Copy file
     // Copies a file from source to destination
     async copyFile(sourcePath, destPath) {
@@ -54,6 +61,16 @@ class FileSystemOperations {
             if (error.code === 'ENOENT') {
                 await fs.promises.writeFile(favouritesFilePath, JSON.stringify({}));
             }
+        }
+    }
+
+    // Check if file exists
+    async fileExists(filePath) {
+        try {
+            await fs.access(filePath);
+            return true;
+        } catch {
+            return false;
         }
     }
 
@@ -191,15 +208,7 @@ class FileSystemOperations {
         }
     }
 
-    // Check TRIGGERcmd file
-    checkTriggerCmdFile() {
-        const userHomeDir = os.homedir();
-        const filePath = path.join(userHomeDir, '.TRIGGERcmdData', 'commands.json');
-        return fs.existsSync(filePath);
-    }
-
-    // Add this new method to the FileSystemOperations class
-
+    // Update xlaunch config
     async updateXlaunchConfig(configData) {
         const configPath = path.join(this.appDir, 'utils', 'xlaunch.cfg');
         try {

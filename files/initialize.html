@@ -52,7 +52,7 @@
                     js.F.updateJsF();
                     initializePage();
                 }
-            } else {}
+            }
         }
     </script>
 
@@ -83,10 +83,12 @@
 
             if (isCategory) {
                 currentFileElement.textContent = 'Loading Category:';
-                addLoadedFile(categoryFileElement.textContent);
-                categoryFileElement.textContent = fileName;
+                if (categoryFileElement.textContent) {
+                    addLoadedFile(categoryFileElement.textContent);
+                }
+                categoryFileElement.textContent = fileName || 'Unknown';
             } else {
-                currentFileElement.textContent = fileName;
+                currentFileElement.textContent = fileName || 'Unknown';
                 categoryFileElement.textContent = '';
             }
         }

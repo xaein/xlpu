@@ -19,6 +19,7 @@ const sudo = require('sudo-prompt');
 const { compileSassThemes } = require('./utils/themebuilder');
 const FileSystemOperations = require('./xlauncherplusfs');
 const TriggerCmdGenerator = require('./utils/xltc.js');
+const xlstitch = require('./utils/xlstitch');
 
 // Define directories
 const pagesDir = path.join(__dirname, 'pages');
@@ -40,7 +41,6 @@ safeIpc('get-app-dir', () => __dirname);
 safeIpc('get-file', (event, filePath) => fsOps.getFile(filePath));
 safeIpc('get-file-path', (event, directory, fileName) => fsOps.getFilePath(directory, fileName));
 safeIpc('write-file', (event, filePath, content, isBinary = false) => fsOps.writeFile(filePath, content, isBinary));
-safeIpc('write-csv-file', (event, filePath, content) => fsOps.writeFile(filePath, content));
 safeIpc('remove-file', (event, filePath) => fsOps.removeFile(filePath));
 safeIpc('get-variables', () => fsOps.getVariables(utilsDir));
 safeIpc('rename-file', (event, oldFilePath, newFilePath) => fsOps.renameFile(oldFilePath, newFilePath));
@@ -54,21 +54,14 @@ safeIpc('check-triggercmd-file', () => fsOps.checkTriggerCmdFile());
 safeIpc('update-xlaunch-config', (event, config) => fsOps.updateXlaunchConfig(config));
 
 // Run xlstitch
-// Execute the xlstitch utility with elevated permissions
+// Execute the xlstitch function
 safeIpc('run-xlstitch', async (event) => {
-    const xlstitchPath = path.join(utilsDir, 'xlstitch.exe');
-    const options = {
-        name: 'xLauncherPlus'
-    };
-    return new Promise((resolve, reject) => {
-        sudo.exec(`"${xlstitchPath}"`, options, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(stdout.trim());
-            }
-        });
-    });
+    try {
+        const result = await xlstitch(__dirname);
+        return result;
+    } catch (error) {
+        return false;
+    }
 });
 
 // Open file dialog
@@ -121,12 +114,18 @@ safeIpc('parse-shortcut', async (event, filePath) => {
     const ext = path.extname(filePath).toLowerCase();
     const fileName = path.basename(filePath, ext);
 
+    // Helper function to convert backslashes to forward slashes
+    const convertToForwardSlash = (str) => str.replace(/\\/g, '/');
+
     switch (ext) {
         case '.lnk':
             return new Promise((resolve, reject) => {
                 windowsShortcuts.query(filePath, (error, shortcut) => {
                     if (error) reject(error);
-                    else resolve({ name: fileName, target: shortcut.target });
+                    else resolve({ 
+                        name: fileName, 
+                        target: convertToForwardSlash(shortcut.target) 
+                    });
                 });
             });
         case '.url':
@@ -146,7 +145,7 @@ safeIpc('parse-shortcut', async (event, filePath) => {
         case '.exe':
         case '.bat':
         case '.vbs':
-            return { name: fileName, target: filePath };
+            return { name: fileName, target: convertToForwardSlash(filePath) };
         default:
             throw new Error('Unsupported file type');
     }

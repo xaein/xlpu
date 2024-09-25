@@ -6,35 +6,31 @@ class TriggerCmdGenerator {
     constructor(appDir, configOpts) {
         this.appDir = appDir;
         this.configOpts = configOpts;
-        this.mainCSV = 'xlauncher.csv'; // Set this to the correct filename
+        this.mainXLFC = 'xlauncher.xlfc'; // Changed from .csv to .xlfc
     }
 
     async generateCommands() {
-        const filePath = path.join(this.appDir, 'utils', this.mainCSV);
+        const filePath = path.join(this.appDir, 'utils', this.mainXLFC);
 
         try {
             const fileContent = await fs.readFile(filePath, 'utf8');
-            const lines = fileContent.split('\n');
+            const appsData = JSON.parse(fileContent);
             const gamesList = [];
 
-            for (const line of lines) {
-                const parts = line.split(',').map(part => part.trim()).filter(Boolean);
-                if (parts.length > 0) {
-                    const gameName = parts[0];
-                    const capitalizedGameName = gameName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            for (const [appName, command] of Object.entries(appsData)) {
+                const capitalizedAppName = appName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-                    if (this.configOpts.tcao === 'all' || 
-                        (this.configOpts.tcao === 'favourited' && await this.isFavorited(gameName))) {
-                        gamesList.push({
-                            trigger: "XLauncher: " + capitalizedGameName,
-                            command: "xlaunch " + gameName,
-                            offCommand: "",
-                            ground: "foreground",
-                            voice: gameName,
-                            voiceReply: "",
-                            allowParams: "false"
-                        });
-                    }
+                if (this.configOpts.tcao === 'all' || 
+                    (this.configOpts.tcao === 'favourited' && await this.isFavorited(appName))) {
+                    gamesList.push({
+                        trigger: "XLauncher: " + capitalizedAppName,
+                        command: "xlaunch " + appName,
+                        offCommand: "",
+                        ground: "foreground",
+                        voice: appName,
+                        voiceReply: "",
+                        allowParams: "false"
+                    });
                 }
             }
 
@@ -74,12 +70,12 @@ class TriggerCmdGenerator {
         }
     }
 
-    async isFavorited(gameName) {
+    async isFavorited(appName) {
         const xldbfPath = path.join(this.appDir, 'utils', 'xldbf.json');
         try {
             const xldbfContent = await fs.readFile(xldbfPath, 'utf8');
             const xldbf = JSON.parse(xldbfContent);
-            return xldbf.hasOwnProperty(gameName);
+            return xldbf.hasOwnProperty(appName);
         } catch (error) {
             return false;
         }

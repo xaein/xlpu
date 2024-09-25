@@ -39,7 +39,7 @@
     "themedelete.html": "pages/include/dialog",
     "themebuilder.js": "utils",
     "xlaunch.exe": "utils",
-    "xlstitch.exe": "utils",
+    "xlstitch.js": "utils",
     "xltc.js": "utils",
     "xltcp.exe": "utils"
   },

@@ -59,8 +59,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {
-                }
+                } catch (error) {}
             }
         }
     </script>
@@ -362,7 +361,6 @@
             const updateElement = document.getElementById('checkUpdate');
             if (updateElement) {
                 updateElement.addEventListener('change', (e) => {
-                    console.log('Checkbox changed:', e.target.checked);
                     updateSaveButtonState();
                 });
             }

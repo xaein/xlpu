@@ -20,8 +20,12 @@ if (typeof preloadedData === 'undefined') {
 }
 
 // Load file with delay
-// Loads a single file and updates progress with a delay
-async function loadFileWithDelay(appDir, directory, fileName, updateProgress, updateCurrentFile, updateStatusMessage) {
+async function loadFileWithDelay(appDir, directory, fileName) {
+    if (!fileName) {
+        js.F.updateStatusMessage(`Error: Attempted to load undefined file`);
+        return null;
+    }
+
     const filePath = js.F.joinPath(appDir, directory, fileName);
     try {
         updateUIForFile(fileName);
@@ -45,14 +49,18 @@ async function loadFileWithDelay(appDir, directory, fileName, updateProgress, up
         
         return data || js.F.getData('preloadedData', fileName);
     } catch (error) {
-        updateStatusMessage(`Error loading ${fileName}: ${error.message}`);
+        js.F.updateStatusMessage(`Error loading ${fileName}: ${error.message}`);
         return null;
     }
 }
 
 // Update UI for file
-// Updates the UI elements for the current file being processed
 function updateUIForFile(fileName) {
+    if (!fileName) {
+        js.F.updateCurrentFile('Loading unknown file', false);
+        return;
+    }
+
     let displayName = fileName.replace(/\.[^/.]+$/, "");
     if (fileName === 'xldbv.json') {
         js.F.updateCurrentFile('Loading Variables', false);
@@ -60,9 +68,9 @@ function updateUIForFile(fileName) {
         js.F.updateCurrentFile('Applying Favourites', false);
     } else if (fileName === 'xlaunch.cfg') {
         js.F.updateCurrentFile('Loading Config', false);
-    } else if (fileName === xldbv.mainCSV) {
+    } else if (xldbv && fileName === xldbv.mainXLFC) {
         js.F.updateCurrentFile('Loading Launch List', false);
-    } else if (fileName.endsWith('.csv')) {
+    } else if (fileName.endsWith('.xlfc')) {
         js.F.updateCurrentFile(displayName, true);
     } else {
         js.F.updateCurrentFile(displayName, false);
@@ -70,7 +78,6 @@ function updateUIForFile(fileName) {
 }
 
 // Process and store data
-// Processes loaded data and stores it in the appropriate format
 function processAndStoreData(fileName, data) {
     if (fileName === 'xldbv.json') {
         const variables = JSON.parse(data);
@@ -87,21 +94,19 @@ function processAndStoreData(fileName, data) {
     } else if (fileName === 'xlaunch.cfg') {
         const configData = parseConfigFile(data);
         js.F.setData('xlaunchConfig', configData);
-    } else if (fileName === xldbv.mainCSV || (xldbv.xldbFiles && xldbv.xldbFiles.includes(fileName))) {
+    } else if (fileName === xldbv.mainXLFC || (xldbv.xldbFiles && xldbv.xldbFiles.includes(fileName))) {
         js.F.setData('preloadedData', data, fileName);
     }
 }
 
 // Parse config file
-// Parses the configuration file and returns an object
 function parseConfigFile(configData) {
     const config = {};
     const lines = configData.split('\n');
     for (const line of lines) {
         const [key, ...valueParts] = line.split('=').map(item => item.trim());
         if (key && valueParts.length > 0) {
-            let value = valueParts.join('='); // Rejoin in case there were '=' in the value
-            // Remove surrounding quotes if present
+            let value = valueParts.join('=');
             value = value.replace(/^['"](.*)['"]$/, '$1');
             config[key] = value;
         }
@@ -110,14 +115,13 @@ function parseConfigFile(configData) {
 }
 
 // Initialize files
-// Loads all necessary files and initializes the application
-async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMessage) {
+async function initializeFiles() {
     try {
         js.F.updateProgress(0);
         const appDir = await e.Api.invoke('get-app-dir');
 
         js.F.updateCurrentFile('Loading Variables');
-        const data = await loadFileWithDelay(appDir, 'utils', 'xldbv.json', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+        const data = await loadFileWithDelay(appDir, 'utils', 'xldbv.json');
         if (!data) {
             throw new Error('Failed to load xldbv.json');
         }
@@ -135,12 +139,12 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
         // Check firstRun status
         if (window.xldbv.firstRun === 1) {
             js.F.updateCurrentFile('First run startup detected.. Progressing to first-time setup...');
-            js.F.updateProgress(100); // Set progress bar to 100% on first run
-            return true; // Return true for first run
+            js.F.updateProgress(100);
+            return true;
         } else if (window.xldbv.firstRun === 2) {
             js.F.updateCurrentFile('Setup Was not completed. Continuing setup...');
-            js.F.updateProgress(100); // Set progress bar to 100% on continuing setup
-            return true; // Return true for continuing setup
+            js.F.updateProgress(100);
+            return true;
         } else {
             // Check for updates if aupd is set to 'on'
             if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
@@ -149,17 +153,21 @@ async function initializeFiles(updateProgress, updateCurrentFile, updateStatusMe
             }
 
             // Load other files
-            await loadFileWithDelay(appDir, 'utils', window.xldbv.mainCSV, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
-            for (const file of window.xldbv.xldbFiles) {
-                await loadFileWithDelay(appDir, 'xldb', file, js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+            await loadFileWithDelay(appDir, 'utils', window.xldbv.mainXLFC);
+            if (Array.isArray(window.xldbv.xldbFiles)) {
+                for (const file of window.xldbv.xldbFiles) {
+                    await loadFileWithDelay(appDir, 'xldb', file);
+                }
+            } else {
+                js.F.updateStatusMessage('Warning: xldbFiles is not an array or is undefined');
             }
 
-            await loadFileWithDelay(appDir, 'utils', 'xlaunch.cfg', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
-            await loadFileWithDelay(appDir, 'utils', 'xldbf.json', js.F.updateProgress, js.F.updateCurrentFile, js.F.updateStatusMessage);
+            await loadFileWithDelay(appDir, 'utils', 'xlaunch.cfg');
+            await loadFileWithDelay(appDir, 'utils', 'xldbf.json');
     
             js.F.setData('tempData', js.F.getData('preloadedData'));
     
-            return false; // Return false for non-first run
+            return false;
         }
     } catch (error) {
         js.F.updateStatusMessage(`Error initializing application: ${error.message}`);
@@ -198,13 +206,11 @@ async function checkForUpdates() {
 }
 
 // Save dialog exists
-// Verifies if the save dialog element exists in the DOM
 function saveDialogExists() {
     return document.getElementById('saveDialog') !== null;
 }
 
 // Update save progress
-// Updates the save progress UI elements
 async function updateSaveProgress(progress, category) {
     if (!saveDialogExists() || !isSaveProcessActive) return;
 
@@ -263,7 +269,6 @@ async function updateSaveProgress(progress, category) {
 }
 
 // Update reload progress
-// Updates the reload progress UI elements
 function updateReloadProgress(progress, category) {
     if (!saveDialogExists() || !isSaveProcessActive) return;
 
@@ -304,14 +309,24 @@ function updateReloadProgress(progress, category) {
     }
 }
 
+// Helper function to format JSON string
+function formatJSONString(jsonString) {
+    try {
+        const obj = JSON.parse(jsonString);
+        return JSON.stringify(obj, null, 2);
+    } catch (error) {
+        return jsonString; // Return original string if parsing fails
+    }
+}
+
 // Save all data
-// Saves all data, updates UI, and reloads data
 async function saveAllData() {
     isSaveProcessActive = true;
     
     const tempData = js.F.getData('tempData');
     js.F.setData('tempData', tempData);
-    js.F.updateFavoritesOnExit();
+    js.F.setData('xldbv', window.xldbv);
+    await js.F.updateFavoritesOnExit();
 
     const xldbFiles = window.xldbv.xldbFiles || [];
     let totalFiles = xldbFiles.length;
@@ -324,13 +339,16 @@ async function saveAllData() {
 
     for (const fileName of xldbFiles) {
         if (!isSaveProcessActive) break;
-        updateSaveProgress((processedFiles / totalFiles) * 100, fileName.replace('.csv', ''));
+        updateSaveProgress((processedFiles / totalFiles) * 100, fileName.replace('.xlfc', ''));
         const content = tempData[fileName];
         if (content) {
             const filePath = js.F.joinPath(appDir, xldbDir, fileName);
             try {
-                await e.Api.invoke('write-csv-file', filePath, content);
+                // Format the content before writing
+                const formattedContent = formatJSONString(content);
+                await e.Api.invoke('write-file', filePath, formattedContent);
             } catch (error) {
+                // Error handling removed
             }
         }
         
@@ -343,7 +361,7 @@ async function saveAllData() {
         try {
             await e.Api.invoke('run-xlstitch');
         } catch (error) {
-            console.error('Error running xlstitch:', error);
+            // Error handling removed
         }
         await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -351,12 +369,14 @@ async function saveAllData() {
     processedFiles = 0;
     for (const fileName of xldbFiles) {
         if (!isSaveProcessActive) break;
-        updateReloadProgress((processedFiles / totalFiles) * 100, fileName.replace('.csv', ''));
+        updateReloadProgress((processedFiles / totalFiles) * 100, fileName.replace('.xlfc', ''));
         try {
             const filePath = js.F.joinPath(appDir, xldbDir, fileName);
             const { data } = await e.Api.invoke('get-file', filePath);
             newData[fileName] = data;
+            js.F.setData('preloadedData', data, fileName);
         } catch (error) {
+            // Error handling removed
         }
 
         processedFiles++;
@@ -365,15 +385,19 @@ async function saveAllData() {
 
     if (isSaveProcessActive) {
         updateReloadProgress(95, '');
-        const mainCSV = window.xldbv.mainCSV;
+        const mainXLFC = window.xldbv.mainXLFC;
         try {
-            const mainCSVPath = js.F.joinPath(appDir, utilsDir, mainCSV);
-            const { data: mainCSVData } = await e.Api.invoke('get-file', mainCSVPath);
-            newData[mainCSV] = mainCSVData;
-        } catch (error) {}
+            const mainXLFCPath = js.F.joinPath(appDir, utilsDir, mainXLFC);
+            const { data: mainXLFCData } = await e.Api.invoke('get-file', mainXLFCPath);
+            // Parse the JSON string back into an object
+            newData[mainXLFC] = mainXLFCData;
+            js.F.setData('preloadedData', mainXLFCData, mainXLFC);
+        } catch (error) {
+            // Error handling removed
+        }
 
+        // Update tempData with the new data
         Object.assign(window.tempData, newData);
-        js.F.setData('preloadedData', newData);
         js.F.setData('tempData', window.tempData);
 
         // Check if tcag is set to 'on' and run xltc.js
@@ -406,7 +430,7 @@ async function saveAllData() {
                 await js.F.updateVariablesOnExit();
                 js.F.setupHeaderNavigation('databasecontrol');
             } else {
-                console.error('Error: Invalid xldbv data after updating firstRun');
+                // Error handling removed
             }
         }
 

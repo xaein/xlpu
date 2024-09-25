@@ -5,12 +5,12 @@ async function categoryAdd() {
     const categoryName = categoryNameInput.value.trim().toLowerCase();
 
     if (categoryName) {
-        const fileName = `${categoryName}.csv`;
+        const fileName = `${categoryName}.xlfc`;
         
         if (!window.tempData) {
             window.tempData = {};
         }
-        window.tempData[fileName] = ' , \n';
+        window.tempData[fileName] = {};
 
         js.F.setData('tempData', window.tempData);
 
@@ -18,7 +18,7 @@ async function categoryAdd() {
             const appDir = await e.Api.invoke('get-app-dir');
             const xldbDir = window.xldbv.directories?.xldb || 'xldb';
             const filePath = js.F.joinPath(appDir, xldbDir, fileName);
-            await e.Api.invoke('write-csv-file', filePath, ' , \n');
+            await e.Api.invoke('write-file', filePath, JSON.stringify({}));
 
             updateVariables('addCategory', fileName);
 
@@ -40,7 +40,7 @@ async function categoryRemove() {
             tabList.removeChild(button);
         }
 
-        const fileName = `${categoryName}.csv`;
+        const fileName = `${categoryName}.xlfc`;
         
         delete window.tempData[fileName];
         js.F.setData('tempData', window.tempData);
@@ -71,8 +71,8 @@ async function categoryRename() {
             activeTab.classList.remove('active');
         }
 
-        const oldFileName = `${currentCategoryName}.csv`;
-        const newFileName = `${newCategoryName}.csv`;
+        const oldFileName = `${currentCategoryName}.xlfc`;
+        const newFileName = `${newCategoryName}.xlfc`;
         
         window.tempData[newFileName] = window.tempData[oldFileName];
         delete window.tempData[oldFileName];
@@ -118,17 +118,12 @@ async function confirmRowRemove() {
     }
 
     const categoryName = activeTab.textContent.toLowerCase();
-    const fileName = `${categoryName}.csv`;
+    const fileName = `${categoryName}.xlfc`;
 
     if (window.tempData[fileName]) {
-        window.tempData[fileName] = window.tempData[fileName].split('\n')
-            .filter(row => row.split(',')[0].trim() !== appName)
-            .join('\n');
-
-        // Check if the file is empty after removing the row
-        if (window.tempData[fileName].trim() === '') {
-            window.tempData[fileName] = ' , \n'; // Add the blank entry
-        }
+        const fileData = JSON.parse(window.tempData[fileName]);
+        delete fileData[appName];
+        window.tempData[fileName] = JSON.stringify(fileData);
 
         js.F.setData('tempData', window.tempData);
     }
@@ -233,17 +228,14 @@ async function rowAdd() {
     }
 
     const categoryName = activeTab.textContent.toLowerCase();
-    const fileName = `${categoryName}.csv`;
+    const fileName = `${categoryName}.xlfc`;
 
     if (!window.tempData[fileName]) {
-        window.tempData[fileName] = '';
+        window.tempData[fileName] = JSON.stringify({});
     }
-    window.tempData[fileName] += `${appName},${appCmd}\n`;
-
-    window.tempData[fileName] = window.tempData[fileName]
-        .split('\n')
-        .filter(line => line !== ' , ')
-        .join('\n');
+    const fileData = JSON.parse(window.tempData[fileName]);
+    fileData[appName] = appCmd;
+    window.tempData[fileName] = JSON.stringify(fileData);
 
     js.F.setData('tempData', window.tempData);
 
@@ -313,8 +305,6 @@ async function showDeleteThemeDialog() {
         if (confirmDeleteButton) {
             confirmDeleteButton.onclick = js.F.deleteTheme;
         }
-    } else {
-        console.log('No theme selected');
     }
 }
 
@@ -562,7 +552,7 @@ async function selectApplicationFile() {
             handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
         }
     } catch (error) {
-        console.error('Error selecting application file:', error);
+        // Error handling removed
     }
 }
 

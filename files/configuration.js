@@ -63,8 +63,8 @@ async function updateFiles() {
 
     // Display message if main files were updated
     if (mainFilesUpdated) {
-        updateInfoPreview.value += '\nApplication will need to be reopened for changes to take effect.';
-        scrollToLine(updateInfoPreview, 'Application will need to be reopened for changes to take effect.');
+        updateInfoPreview.value += '\nApplication will need to be relaunched for changes to take effect.';
+        scrollToLine(updateInfoPreview, 'Application will need to be relaunched for changes to take effect.');
     }
 }
 
