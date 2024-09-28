@@ -398,7 +398,7 @@ function restoreSelectedRow(isEditPage) {
 
 // Select row
 // Updates UI and button states based on the selected row in main or edit tables
-function selectRow(row, appName, isEditPage) {
+function selectRow(row, appName, isEditPage, isDoubleClick = false) {
     if (!row.classList.contains('empty-row')) {
         const rows = document.querySelectorAll('#appTable .table-row:not(.empty-row)');
         rows.forEach(r => {
@@ -409,7 +409,7 @@ function selectRow(row, appName, isEditPage) {
             }
         });
         
-        if (window.selectedApp === appName) {
+        if (window.selectedApp === appName && !isDoubleClick) {
             window.selectedApp = null;
             row.classList.remove('selected');
         } else {
@@ -419,6 +419,10 @@ function selectRow(row, appName, isEditPage) {
             if (path) {
                 const selectedColor = getTableHighlightVariable('selected-color');
                 path.setAttribute("fill", selectedColor);
+            }
+            
+            if (isDoubleClick) {
+                js.F.launchApp(appName);
             }
         }
         

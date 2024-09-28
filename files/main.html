@@ -130,14 +130,12 @@
                     js.F.updateLaunchButtonState();
                 });
 
-                // Add this new code for the double-click listener
+                // Add these event listeners after creating the table in initializePage function
                 document.getElementById('appTable').addEventListener('dblclick', (event) => {
                     const row = event.target.closest('.table-row');
                     if (row && !row.classList.contains('empty-row')) {
-                        const appName = row.getAttribute('data-app-name');
-                        if (appName) {
-                            js.F.launchApp(appName);
-                        }
+                        const appName = row.querySelector('.app-column').textContent;
+                        js.F.selectRow(row, appName, false, true);
                     }
                 });
 
