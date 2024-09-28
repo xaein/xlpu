@@ -186,12 +186,12 @@ async function handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput) {
 async function launchApp() {
     if (window.selectedApp) {
         await showDialog('launch');
+        let countdown = 10;
         const appNameElement = document.getElementById('appName');
         const countdownElement = document.getElementById('countdown');
         await e.Api.invoke('launch-app', window.selectedApp);
 
         appNameElement.textContent = window.selectedApp;
-        let countdown = 10;
         countdownElement.textContent = `Closing in ${countdown}s`;
 
         const interval = setInterval(() => {
