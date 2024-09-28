@@ -22,8 +22,12 @@ const TriggerCmdGenerator = require('./utils/xltc.js');
 const xlstitch = require('./utils/xlstitch');
 
 // Define directories
-const pagesDir = path.join(__dirname, 'pages');
-const utilsDir = path.join(__dirname, 'utils');
+const pagesDir = app.isPackaged 
+    ? path.join(process.resourcesPath, 'app', 'pages')
+    : path.join(__dirname, 'pages');
+const utilsDir = app.isPackaged 
+    ? path.join(process.resourcesPath, 'app', 'utils')
+    : path.join(__dirname, 'utils');
 const fsOps = new FileSystemOperations(__dirname);
 
 // Safe IPC handler
@@ -103,9 +107,22 @@ safeIpc('import-theme', async (event, sourcePath, themesDir) => {
 
 // Launch app
 // Launch an application
-safeIpc('launch-app', (event, appName) => {
+safeIpc('launch-app', async (event, appName) => {
     const xlaunchPath = path.join(utilsDir, 'xlaunch.exe');
-    exec(`${xlaunchPath} ${appName}`);
+    const command = `"${xlaunchPath}" "${appName}"`;
+    const options = {
+        name: 'xLauncherPlus'
+    };
+
+    return new Promise((resolve, reject) => {
+        sudo.exec(command, options, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
 });
 
 // Parse shortcut

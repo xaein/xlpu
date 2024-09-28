@@ -94,7 +94,8 @@ class Program
         File.WriteAllText(versionJsonPath, orderedVersionJson.ToString());
 
         Console.WriteLine("Updated version to: " + orderedVersionJson["version"]);
-        Console.WriteLine("Included comment: " + updateComment);
+        Console.WriteLine("Included comment:");
+        Console.WriteLine(updateComment);
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
         Console.WriteLine("");

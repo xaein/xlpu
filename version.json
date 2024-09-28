@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "comment": "Full Test Update\nTesting purposes only\nShould be exactly the same code you already have\nYou can update if you feel like it",
+  "version": "1.0.2",
+  "comment": "Full update\nFixed launch file bug.\nUpdated Edit Application dialog.",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",

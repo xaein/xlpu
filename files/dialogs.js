@@ -1,3 +1,5 @@
+// Dialog management and interaction
+
 // Add new category
 // Creates a new category and associated file
 async function categoryAdd() {
@@ -10,7 +12,6 @@ async function categoryAdd() {
         if (!window.tempData) {
             window.tempData = {};
         }
-        // Create an object with an initial blank entry
         const initialData = { " ": " " };
         window.tempData[fileName] = JSON.stringify(initialData);
 
@@ -140,6 +141,21 @@ async function confirmRowRemove() {
     closeDialog('rowRemove');
 }
 
+// Get circular replacer
+// Handles circular references in JSON.stringify
+function getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return "[Circular]";
+            }
+            seen.add(value);
+        }
+        return value;
+    };
+}
+
 // Handle shortcut info
 // Populates input fields with shortcut information
 async function handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput) {
@@ -237,15 +253,12 @@ async function rowAdd() {
     }
     let fileData = JSON.parse(window.tempData[fileName]);
 
-    // Remove the blank entry if it exists
     if (fileData[" "] === " ") {
         delete fileData[" "];
     }
 
-    // Add the new entry
     fileData[appName] = appCmd;
 
-    // Update tempData with the new file data
     window.tempData[fileName] = JSON.stringify(fileData);
 
     js.F.setData('tempData', window.tempData);
@@ -256,7 +269,7 @@ async function rowAdd() {
 
 // Edit existing row
 // Opens dialog to edit an existing application
-function rowEdit() {
+async function rowEdit() {
     const appNameInput = document.getElementById('editAppNameInput');
     const appCmdInput = document.getElementById('editAppCmdInput');
     
@@ -267,6 +280,10 @@ function rowEdit() {
     const newAppName = appNameInput.value.trim();
     const newAppCmd = appCmdInput.value.trim();
 
+    if (!newAppName || !newAppCmd) {
+        return;
+    }
+
     const selectedRow = document.querySelector('#appTable .table-row.selected');
     if (!selectedRow) {
         return;
@@ -274,7 +291,6 @@ function rowEdit() {
 
     const oldAppName = selectedRow.querySelector('.app-column').textContent;
 
-    // Get the current category from the active tab
     const activeTab = document.querySelector('.tablinks.active');
     if (!activeTab) {
         return;
@@ -282,7 +298,6 @@ function rowEdit() {
     const currentCategory = activeTab.textContent;
     const currentFileName = `${currentCategory}.xlfc`;
 
-    // Update tempData entries
     if (window.tempData[currentFileName]) {
         let categoryData = JSON.parse(window.tempData[currentFileName]);
         if (oldAppName !== newAppName) {
@@ -292,14 +307,11 @@ function rowEdit() {
         window.tempData[currentFileName] = JSON.stringify(categoryData);
     }
 
-    // Close the dialog
-    js.F.closeDialog('rowEdit');
+    closeDialog('rowEdit');
 
-    // Refresh the table
     js.F.loadFileData(currentFileName);
     js.F.updateSaveButtonState();
 }
-
 
 // Remove row
 // Opens dialog to confirm row removal
@@ -315,18 +327,80 @@ async function rowRemove() {
     document.getElementById('appToRemove').textContent = appName;
 }
 
-// Helper function to handle circular references in JSON.stringify
-function getCircularReplacer() {
-    const seen = new WeakSet();
-    return (key, value) => {
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return "[Circular]";
-            }
-            seen.add(value);
+// Select application file
+// Opens a file dialog to select an application and populates the input fields
+async function selectApplicationFile() {
+    try {
+        const defaultDir = await e.Api.invoke('get-desktop-dir');
+        const result = await e.Api.invoke('open-file-dialog', {
+            title: 'Select Application File',
+            defaultPath: defaultDir,
+            properties: ['openFile'],
+            filters: [
+                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs'] }
+            ]
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0];
+            const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
+            
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
+            updateOkButtonState('rowAdd');
         }
-        return value;
-    };
+    } catch (error) {}
+}
+
+// Select edit application file
+// Opens a file dialog to select an application for editing
+async function selectEditApplicationFile() {
+    const result = await e.Api.invoke('open-file-dialog', {
+        properties: ['openFile'],
+        filters: [
+            { name: 'Executables', extensions: ['exe', 'bat', 'cmd'] },
+            { name: 'Shortcuts', extensions: ['lnk', 'url'] },
+            { name: 'All Files', extensions: ['*'] }
+        ]
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        const filePath = result.filePaths[0];
+        const parsedShortcut = await e.Api.invoke('parse-shortcut', filePath);
+        
+        if (parsedShortcut) {
+            document.getElementById('editAppNameInput').value = parsedShortcut.name;
+            document.getElementById('editAppCmdInput').value = parsedShortcut.target;
+        }
+    }
+}
+
+// Setup dialog input listeners
+// Sets up input listeners for various dialog types
+function setupDialogInputListeners(dialogName) {
+    switch (dialogName) {
+        case 'categoryAdd':
+            const categoryNameInput = document.getElementById('categoryNameInput');
+            categoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'categoryRename':
+            const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+            newCategoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowAdd':
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            appCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowEdit':
+            const editAppNameInput = document.getElementById('editAppNameInput');
+            const editAppCmdInput = document.getElementById('editAppCmdInput');
+            editAppNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            editAppCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+    }
 }
 
 // Show delete theme dialog
@@ -453,7 +527,6 @@ async function showDialog(dialogName, sectionName) {
             }
         }
 
-        // Add this new switch statement at the end of the function
         switch (dialogName) {
             case 'categoryAdd':
             case 'categoryRename':
@@ -530,6 +603,35 @@ async function showSaveDialog() {
     }
 }
 
+// Update OK button state
+// Enables or disables the OK button based on input validity
+function updateOkButtonState(dialogName) {
+    const dialog = document.getElementById(`${dialogName}Dialog`);
+    const okButton = dialog.querySelector('.ok-button');
+    let shouldEnable = true;
+
+    switch (dialogName) {
+        case 'categoryAdd':
+            shouldEnable = !!document.getElementById('categoryNameInput').value.trim();
+            break;
+        case 'categoryRename':
+            shouldEnable = !!document.getElementById('newCategoryNameInput').value.trim();
+            break;
+        case 'rowAdd':
+            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
+                           !!document.getElementById('appCmdInput').value.trim();
+            break;
+        case 'rowEdit':
+            shouldEnable = !!document.getElementById('editAppNameInput').value.trim() &&
+                           !!document.getElementById('editAppCmdInput').value.trim();
+            break;
+    }
+
+    okButton.disabled = !shouldEnable;
+    okButton.style.opacity = shouldEnable ? '1' : '0.5';
+    okButton.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
+}
+
 // Update variables
 // Updates the xldbv object based on category operations
 function updateVariables(operation, data) {
@@ -566,90 +668,6 @@ function updateVariables(operation, data) {
     window.xldbv = xldbv;
 }
 
-// Select application file
-// Opens a file dialog to select an application and populates the input fields
-async function selectApplicationFile() {
-    try {
-        const defaultDir = await e.Api.invoke('get-desktop-dir');  // Get a default directory
-        const result = await e.Api.invoke('open-file-dialog', {
-            title: 'Select Application File',
-            defaultPath: defaultDir,
-            properties: ['openFile'],
-            filters: [
-                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs'] }
-            ]
-        });
-
-        if (!result.canceled && result.filePaths.length > 0) {
-            const filePath = result.filePaths[0];
-            const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
-            
-            const appNameInput = document.getElementById('appNameInput');
-            const appCmdInput = document.getElementById('appCmdInput');
-            handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
-            updateOkButtonState('rowAdd');
-        }
-    } catch (error) {
-        // Error handling removed
-    }
-}
-
-// New function to update OK button state
-function updateOkButtonState(dialogName) {
-    const dialog = document.getElementById(`${dialogName}Dialog`);
-    const okButton = dialog.querySelector('.ok-button');
-    let shouldEnable = true;
-
-    switch (dialogName) {
-        case 'categoryAdd':
-            shouldEnable = !!document.getElementById('categoryNameInput').value.trim();
-            break;
-        case 'categoryRename':
-            shouldEnable = !!document.getElementById('newCategoryNameInput').value.trim();
-            break;
-        case 'rowAdd':
-            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
-                           !!document.getElementById('appCmdInput').value.trim();
-            break;
-        case 'rowEdit':
-            shouldEnable = !!document.getElementById('editAppNameInput').value.trim() &&
-                           !!document.getElementById('editAppCmdInput').value.trim();
-            break;
-        // categoryRemove and rowRemove don't need input checks
-        default:
-            return; // Exit for dialogs that don't need button state updates
-    }
-
-    okButton.disabled = !shouldEnable;
-    okButton.style.opacity = shouldEnable ? '1' : '0.5';
-    okButton.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
-}
-
-// New function to set up input listeners
-function setupDialogInputListeners(dialogName) {
-    switch (dialogName) {
-        case 'categoryAdd':
-            const categoryNameInput = document.getElementById('categoryNameInput');
-            categoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            break;
-        case 'categoryRename':
-            const newCategoryNameInput = document.getElementById('newCategoryNameInput');
-            newCategoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            break;
-        case 'rowAdd':
-            const appNameInput = document.getElementById('appNameInput');
-            const appCmdInput = document.getElementById('appCmdInput');
-            appNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            appCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            break;
-        case 'rowEdit':
-            const editAppNameInput = document.getElementById('editAppNameInput');
-            const editAppCmdInput = document.getElementById('editAppCmdInput');
-            editAppNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            editAppCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
-            break;
-    }
-}
 // Export dialog functions
 window.dialogFunctions = {
     categoryAdd,
@@ -657,14 +675,12 @@ window.dialogFunctions = {
     categoryRename,
     closeDialog,
     confirmRowRemove,
-    handleShortcutInfo,
     launchApp,
     lazyLoadDialog,
     lazyLoadStylesheet,
     rowAdd,
     rowEdit,
     rowRemove,
-    selectApplicationFile,
     showDeleteThemeDialog,
     showDialog,
     showRowEditDialog,
