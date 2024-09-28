@@ -337,7 +337,8 @@ async function selectApplicationFile() {
             defaultPath: defaultDir,
             properties: ['openFile'],
             filters: [
-                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs'] }
+                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs', 'cmd'] },
+                { name: 'All Files', extensions: ['*'] }
             ]
         });
 
@@ -357,10 +358,11 @@ async function selectApplicationFile() {
 // Opens a file dialog to select an application for editing
 async function selectEditApplicationFile() {
     const result = await e.Api.invoke('open-file-dialog', {
+        title: 'Select Application File',
+        defaultPath: defaultDir,
         properties: ['openFile'],
         filters: [
-            { name: 'Executables', extensions: ['exe', 'bat', 'cmd'] },
-            { name: 'Shortcuts', extensions: ['lnk', 'url'] },
+            { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs', 'cmd'] },
             { name: 'All Files', extensions: ['*'] }
         ]
     });

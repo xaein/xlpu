@@ -1,6 +1,6 @@
 {
-  "version": "1.0.2",
-  "comment": "Full update\nFixed launch file bug.\nUpdated Edit Application dialog.",
+  "version": "1.0.3",
+  "comment": "Full update\nFixed launch file bug.\nUpdated Edit Application dialog.\nUpdated file selector for Edit Application Dialog",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
