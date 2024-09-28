@@ -2,7 +2,7 @@
 // Creates a new category and associated file
 async function categoryAdd() {
     const categoryNameInput = document.getElementById('categoryNameInput');
-    const categoryName = categoryNameInput.value.trim().toLowerCase();
+    const categoryName = categoryNameInput.value.trim();
 
     if (categoryName) {
         const fileName = `${categoryName}.xlfc`;
@@ -10,7 +10,9 @@ async function categoryAdd() {
         if (!window.tempData) {
             window.tempData = {};
         }
-        window.tempData[fileName] = {};
+        // Create an object with an initial blank entry
+        const initialData = { " ": " " };
+        window.tempData[fileName] = JSON.stringify(initialData);
 
         js.F.setData('tempData', window.tempData);
 
@@ -18,7 +20,7 @@ async function categoryAdd() {
             const appDir = await e.Api.invoke('get-app-dir');
             const xldbDir = window.xldbv.directories?.xldb || 'xldb';
             const filePath = js.F.joinPath(appDir, xldbDir, fileName);
-            await e.Api.invoke('write-file', filePath, JSON.stringify({}));
+            await e.Api.invoke('write-file', filePath, JSON.stringify(initialData));
 
             updateVariables('addCategory', fileName);
 
@@ -62,7 +64,7 @@ async function categoryRemove() {
 async function categoryRename() {
     const currentCategoryName = document.getElementById('currentCategoryName').textContent;
     const newCategoryNameInput = document.getElementById('newCategoryNameInput');
-    const newCategoryName = newCategoryNameInput.value.trim().toLowerCase();
+    const newCategoryName = newCategoryNameInput.value.trim();
     if (newCategoryName && currentCategoryName !== newCategoryName) {
         const tabList = document.getElementById('tabList');
         const activeTab = document.querySelector('.tablinks.active');
@@ -212,8 +214,8 @@ function lazyLoadStylesheet(href) {
 async function rowAdd() {
     const appNameInput = document.getElementById('appNameInput');
     const appCmdInput = document.getElementById('appCmdInput');
-    const appName = appNameInput.value.trim().toLowerCase();
-    const appCmd = appCmdInput.value.trim().toLowerCase();
+    const appName = appNameInput.value.trim();
+    const appCmd = appCmdInput.value.trim();
 
     appNameInput.value = '';
     appCmdInput.value = '';
@@ -227,14 +229,23 @@ async function rowAdd() {
         return;
     }
 
-    const categoryName = activeTab.textContent.toLowerCase();
+    const categoryName = activeTab.textContent;
     const fileName = `${categoryName}.xlfc`;
 
     if (!window.tempData[fileName]) {
         window.tempData[fileName] = JSON.stringify({});
     }
-    const fileData = JSON.parse(window.tempData[fileName]);
+    let fileData = JSON.parse(window.tempData[fileName]);
+
+    // Remove the blank entry if it exists
+    if (fileData[" "] === " ") {
+        delete fileData[" "];
+    }
+
+    // Add the new entry
     fileData[appName] = appCmd;
+
+    // Update tempData with the new file data
     window.tempData[fileName] = JSON.stringify(fileData);
 
     js.F.setData('tempData', window.tempData);
@@ -245,25 +256,50 @@ async function rowAdd() {
 
 // Edit existing row
 // Opens dialog to edit an existing application
-async function rowEdit() {
+function rowEdit() {
+    const appNameInput = document.getElementById('editAppNameInput');
+    const appCmdInput = document.getElementById('editAppCmdInput');
+    
+    if (!appNameInput || !appCmdInput) {
+        return;
+    }
+
+    const newAppName = appNameInput.value.trim();
+    const newAppCmd = appCmdInput.value.trim();
+
     const selectedRow = document.querySelector('#appTable .table-row.selected');
     if (!selectedRow) {
         return;
     }
 
-    await showDialog('rowEdit');
+    const oldAppName = selectedRow.querySelector('.app-column').textContent;
 
-    const appName = selectedRow.querySelector('.app-column').textContent;
-    const appCmd = selectedRow.querySelector('.command-column').textContent;
-
-    const appNameInput = document.getElementById('editAppNameInput');
-    const appCmdInput = document.getElementById('editAppCmdInput');
-
-    if (appNameInput && appCmdInput) {
-        appNameInput.value = appName;
-        appCmdInput.value = appCmd;
+    // Get the current category from the active tab
+    const activeTab = document.querySelector('.tablinks.active');
+    if (!activeTab) {
+        return;
     }
+    const currentCategory = activeTab.textContent;
+    const currentFileName = `${currentCategory}.xlfc`;
+
+    // Update tempData entries
+    if (window.tempData[currentFileName]) {
+        let categoryData = JSON.parse(window.tempData[currentFileName]);
+        if (oldAppName !== newAppName) {
+            delete categoryData[oldAppName];
+        }
+        categoryData[newAppName] = newAppCmd;
+        window.tempData[currentFileName] = JSON.stringify(categoryData);
+    }
+
+    // Close the dialog
+    js.F.closeDialog('rowEdit');
+
+    // Refresh the table
+    js.F.loadFileData(currentFileName);
+    js.F.updateSaveButtonState();
 }
+
 
 // Remove row
 // Opens dialog to confirm row removal
@@ -417,19 +453,19 @@ async function showDialog(dialogName, sectionName) {
             }
         }
 
-        setupLowercaseInputs(dialog);
+        // Add this new switch statement at the end of the function
+        switch (dialogName) {
+            case 'categoryAdd':
+            case 'categoryRename':
+            case 'rowAdd':
+            case 'rowEdit':
+                setupDialogInputListeners(dialogName);
+                updateOkButtonState(dialogName);
+                break;
+        }
 
         dialog.style.display = 'flex';
         dialog.style.visibility = 'visible';
-    }
-
-    function setupLowercaseInputs(dialog) {
-        const inputs = dialog.querySelectorAll('input[type="text"]');
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                this.value = this.value.toLowerCase();
-            });
-        });
     }
 }
 
@@ -463,7 +499,8 @@ async function showSaveDialog() {
     await js.F.lazyLoadScript('common/loadsave.js');
     
     js.F.updateJsF();
-
+    js.F.updateVariablesOnExit();
+    
     const saveDialog = document.getElementById('saveDialog');
     if (saveDialog) {
         const progressBar = document.getElementById('saveProgressBar');
@@ -550,12 +587,69 @@ async function selectApplicationFile() {
             const appNameInput = document.getElementById('appNameInput');
             const appCmdInput = document.getElementById('appCmdInput');
             handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
+            updateOkButtonState('rowAdd');
         }
     } catch (error) {
         // Error handling removed
     }
 }
 
+// New function to update OK button state
+function updateOkButtonState(dialogName) {
+    const dialog = document.getElementById(`${dialogName}Dialog`);
+    const okButton = dialog.querySelector('.ok-button');
+    let shouldEnable = true;
+
+    switch (dialogName) {
+        case 'categoryAdd':
+            shouldEnable = !!document.getElementById('categoryNameInput').value.trim();
+            break;
+        case 'categoryRename':
+            shouldEnable = !!document.getElementById('newCategoryNameInput').value.trim();
+            break;
+        case 'rowAdd':
+            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
+                           !!document.getElementById('appCmdInput').value.trim();
+            break;
+        case 'rowEdit':
+            shouldEnable = !!document.getElementById('editAppNameInput').value.trim() &&
+                           !!document.getElementById('editAppCmdInput').value.trim();
+            break;
+        // categoryRemove and rowRemove don't need input checks
+        default:
+            return; // Exit for dialogs that don't need button state updates
+    }
+
+    okButton.disabled = !shouldEnable;
+    okButton.style.opacity = shouldEnable ? '1' : '0.5';
+    okButton.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
+}
+
+// New function to set up input listeners
+function setupDialogInputListeners(dialogName) {
+    switch (dialogName) {
+        case 'categoryAdd':
+            const categoryNameInput = document.getElementById('categoryNameInput');
+            categoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'categoryRename':
+            const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+            newCategoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowAdd':
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            appCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowEdit':
+            const editAppNameInput = document.getElementById('editAppNameInput');
+            const editAppCmdInput = document.getElementById('editAppCmdInput');
+            editAppNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            editAppCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+    }
+}
 // Export dialog functions
 window.dialogFunctions = {
     categoryAdd,

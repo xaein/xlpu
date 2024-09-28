@@ -72,7 +72,7 @@
         // Initialize main page
         // Sets up the page structure, loads necessary components, and sets up event listeners
         async function initializePage() {
-            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbv = js.F.getData('xldbv');
             window.xldbf = js.F.getData('xldbf') || {};
             const preloadedData = js.F.getData('preloadedData');
             
@@ -129,9 +129,19 @@
                     js.F.restoreSelectedRow(false);
                     js.F.updateLaunchButtonState();
                 });
-            });
 
-            window.xldbf = js.F.getData('xldbf') || {};
+                // Add this new code for the double-click listener
+                document.getElementById('appTable').addEventListener('dblclick', (event) => {
+                    const row = event.target.closest('.table-row');
+                    if (row && !row.classList.contains('empty-row')) {
+                        const appName = row.getAttribute('data-app-name');
+                        if (appName) {
+                            js.F.launchApp(appName);
+                        }
+                    }
+                });
+
+            });
         }
 
         // Update launch button state

@@ -1,6 +1,6 @@
 {
   "version": "1.0.1",
-  "comment": "Full Update\nFixed Various Bugs\nTesting things out",
+  "comment": "Full Test Update\nTesting purposes only\nShould be exactly the same code you already have\nYou can update if you feel like it",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",

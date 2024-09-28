@@ -78,7 +78,8 @@
         // Page initialization
         // This function initializes the page by loading necessary components and setting up handlers
         async function initializePage() {
-            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbv = js.F.getData('xldbv');
+            window.xldbf = js.F.getData('xldbf') || {};
             lazyLoadScript('common/configuration.js');
             js.F.updateJsF();
 

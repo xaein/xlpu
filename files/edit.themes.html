@@ -131,7 +131,7 @@
         // Initialize the page
         // Sets up the page structure, loads necessary components, and sets up event listeners
         async function initializePage() {
-            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbv = js.F.getData('xldbv');
             window.xldbf = js.F.getData('xldbf') || {};
 
             Promise.all([
@@ -144,11 +144,10 @@
 
             await new Promise(resolve => setTimeout(resolve, 100));
             
+            await js.F.lazyLoadScript('common/themes.js');
+
             js.F.setupHeaderNavigation('themes');
             js.F.setupFooterButtons('themes');
-
-            await js.F.lazyLoadScript('common/themes.js');
-            
             await js.F.handleResize('themes');
             await js.F.themePageSetup(); 
 

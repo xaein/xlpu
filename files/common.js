@@ -178,6 +178,7 @@ function setData(key, data, fileName = null) {
 function setupFooterButtons(currentPage) {
     const footerLeftButton = document.getElementById('footerLeftButton');
     const footerRightButton = document.getElementById('footerRightButton');
+    footerLeftButton.style.visibility = 'show';
 
     if (footerLeftButton && footerRightButton) {
         if (currentPage === 'launchlist') {
@@ -198,7 +199,11 @@ function setupFooterButtons(currentPage) {
         } else if (currentPage === 'themes') {
             footerLeftButton.textContent = 'Apply';
             footerLeftButton.onclick = () => {
-                js.F.applySelectedTheme();
+                if (js.F.applySelectedTheme) {
+                    js.F.applySelectedTheme();
+                } else {
+                    console.error("applySelectedTheme function not found in js.F");
+                }
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'configuration') {
@@ -208,9 +213,7 @@ function setupFooterButtons(currentPage) {
             };
             footerLeftButton.disabled = true;
         } else if (currentPage === 'logging') {
-            footerLeftButton.textContent = '-----';
-            footerLeftButton.onclick = null;
-            footerLeftButton.disabled = true;
+            footerLeftButton.style.visibility = 'hidden';
         }
         if (footerLeftButton.disabled === true) {
             footerLeftButton.classList.add('disabled');

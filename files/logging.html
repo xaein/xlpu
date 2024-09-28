@@ -63,7 +63,7 @@
         // Initialize the page
         // Sets up the title bar, header, footer, and log content refresh
         async function initializePage() {
-            window.xldbv = js.F.getData('xldbv') || {};
+            window.xldbv = js.F.getData('xldbv');
             window.xldbf = js.F.getData('xldbf') || {};
 
             Promise.all([
