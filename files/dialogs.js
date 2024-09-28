@@ -107,6 +107,22 @@ function closeDialog(dialogName) {
     if (dialog) {
         dialog.style.display = 'none';
         dialog.style.visibility = 'hidden';
+
+        // Deselect the row if closing the launch dialog
+        if (dialogName === 'launch') {
+            const selectedRow = document.querySelector('#appTable .table-row.selected');
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+            }
+            window.selectedApp = null;
+            
+            // Update launch button state
+            const launchButton = document.getElementById('footerLeftButton');
+            if (launchButton) {
+                launchButton.disabled = true;
+                launchButton.classList.add('disabled');
+            }
+        }
     }
 }
 
@@ -169,10 +185,10 @@ async function handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput) {
 // Launches the selected application and shows a countdown dialog
 async function launchApp() {
     if (window.selectedApp) {
-        await e.Api.invoke('launch-app', window.selectedApp);
         await showDialog('launch');
         const appNameElement = document.getElementById('appName');
         const countdownElement = document.getElementById('countdown');
+        await e.Api.invoke('launch-app', window.selectedApp);
 
         appNameElement.textContent = window.selectedApp;
         let countdown = 10;
@@ -374,6 +390,7 @@ async function selectEditApplicationFile() {
         if (parsedShortcut) {
             document.getElementById('editAppNameInput').value = parsedShortcut.name;
             document.getElementById('editAppCmdInput').value = parsedShortcut.target;
+            updateOkButtonState('rowEdit');
         }
     }
 }

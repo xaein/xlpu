@@ -1,6 +1,6 @@
 {
-  "version": "1.0.3",
-  "comment": "Full update\nFixed launch file bug.\nUpdated Edit Application dialog.\nUpdated file selector for Edit Application Dialog",
+  "version": "1.0.4",
+  "comment": "Full update\nFixed launch file bug.\nUpdated Edit Application dialog.\nUpdated file selector for Edit Application Dialog\nAdded auto deselect row in main table after launch of app",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
