@@ -2,7 +2,8 @@
   "version": "1.0.7",
   "comment": "Updates to some dialog functions\nMinor bug fixes\n1st incremental update.",
   "files": {
-    "dialogs.js": "pages/common"
+    "dialogs.js": "pages/common",
+    "rowedit.html": "pages/include/dialog"
   },
   "mainFiles": {}
 }

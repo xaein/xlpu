@@ -303,8 +303,8 @@ async function rowAdd() {
 // Edit existing row
 // Opens dialog to edit an existing application
 async function rowEdit() {
-    const appNameInput = document.getElementById('editAppNameInput');
-    const appCmdInput = document.getElementById('editAppCmdInput');
+    const appNameInput = document.getElementById('appNameInput');
+    const appCmdInput = document.getElementById('appCmdInput');
     
     if (!appNameInput || !appCmdInput) {
         return;
@@ -362,7 +362,7 @@ async function rowRemove() {
 
 // Select application file
 // Opens a file dialog to select an application and populates the input fields for both Add and Edit dialogs
-async function selectApplicationFile(isEdit = false) {
+async function selectApplicationFile() {
     try {
         const defaultDir = await e.Api.invoke('get-desktop-dir');
         const result = await e.Api.invoke('open-file-dialog', {
@@ -379,16 +379,17 @@ async function selectApplicationFile(isEdit = false) {
             const filePath = result.filePaths[0];
             const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
             
-            const prefix = isEdit ? 'edit' : '';
-            const appNameInput = document.getElementById(`${prefix}AppNameInput`);
-            const appCmdInput = document.getElementById(`${prefix}AppCmdInput`);
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
             
             if (appNameInput && appCmdInput) {
                 appNameInput.value = shortcutInfo?.name || '';
                 appCmdInput.value = shortcutInfo?.target || filePath;
             }
             
-            updateOkButtonState(isEdit ? 'rowEdit' : 'rowAdd');
+            // Determine which dialog is open and update its OK button state
+            const dialogType = document.getElementById('rowEditDialog').style.display !== 'none' ? 'rowEdit' : 'rowAdd';
+            updateOkButtonState(dialogType);
         }
     } catch (error) {
         console.error('Error selecting application file:', error);
@@ -414,8 +415,8 @@ function setupDialogInputListeners(dialogName) {
             appCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
             break;
         case 'rowEdit':
-            const editAppNameInput = document.getElementById('editAppNameInput');
-            const editAppCmdInput = document.getElementById('editAppCmdInput');
+            const editAppNameInput = document.getElementById('appNameInput');
+            const editAppCmdInput = document.getElementById('appCmdInput');
             editAppNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
             editAppCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
             break;
@@ -574,8 +575,8 @@ async function showRowEditDialog() {
     const appName = selectedRow.querySelector('.app-column').textContent;
     const appCmd = selectedRow.querySelector('.command-column').textContent;
 
-    const appNameInput = document.getElementById('editAppNameInput');
-    const appCmdInput = document.getElementById('editAppCmdInput');
+    const appNameInput = document.getElementById('appNameInput');
+    const appCmdInput = document.getElementById('appCmdInput');
 
     if (appNameInput && appCmdInput) {
         appNameInput.value = appName;
@@ -641,8 +642,8 @@ function updateOkButtonState(dialogName) {
                            !!document.getElementById('appCmdInput').value.trim();
             break;
         case 'rowEdit':
-            shouldEnable = !!document.getElementById('editAppNameInput').value.trim() &&
-                           !!document.getElementById('editAppCmdInput').value.trim();
+            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
+                           !!document.getElementById('appCmdInput').value.trim();
             break;
     }
 
