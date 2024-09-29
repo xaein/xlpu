@@ -237,8 +237,6 @@ class Program
             RunGitCommand(repoPath, "push origin main"); // Adjust branch name if different
 
             Console.WriteLine($"Successfully pushed update for version {version} to GitHub.");
-            Console.WriteLine("Commit message:");
-            Console.WriteLine(commitMessage);
         }
         catch (Exception ex)
         {
