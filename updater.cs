@@ -38,7 +38,9 @@ class Program
         }
 
         bool forceFullUpdate = args.Contains("-f");
-        bool isFullUpdate = forceFullUpdate;  // Initialize isFullUpdate
+        bool isFullUpdate = forceFullUpdate;
+        bool fullUpdateExcludingMain = false;
+        bool minorIncremented = false;
 
         // Read the existing version information
         JObject versionJson;
@@ -67,9 +69,9 @@ class Program
                 ["comment"] = updateComment,
                 ["files"] = new JObject(),
                 ["mainFiles"] = new JObject(),
-                ["lastFullUpdate"] = true  // Assume first run is a full update
+                ["lastFullUpdate"] = true
             };
-            isFullUpdate = true;  // First run is always a full update
+            isFullUpdate = true;
         }
 
         // Create new JSON objects to track changes
@@ -85,7 +87,7 @@ class Program
 
         if (filesChanged || forceFullUpdate)
         {
-            bool minorIncremented = IncrementVersion(versionJson);
+            minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
             if (minorIncremented || forceFullUpdate)
             {
                 Console.WriteLine(forceFullUpdate ? "Forced full update." : "Minor version incremented. Performing full update...");
@@ -94,6 +96,15 @@ class Program
                 newMainFilesSection.RemoveAll();
                 ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, true);
                 versionJson["lastFullUpdate"] = true;
+                isFullUpdate = true;
+            }
+            else if (fullUpdateExcludingMain)
+            {
+                Console.WriteLine("Patch 10% update. Performing full update excluding main files...");
+                // Perform a full copy excluding main files
+                newFilesSection.RemoveAll();
+                ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, false, sourceDir, true);
+                versionJson["lastFullUpdate"] = false; 
                 isFullUpdate = true;
             }
             else
@@ -111,7 +122,10 @@ class Program
         else
         {
             versionJson["files"] = newFilesSection;
-            versionJson["mainFiles"] = newMainFilesSection;
+            if (forceFullUpdate || minorIncremented)
+            {
+                versionJson["mainFiles"] = newMainFilesSection;
+            }
         }
 
         // Update the version and add the comment
@@ -173,7 +187,7 @@ class Program
                 (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))))
             {
                 string relativePath = GetRelativePath(rootSourceDir, srcFile);
-                string destFilePath = Path.Combine(destFolder, fileName); // Copy all files directly into destFolder
+                string destFilePath = Path.Combine(destFolder, fileName);
                 if (forceFullUpdate || !File.Exists(destFilePath) || !FilesAreEqual(srcFile, destFilePath))
                 {
                     File.Copy(srcFile, destFilePath, true);
@@ -208,7 +222,7 @@ class Program
         return filesChanged;
     }
 
-    static bool IncrementVersion(JObject versionJson)
+    static bool IncrementVersion(JObject versionJson, out bool fullUpdateExcludingMain)
     {
         string version = versionJson["version"]?.ToString() ?? "1.0.0";
         var versionParts = version.Split(new char[] { '.' });
@@ -218,13 +232,18 @@ class Program
         int patch = int.Parse(versionParts[2]);
 
         bool minorIncremented = false;
+        fullUpdateExcludingMain = false;
 
         patch++;
-        if (patch > 99 || patch % 10 == 0)  // Full update every 10 patches or when patch > 99
+        if (patch > 99)
         {
             patch = 0;
             minor++;
             minorIncremented = true;
+        }
+        else if (patch % 10 == 0)
+        {
+            fullUpdateExcludingMain = true;
         }
 
         versionJson["version"] = $"{major}.{minor}.{patch}";
@@ -257,7 +276,7 @@ class Program
 
     static void UpdateGitHub(string version)
     {
-        string repoPath = @"f:\coding\xlpu"; // Adjust this path as needed
+        string repoPath = @"f:\coding\xlpu";
 
         try
         {
@@ -270,7 +289,7 @@ class Program
             string commitMessage = $"Update to version {version}";
             
             RunGitCommand(repoPath, $"commit -m \"{commitMessage}\"");
-            RunGitCommand(repoPath, "push origin main"); // Adjust branch name if different
+            RunGitCommand(repoPath, "push origin main");
 
             Console.WriteLine($"Successfully pushed update for version {version} to GitHub.");
         }

@@ -265,6 +265,7 @@ function setupSearch(isEnabled) {
     const searchInput = document.getElementById('searchInput');
     const iconCircle = document.querySelector('.icon-circle');
     let isExpanded = false;
+    let searchTimeout;
 
     if (!isEnabled) {
         searchContainer.classList.add('disabled');
@@ -279,23 +280,44 @@ function setupSearch(isEnabled) {
         js.F.updatePagination(false, filteredRows);
     }
 
+    function expandSearch() {
+        isExpanded = true;
+        searchWrapper.style.width = '180px';
+        searchInput.style.width = '140px';
+        searchInput.style.opacity = '1';
+        searchInput.focus();
+        resetSearchTimeout();
+    }
+
+    function shrinkSearch() {
+        isExpanded = false;
+        searchWrapper.style.width = '24px';
+        searchInput.style.width = '0';
+        searchInput.style.opacity = '0';
+        searchInput.value = '';
+        performSearch();
+    }
+
+    function resetSearchTimeout() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(shrinkSearch, 120000);
+    }
+
     iconCircle.addEventListener('click', () => {
-        isExpanded = !isExpanded;
         if (isExpanded) {
-            searchWrapper.style.width = '180px';
-            searchInput.style.width = '140px';
-            searchInput.style.opacity = '1';
-            searchInput.focus();
+            shrinkSearch();
         } else {
-            searchWrapper.style.width = '24px';
-            searchInput.style.width = '0';
-            searchInput.style.opacity = '0';
-            searchInput.value = '';
-            performSearch();
+            expandSearch();
         }
     });
 
-    searchInput.addEventListener('input', debounce(performSearch, 300));
+    searchInput.addEventListener('input', debounce(() => {
+        performSearch();
+        resetSearchTimeout();
+    }, 300));
+
+    // Reset timeout when user focuses on the input
+    searchInput.addEventListener('focus', resetSearchTimeout);
 }
 
 // Update favorites on exit

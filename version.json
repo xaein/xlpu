@@ -1,9 +1,10 @@
 {
-  "version": "1.0.8",
-  "comment": "Updates to some dialog functions\nMinor bug fixes\n1st incremental update.",
+  "version": "1.0.9",
+  "comment": "Dialog updates\nIncluded a 2 min timer to reshrink search if it hasnt been used\nsome other minor fixes.",
   "files": {
     "dialogs.js": "pages/common",
-    "rowedit.html": "pages/include/dialog"
+    "rowedit.html": "pages/include/dialog",
+    "common.js": "pages/common"
   },
   "mainFiles": {},
   "lastFullUpdate": false
