@@ -172,15 +172,6 @@ function getCircularReplacer() {
     };
 }
 
-// Handle shortcut info
-// Populates input fields with shortcut information
-async function handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput) {
-    if (shortcutInfo && appNameInput && appCmdInput) {
-        appNameInput.value = shortcutInfo.name;
-        appCmdInput.value = shortcutInfo.target;
-    }
-}
-
 // Launch application
 // Launches the selected application, shows a countdown dialog, and removes selection/hover effects
 async function launchApp() {
@@ -392,9 +383,9 @@ async function selectApplicationFile(isEdit = false) {
             const appNameInput = document.getElementById(`${prefix}AppNameInput`);
             const appCmdInput = document.getElementById(`${prefix}AppCmdInput`);
             
-            if (shortcutInfo && appNameInput && appCmdInput) {
-                appNameInput.value = shortcutInfo.name;
-                appCmdInput.value = shortcutInfo.target;
+            if (appNameInput && appCmdInput) {
+                appNameInput.value = shortcutInfo?.name || '';
+                appCmdInput.value = shortcutInfo?.target || filePath;
             }
             
             updateOkButtonState(isEdit ? 'rowEdit' : 'rowAdd');
