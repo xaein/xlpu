@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
 class Program
 {
@@ -17,12 +19,14 @@ class Program
         string destDir = @"f:\coding\xlpu\files";
         string versionJsonPath = @"f:\coding\xlpu\version.json";
         string updateComment = "No comment provided";
+        List<string> gitCommitLines = new List<string>();
 
         // Check for the -c flag and concatenate all following arguments as the comment
         int commentIndex = Array.IndexOf(args, "-c");
         if (commentIndex != -1 && commentIndex + 1 < args.Length)
         {
             updateComment = string.Join(" ", args.Skip(commentIndex + 1));
+            
             // Replace literal "\n", " | ", and "|" with actual newline characters
             updateComment = updateComment.Replace("\\n", "\n").Replace(" | ", "\n").Replace("|", "\n");
         }
@@ -99,6 +103,9 @@ class Program
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
         Console.WriteLine("");
+
+        // Add GitHub update after the update process
+        UpdateGitHub(orderedVersionJson["version"].ToString());
     }
 
     static void DisplayHelp()
@@ -210,5 +217,81 @@ class Program
         }
 
         return true;
+    }
+
+    static void UpdateGitHub(string version)
+    {
+        string repoPath = @"f:\coding\xlpu"; // Adjust this path as needed
+
+        try
+        {
+            // Configure Git to handle line endings automatically
+            RunGitCommand(repoPath, "config core.autocrlf true");
+
+            RunGitCommand(repoPath, "add .");
+            
+            // Prepare the commit message with just the version number
+            string commitMessage = $"Update to version {version}";
+            
+            RunGitCommand(repoPath, $"commit -m \"{commitMessage}\"");
+            RunGitCommand(repoPath, "push origin main"); // Adjust branch name if different
+
+            Console.WriteLine($"Successfully pushed update for version {version} to GitHub.");
+            Console.WriteLine("Commit message:");
+            Console.WriteLine(commitMessage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to update GitHub: {ex.Message}");
+        }
+    }
+
+    static void RunGitCommand(string workingDirectory, string arguments)
+    {
+        using (Process process = new Process())
+        {
+            process.StartInfo.FileName = "git";
+            process.StartInfo.Arguments = arguments;
+            process.StartInfo.WorkingDirectory = workingDirectory;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.Start();
+            
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+            
+            process.WaitForExit();
+            
+            // Filter out CRLF warnings without using Split
+            string filteredError = "";
+            int startIndex = 0;
+            int endIndex;
+            while ((endIndex = error.IndexOf('\n', startIndex)) != -1)
+            {
+                string line = error.Substring(startIndex, endIndex - startIndex).Trim();
+                if (!string.IsNullOrEmpty(line) && !line.Contains("LF will be replaced by CRLF"))
+                {
+                    filteredError += line + "\n";
+                }
+                startIndex = endIndex + 1;
+            }
+            // Check the last line if it doesn't end with a newline
+            if (startIndex < error.Length)
+            {
+                string lastLine = error.Substring(startIndex).Trim();
+                if (!string.IsNullOrEmpty(lastLine) && !lastLine.Contains("LF will be replaced by CRLF"))
+                {
+                    filteredError += lastLine;
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(filteredError))
+            {
+                throw new Exception($"Git command failed: {filteredError}");
+            }
+            
+            Console.WriteLine(output);
+        }
     }
 }

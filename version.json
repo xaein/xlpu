@@ -1,6 +1,6 @@
 {
-  "version": "1.0.5",
-  "comment": "Full update\nMinor changes and updates, plus some bug fixes",
+  "version": "1.0.6",
+  "comment": "Full update\nSome more minor changes and updates, last full update.\nNext update will be changed files only, so please ensure the updates are upto date.",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",

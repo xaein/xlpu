@@ -182,17 +182,16 @@ async function handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput) {
 }
 
 // Launch application
-// Launches the selected application and shows a countdown dialog
+// Launches the selected application, shows a countdown dialog, and removes selection/hover effects
 async function launchApp() {
     if (window.selectedApp) {
         await showDialog('launch');
         let countdown = 10;
         const appNameElement = document.getElementById('appName');
         const countdownElement = document.getElementById('countdown');
-        await e.Api.invoke('launch-app', window.selectedApp);
-
         appNameElement.textContent = window.selectedApp;
         countdownElement.textContent = `Closing in ${countdown}s`;
+        await e.Api.invoke('launch-app', window.selectedApp);
 
         const interval = setInterval(() => {
             countdown -= 1;
@@ -200,6 +199,33 @@ async function launchApp() {
             if (countdown <= 0) {
                 clearInterval(interval);
                 closeDialog('launch');
+                
+                // Deselect the row and remove hover effects
+                const selectedRow = document.querySelector('#appTable .table-row.selected');
+                if (selectedRow) {
+                    selectedRow.classList.remove('selected');
+                }
+                window.selectedApp = null;
+                
+                // Remove hover effects from all rows
+                const allRows = document.querySelectorAll('#appTable .table-row');
+                allRows.forEach(row => {
+                    row.style.pointerEvents = 'none';
+                });
+                
+                // Update launch button state
+                const launchButton = document.getElementById('footerLeftButton');
+                if (launchButton) {
+                    launchButton.disabled = true;
+                    launchButton.classList.add('disabled');
+                }
+                
+                // Re-enable hover effects after a short delay
+                setTimeout(() => {
+                    allRows.forEach(row => {
+                        row.style.pointerEvents = 'auto';
+                    });
+                }, 1000); // Adjust this delay as needed
             }
         }, 1000);
     }
@@ -344,8 +370,8 @@ async function rowRemove() {
 }
 
 // Select application file
-// Opens a file dialog to select an application and populates the input fields
-async function selectApplicationFile() {
+// Opens a file dialog to select an application and populates the input fields for both Add and Edit dialogs
+async function selectApplicationFile(isEdit = false) {
     try {
         const defaultDir = await e.Api.invoke('get-desktop-dir');
         const result = await e.Api.invoke('open-file-dialog', {
@@ -362,36 +388,19 @@ async function selectApplicationFile() {
             const filePath = result.filePaths[0];
             const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
             
-            const appNameInput = document.getElementById('appNameInput');
-            const appCmdInput = document.getElementById('appCmdInput');
-            handleShortcutInfo(shortcutInfo, appNameInput, appCmdInput);
-            updateOkButtonState('rowAdd');
+            const prefix = isEdit ? 'edit' : '';
+            const appNameInput = document.getElementById(`${prefix}AppNameInput`);
+            const appCmdInput = document.getElementById(`${prefix}AppCmdInput`);
+            
+            if (shortcutInfo && appNameInput && appCmdInput) {
+                appNameInput.value = shortcutInfo.name;
+                appCmdInput.value = shortcutInfo.target;
+            }
+            
+            updateOkButtonState(isEdit ? 'rowEdit' : 'rowAdd');
         }
-    } catch (error) {}
-}
-
-// Select edit application file
-// Opens a file dialog to select an application for editing
-async function selectEditApplicationFile() {
-    const result = await e.Api.invoke('open-file-dialog', {
-        title: 'Select Application File',
-        defaultPath: defaultDir,
-        properties: ['openFile'],
-        filters: [
-            { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs', 'cmd'] },
-            { name: 'All Files', extensions: ['*'] }
-        ]
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
-        const parsedShortcut = await e.Api.invoke('parse-shortcut', filePath);
-        
-        if (parsedShortcut) {
-            document.getElementById('editAppNameInput').value = parsedShortcut.name;
-            document.getElementById('editAppCmdInput').value = parsedShortcut.target;
-            updateOkButtonState('rowEdit');
-        }
+    } catch (error) {
+        console.error('Error selecting application file:', error);
     }
 }
 
