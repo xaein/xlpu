@@ -387,9 +387,13 @@ async function selectApplicationFile() {
                 appCmdInput.value = shortcutInfo?.target || filePath;
             }
             
-            // Determine which dialog is open and update its OK button state
-            const dialogType = document.getElementById('rowEditDialog').style.display !== 'none' ? 'rowEdit' : 'rowAdd';
-            updateOkButtonState(dialogType);
+            // Enable the OK button
+            const okButton = document.querySelector('.dialog-footer .ok-button');
+            if (okButton) {
+                okButton.disabled = false;
+                okButton.style.opacity = '1';
+                okButton.style.cursor = 'pointer';
+            }
         }
     } catch (error) {
         console.error('Error selecting application file:', error);

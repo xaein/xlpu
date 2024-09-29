@@ -37,6 +37,9 @@ class Program
             Directory.CreateDirectory(destDir);
         }
 
+        bool forceFullUpdate = args.Contains("-f");
+        bool isFullUpdate = forceFullUpdate;  // Initialize isFullUpdate
+
         // Read the existing version information
         JObject versionJson;
         string currentVersion = "1.0.0";
@@ -63,8 +66,10 @@ class Program
                 ["version"] = currentVersion,
                 ["comment"] = updateComment,
                 ["files"] = new JObject(),
-                ["mainFiles"] = new JObject()
+                ["mainFiles"] = new JObject(),
+                ["lastFullUpdate"] = true  // Assume first run is a full update
             };
+            isFullUpdate = true;  // First run is always a full update
         }
 
         // Create new JSON objects to track changes
@@ -75,37 +80,68 @@ class Program
         Console.WriteLine("Starting update process...");
         Console.WriteLine("");
 
-        bool forceFullUpdate = args.Contains("-f");
-
         // Process files and directories
         bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate);
 
         if (filesChanged || forceFullUpdate)
         {
-            IncrementVersion(versionJson);
+            bool minorIncremented = IncrementVersion(versionJson);
+            if (minorIncremented || forceFullUpdate)
+            {
+                Console.WriteLine(forceFullUpdate ? "Forced full update." : "Minor version incremented. Performing full update...");
+                // Perform a full copy as if the directory was empty
+                newFilesSection.RemoveAll();
+                newMainFilesSection.RemoveAll();
+                ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, true);
+                versionJson["lastFullUpdate"] = true;
+                isFullUpdate = true;
+            }
+            else
+            {
+                versionJson["lastFullUpdate"] = false;
+            }
         }
+
+        // Merge new files with existing files if it's not a full update
+        if (!(bool)versionJson["lastFullUpdate"])
+        {
+            MergeFileEntries(versionJson["files"] as JObject, newFilesSection);
+            MergeFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
+        }
+        else
+        {
+            versionJson["files"] = newFilesSection;
+            versionJson["mainFiles"] = newMainFilesSection;
+        }
+
+        // Update the version and add the comment
+        if (isFullUpdate)
+        {
+            updateComment = "Full Update\n" + updateComment;
+        }
+        versionJson["comment"] = updateComment;
 
         // Create a new JObject with the desired property order
         var orderedVersionJson = new JObject
         {
             ["version"] = versionJson["version"],
-            ["comment"] = updateComment,
-            ["files"] = newFilesSection,
-            ["mainFiles"] = newMainFilesSection
+            ["comment"] = versionJson["comment"],
+            ["files"] = versionJson["files"],
+            ["mainFiles"] = versionJson["mainFiles"],
+            ["lastFullUpdate"] = versionJson["lastFullUpdate"]
         };
 
         // Write the updated version information back to the file
         File.WriteAllText(versionJsonPath, orderedVersionJson.ToString());
 
-        Console.WriteLine("Updated version to: " + orderedVersionJson["version"]);
+        Console.WriteLine("Updated version to: " + versionJson["version"]);
         Console.WriteLine("Included comment:");
         Console.WriteLine(updateComment);
         Console.WriteLine("");
         Console.WriteLine("Update process completed.");
-        Console.WriteLine("");
 
         // Add GitHub update after the update process
-        UpdateGitHub(orderedVersionJson["version"].ToString());
+        UpdateGitHub(versionJson["version"].ToString());
     }
 
     static void DisplayHelp()
@@ -163,7 +199,7 @@ class Program
             string folderName = Path.GetFileName(srcSubFolder);
             if (!folderName.Equals("node_modules", StringComparison.OrdinalIgnoreCase) &&
                 !folderName.Equals("dist", StringComparison.OrdinalIgnoreCase) &&
-                !folderName.Equals("help", StringComparison.OrdinalIgnoreCase)) 
+                !folderName.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
                 filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir, forceFullUpdate);
             }
@@ -184,7 +220,7 @@ class Program
         bool minorIncremented = false;
 
         patch++;
-        if (patch > 99)
+        if (patch > 99 || patch % 10 == 0)  // Full update every 10 patches or when patch > 99
         {
             patch = 0;
             minor++;
@@ -294,6 +330,14 @@ class Program
             }
             
             Console.WriteLine(filteredOutput);
+        }
+    }
+
+    static void MergeFileEntries(JObject existingFiles, JObject newFiles)
+    {
+        foreach (var file in newFiles)
+        {
+            existingFiles[file.Key] = file.Value;
         }
     }
 }
