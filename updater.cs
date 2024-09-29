@@ -263,35 +263,39 @@ class Program
             
             process.WaitForExit();
             
-            // Filter out CRLF warnings without using Split
-            string filteredError = "";
+            // Combine output and error, as Git sometimes writes to stderr for non-error messages
+            string fullOutput = output + error;
+            
+            // Filter out CRLF warnings and collect other messages
+            string filteredOutput = "";
             int startIndex = 0;
             int endIndex;
-            while ((endIndex = error.IndexOf('\n', startIndex)) != -1)
+            while ((endIndex = fullOutput.IndexOf('\n', startIndex)) != -1)
             {
-                string line = error.Substring(startIndex, endIndex - startIndex).Trim();
+                string line = fullOutput.Substring(startIndex, endIndex - startIndex).Trim();
                 if (!string.IsNullOrEmpty(line) && !line.Contains("LF will be replaced by CRLF"))
                 {
-                    filteredError += line + "\n";
+                    filteredOutput += line + "\n";
                 }
                 startIndex = endIndex + 1;
             }
             // Check the last line if it doesn't end with a newline
-            if (startIndex < error.Length)
+            if (startIndex < fullOutput.Length)
             {
-                string lastLine = error.Substring(startIndex).Trim();
+                string lastLine = fullOutput.Substring(startIndex).Trim();
                 if (!string.IsNullOrEmpty(lastLine) && !lastLine.Contains("LF will be replaced by CRLF"))
                 {
-                    filteredError += lastLine;
+                    filteredOutput += lastLine;
                 }
             }
             
-            if (!string.IsNullOrEmpty(filteredError))
+            // Check if the filtered output contains any error messages
+            if (filteredOutput.Contains("error:") || filteredOutput.Contains("fatal:"))
             {
-                throw new Exception($"Git command failed: {filteredError}");
+                throw new Exception($"Git command failed: {filteredOutput}");
             }
             
-            Console.WriteLine(output);
+            Console.WriteLine(filteredOutput);
         }
     }
 }
