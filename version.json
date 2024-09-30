@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "comment": "Dialog updates\nRename Category should work correctly\nFound Theme importing was not working, this should also have a fix now.\nThanks Dev Team.",
+  "version": "1.0.2",
+  "comment": "Dialog updates\nGeneral updates.\nThanks Dev Team.",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common"

@@ -107,22 +107,10 @@ function closeDialog(dialogName) {
     if (dialog) {
         dialog.style.display = 'none';
         dialog.style.visibility = 'hidden';
+    }
 
-        // Deselect the row if closing the launch dialog
-        if (dialogName === 'launch') {
-            const selectedRow = document.querySelector('#appTable .table-row.selected');
-            if (selectedRow) {
-                selectedRow.classList.remove('selected');
-            }
-            window.selectedApp = null;
-            
-            // Update launch button state
-            const launchButton = document.getElementById('footerLeftButton');
-            if (launchButton) {
-                launchButton.disabled = true;
-                launchButton.classList.add('disabled');
-            }
-        }
+    if (dialogName === 'launch') {
+        resetAppSelection();
     }
 }
 
@@ -177,7 +165,7 @@ function getCircularReplacer() {
 async function launchApp() {
     if (window.selectedApp) {
         await showDialog('launch');
-        let countdown = 10;
+        let countdown = 5;
         const appNameElement = document.getElementById('appName');
         const countdownElement = document.getElementById('countdown');
         appNameElement.textContent = window.selectedApp;
@@ -191,32 +179,7 @@ async function launchApp() {
                 clearInterval(interval);
                 closeDialog('launch');
                 
-                // Deselect the row and remove hover effects
-                const selectedRow = document.querySelector('#appTable .table-row.selected');
-                if (selectedRow) {
-                    selectedRow.classList.remove('selected');
-                }
-                window.selectedApp = null;
-                
-                // Remove hover effects from all rows
-                const allRows = document.querySelectorAll('#appTable .table-row');
-                allRows.forEach(row => {
-                    row.style.pointerEvents = 'none';
-                });
-                
-                // Update launch button state
-                const launchButton = document.getElementById('footerLeftButton');
-                if (launchButton) {
-                    launchButton.disabled = true;
-                    launchButton.classList.add('disabled');
-                }
-                
-                // Re-enable hover effects after a short delay
-                setTimeout(() => {
-                    allRows.forEach(row => {
-                        row.style.pointerEvents = 'auto';
-                    });
-                }, 1000); // Adjust this delay as needed
+                resetAppSelection();
             }
         }, 1000);
     }
@@ -256,6 +219,39 @@ function lazyLoadStylesheet(href) {
             resolve();
         }
     });
+}
+
+// Reset app selection
+// Deselects the currently selected row and resets the selected application
+function resetAppSelection() {
+    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    if (selectedRow) {
+        selectedRow.classList.remove('selected');
+    }
+    window.selectedApp = null;
+    
+    const launchButton = document.getElementById('footerLeftButton');
+    if (launchButton) {
+        launchButton.disabled = true;
+        launchButton.classList.add('disabled');
+    }
+
+    const appTable = document.getElementById('appTable');
+    if (appTable) {
+        appTable.blur();
+    }
+
+    const allRows = document.querySelectorAll('#appTable .table-row');
+    allRows.forEach(row => {
+        row.blur();
+        row.style.pointerEvents = 'none';
+    });
+
+    setTimeout(() => {
+        allRows.forEach(row => {
+            row.style.pointerEvents = 'auto';
+        });
+    }, 1000);
 }
 
 // Add new row
@@ -727,6 +723,7 @@ function updateVariables(operation, data) {
     js.F.setData('xldbv', xldbv);
     window.xldbv = xldbv;
 }
+
 
 // Export dialog functions
 window.dialogFunctions = {
