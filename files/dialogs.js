@@ -448,24 +448,29 @@ async function showDialog(dialogName, sectionName) {
     await lazyLoadDialog(dialogName);
     const dialog = document.getElementById(`${dialogName}Dialog`);
     if (dialog) {
-        if (dialogName === 'categoryRename' || dialogName === 'categoryRemove') {
+        if (dialogName === 'categoryRename') {
             const activeTab = document.querySelector('.tablinks.active');
             if (activeTab) {
                 const currentCategoryName = activeTab.textContent;
-                const elementId = dialogName === 'categoryRename' ? 'currentCategoryName' : 'categoryToRemove';
-                document.getElementById(elementId).textContent = currentCategoryName;
+                document.getElementById('currentCategoryName').textContent = currentCategoryName;
 
-                if (dialogName === 'categoryRename') {
-                    const newCategoryNameInput = document.getElementById('newCategoryNameInput');
-                    newCategoryNameInput.value = '';
-                    newCategoryNameInput.focus();
+                const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+                newCategoryNameInput.value = '';
+                newCategoryNameInput.focus();
 
-                    newCategoryNameInput.addEventListener('keydown', function(event) {
-                        if (event.key === 'Enter') {
-                            js.F.categoryRename();
-                        }
-                    });
-                }
+                newCategoryNameInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        js.F.categoryRename();
+                    }
+                });
+            }
+        }
+
+        if (dialogName === 'categoryRemove') {
+            const activeTab = document.querySelector('.tablinks.active');
+            if (activeTab) {
+                const currentCategoryName = activeTab.textContent;
+                document.getElementById('categoryToRemove').textContent = currentCategoryName;
             }
         }
 
@@ -493,7 +498,6 @@ async function showDialog(dialogName, sectionName) {
             const headerMain = dialog.querySelector('#applyThemeHeaderMain');
             const progressBar = dialog.querySelector('#applyThemeProgressBar');
             const progressText = dialog.querySelector('#applyThemeProgressText');
-            const cancelButton = dialog.querySelector('#applyThemeCancelButton');
 
             if (headerMain) {
                 headerMain.textContent = `Applying Theme: ${window.currentTheme}`;
@@ -501,12 +505,6 @@ async function showDialog(dialogName, sectionName) {
 
             if (progressBar) progressBar.style.width = '0%';
             if (progressText) progressText.textContent = '0%';
-
-            if (cancelButton) {
-                cancelButton.onclick = () => {
-                    closeDialog('applyTheme');
-                };
-            }
         }
 
         if (dialogName === 'save') {
@@ -549,6 +547,44 @@ async function showDialog(dialogName, sectionName) {
             if (sectionSpan) {
                 sectionSpan.textContent = capitalizedSection;
             }
+        }
+
+        if (dialogName === 'rowAdd') {
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.value = '';
+            appCmdInput.value = '';
+            appNameInput.focus();
+
+            appNameInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowAdd();
+                }
+            });
+
+            appCmdInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowAdd();
+                }
+            });
+        }
+
+        if (dialogName === 'rowEdit') {
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.focus();
+
+            appNameInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowEdit();
+                }
+            });
+
+            appCmdInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowEdit();
+                }
+            });
         }
 
         switch (dialogName) {

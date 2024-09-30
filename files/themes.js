@@ -86,6 +86,12 @@ async function compileAndApplyTheme() {
 // Allows user to import a theme file and apply it
 async function importTheme() {
     try {
+        let themesDir = window.xldbv?.directories?.themes;
+        if (!themesDir) {
+            const xldbvData = js.F.getData('xldbv');
+            themesDir = xldbvData?.directories?.themes;
+        }
+
         const defaultDir = await e.Api.invoke('get-desktop-dir');
         const result = await e.Api.invoke('open-file-dialog', {
             title: 'Select Theme File',
@@ -108,7 +114,9 @@ async function importTheme() {
             await loadThemeList();
             await selectTheme(importResult.themeName);
         }
-    } catch (error) {}
+    } catch (error) {
+        console.error('Error importing theme:', error);
+    }
 }
 
 // Load theme data
