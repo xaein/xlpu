@@ -58,6 +58,12 @@ class Program
                 }
                 versionJson["mainFiles"] = mainFilesObject;
             }
+
+            // Ensure dependencies exist
+            if (versionJson["dependencies"] == null)
+            {
+                versionJson["dependencies"] = new JObject();
+            }
         }
         else
         {
@@ -67,6 +73,7 @@ class Program
                 ["comment"] = updateComment,
                 ["files"] = new JObject(),
                 ["mainFiles"] = new JObject(),
+                ["dependencies"] = new JObject(),
                 ["lastFullUpdate"] = true
             };
             forceFullUpdate = true;
@@ -161,6 +168,7 @@ class Program
             ["comment"] = versionJson["comment"],
             ["files"] = versionJson["files"],
             ["mainFiles"] = versionJson["mainFiles"],
+            ["dependencies"] = versionJson["dependencies"],
             ["directoryZips"] = versionJson["directoryZips"],
             ["lastFullUpdate"] = versionJson["lastFullUpdate"]
         };
@@ -387,13 +395,14 @@ class Program
     static void CreateDependencyZips(string sourceDir, string destDir, JObject versionJson, JObject directoryZips)
     {
         string nodeModulesDir = Path.Combine(sourceDir, "node_modules");
+        string packageJsonPath = Path.Combine(sourceDir, "package.json");
+
         if (!Directory.Exists(nodeModulesDir))
         {
             Console.WriteLine("node_modules directory not found.");
             return;
         }
 
-        string packageJsonPath = Path.Combine(sourceDir, "package.json");
         if (!File.Exists(packageJsonPath))
         {
             Console.WriteLine("package.json not found.");

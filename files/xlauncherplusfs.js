@@ -71,6 +71,29 @@ class FileSystemOperations {
         }
     }
 
+    // Extract zip file
+    // Extracts contents of a zip file to the application directory
+    async extractZip(zipPath) {
+        try {
+            const zip = new AdmZip(zipPath);
+            const extractPath = this.appDir;
+
+            // Ensure the directory exists
+            await fs.ensureDir(extractPath);
+
+            // Extract zip contents, overwriting existing files
+            zip.extractAllTo(extractPath, true);
+
+            // Clean up the zip file
+            await fs.unlink(zipPath);
+
+            return true;
+        } catch (error) {
+            console.error(`Error extracting zip file ${zipPath}:`, error);
+            return false;
+        }
+    }
+
     // Check if file exists
     // Returns true if the file exists, false otherwise
     async fileExists(filePath) {
@@ -247,27 +270,6 @@ class FileSystemOperations {
             await fs.writeFile(configPath, content.trim(), 'utf8');
             return true;
         } catch (error) {
-            return false;
-        }
-    }
-
-    // Update directories
-    // Extracts contents from a zip buffer to update specified directories
-    async updateDirectories(dirName, zipBuffer) {
-        try {
-            const tempPath = path.join(os.tmpdir(), `${dirName}.zip`);
-            await fs.writeFile(tempPath, Buffer.from(zipBuffer));
-
-            const zip = new AdmZip(tempPath);
-            const extractPath = path.join(this.appDir, dirName);
-
-            await fs.remove(extractPath);
-            zip.extractAllTo(this.appDir, true);
-            await fs.unlink(tempPath);
-
-            return true;
-        } catch (error) {
-            console.error(`Error updating ${dirName}:`, error);
             return false;
         }
     }

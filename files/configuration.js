@@ -67,17 +67,31 @@ async function updateFiles() {
     if (versionInfo.directoryZips) {
         for (const [zipName, shouldUpdate] of Object.entries(versionInfo.directoryZips)) {
             if (shouldUpdate) {
-                updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
-                const zipUrl = `${baseUrl}/files/${zipName}`;
-                const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
-                const dirName = path.basename(zipName, '.zip');
-                const result = await e.Api.invoke('update-directories', dirName, zipBuffer);
-                if (result) {
-                    updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${zipName}`, `✔ ${zipName}`);
-                } else {
-                    updateInfoPreview.value += `Failed to update ${zipName}\n`;
+                try {
+                    updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
+                    const zipUrl = `${baseUrl}/files/${zipName}`;
+                    const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
+                    
+                    // Write the zip file directly to the app directory
+                    const zipPath = await e.Api.invoke('get-file-path', '', zipName);
+                    await e.Api.invoke('write-file', zipPath, zipBuffer, true);
+                    
+                    // Extract the zip file
+                    const result = await e.Api.invoke('extract-zip', zipPath);
+                    
+                    // Remove the zip file after extraction
+                    await e.Api.invoke('remove-file', zipPath);
+
+                    if (result) {
+                        updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${zipName}`, `✔ ${zipName}`);
+                    } else {
+                        updateInfoPreview.value += `Failed to update ${zipName}\n`;
+                    }
+                    scrollToLine(updateInfoPreview, `✔ ${zipName}`);
+                } catch (error) {
+                    console.error(`Error updating ${zipName}:`, error);
+                    updateInfoPreview.value += `Error updating ${zipName}: ${error.message}\n`;
                 }
-                scrollToLine(updateInfoPreview, `✔ ${zipName}`);
             }
         }
     }

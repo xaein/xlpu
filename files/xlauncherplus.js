@@ -43,6 +43,7 @@ function safeIpc(channel, handler) {
 // Set up handlers for various file system operations
 safeIpc('check-triggercmd-file', () => fsOps.checkTriggerCmdFile());
 safeIpc('copy-file', (event, sourcePath, destPath) => fsOps.copyFile(sourcePath, destPath));
+safeIpc('extract-zip', (event, zipPath) => fsOps.extractZip(zipPath));
 safeIpc('get-app-dir', () => __dirname);
 safeIpc('get-file', (event, filePath) => fsOps.getFile(filePath));
 safeIpc('get-file-path', (event, directory, fileName) => fsOps.getFilePath(directory, fileName));
@@ -52,11 +53,11 @@ safeIpc('read-directory', (event, dirPath) => fsOps.readDirectory(dirPath));
 safeIpc('read-themes-directory', (event, themesDir) => fsOps.readThemesDirectory(themesDir));
 safeIpc('remove-file', (event, filePath) => fsOps.removeFile(filePath));
 safeIpc('rename-file', (event, oldFilePath, newFilePath) => fsOps.renameFile(oldFilePath, newFilePath));
-safeIpc('update-directories', (event, dirName, zipBuffer) => fsOps.updateDirectories(dirName, zipBuffer));
 safeIpc('update-favs', (event, xldbfPath, favourites) => fsOps.updateFavs(xldbfPath, favourites));
 safeIpc('update-vars', (event, xldbvPath, variables) => fsOps.updateVars(xldbvPath, variables));
 safeIpc('update-xlaunch-config', (event, config) => fsOps.updateXlaunchConfig(config));
 safeIpc('write-file', (event, filePath, content, isBinary = false) => fsOps.writeFile(filePath, content, isBinary));
+
 
 // Application-specific IPC handlers
 // These functions handle various operations specific to xLauncher Plus
