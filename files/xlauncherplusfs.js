@@ -72,13 +72,14 @@ class FileSystemOperations {
     }
 
     // Extract zip file
-    // Extracts contents of a zip file to the application directory
+    // Extracts contents of a zip file to a subdirectory in the application directory
     async extractZip(zipPath) {
         try {
             const zip = new AdmZip(zipPath);
-            const extractPath = this.appDir;
+            const zipFileName = path.basename(zipPath, '.zip');
+            const extractPath = path.join(this.appDir, zipFileName);
 
-            // Ensure the directory exists
+            // Ensure the extraction directory exists
             await fs.ensureDir(extractPath);
 
             // Extract zip contents, overwriting existing files
@@ -87,6 +88,7 @@ class FileSystemOperations {
             // Clean up the zip file
             await fs.unlink(zipPath);
 
+            console.log(`Successfully extracted ${zipFileName} to ${extractPath}`);
             return true;
         } catch (error) {
             console.error(`Error extracting zip file ${zipPath}:`, error);
