@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "comment": "Dialog updates\nGeneral updates.\nThanks Dev Team.",
   "files": {
     "dialogs.js": "pages/common",
@@ -7,12 +7,12 @@
     "configuration.js": "pages/common"
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 0,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
-    "help.zip": 0
+    "help.zip": 1
   },
   "lastFullUpdate": false,
   "dependencies": {

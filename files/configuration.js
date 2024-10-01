@@ -346,7 +346,7 @@ async function initializeUpdateConfig() {
                 }
             }
         } else {
-            updateInfoPreview.value += `You are using the latest version.\n`;
+            updateInfoPreview.value += `You are using the latest version (${currentVersion}).\n`;
         }
     } catch (error) {
         updateInfoPreview.value += `Error fetching version info: ${error.message}\n`;

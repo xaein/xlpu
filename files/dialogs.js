@@ -170,7 +170,8 @@ async function launchApp() {
         const countdownElement = document.getElementById('countdown');
         appNameElement.textContent = window.selectedApp;
         countdownElement.textContent = `Closing in ${countdown}s`;
-        await e.Api.invoke('launch-app', window.selectedApp);
+
+        e.Api.invoke('launch-app', window.selectedApp).catch(() => {});
 
         const interval = setInterval(() => {
             countdown -= 1;
