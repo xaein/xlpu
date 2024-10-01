@@ -54,7 +54,7 @@ class Program
                 var mainFilesObject = new JObject();
                 foreach (var file in mainFilesArray)
                 {
-                    mainFilesObject[file.ToString()] = true;
+                    mainFilesObject[file.ToString()] = 0;  // Initialize with 0
                 }
                 versionJson["mainFiles"] = mainFilesObject;
             }
@@ -63,6 +63,12 @@ class Program
             if (versionJson["dependencies"] == null)
             {
                 versionJson["dependencies"] = new JObject();
+            }
+
+            // Ensure directoryZips exist
+            if (versionJson["directoryZips"] == null)
+            {
+                versionJson["directoryZips"] = new JObject();
             }
         }
         else
@@ -74,6 +80,7 @@ class Program
                 ["files"] = new JObject(),
                 ["mainFiles"] = new JObject(),
                 ["dependencies"] = new JObject(),
+                ["directoryZips"] = new JObject(),
                 ["lastFullUpdate"] = true
             };
             forceFullUpdate = true;
@@ -105,7 +112,7 @@ class Program
             CreateHelpZip(sourceDir, destDir, directoryZips);
         }
 
-        if (filesChanged || forceFullUpdate || updateNodeModules || updateHelpFiles)
+        if (filesChanged || forceFullUpdate)
         {
             minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
             if (minorIncremented || forceFullUpdate)
@@ -137,14 +144,19 @@ class Program
         if (!(bool)versionJson["lastFullUpdate"])
         {
             MergeFileEntries(versionJson["files"] as JObject, newFilesSection);
-            MergeFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
+            UpdateMainFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
+            UpdateDirectoryZips(versionJson["directoryZips"] as JObject, directoryZips);
         }
         else
         {
             versionJson["files"] = newFilesSection;
             if (forceFullUpdate || minorIncremented)
             {
-                versionJson["mainFiles"] = newMainFilesSection;
+                versionJson["mainFiles"] = ConvertToIntegerValues(newMainFilesSection);
+            }
+            else
+            {
+                UpdateMainFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
             }
         }
 
@@ -168,9 +180,9 @@ class Program
             ["comment"] = versionJson["comment"],
             ["files"] = versionJson["files"],
             ["mainFiles"] = versionJson["mainFiles"],
-            ["dependencies"] = versionJson["dependencies"],
             ["directoryZips"] = versionJson["directoryZips"],
-            ["lastFullUpdate"] = versionJson["lastFullUpdate"]
+            ["lastFullUpdate"] = versionJson["lastFullUpdate"],
+            ["dependencies"] = versionJson["dependencies"]
         };
 
         // Write the updated version information back to the file
@@ -498,5 +510,85 @@ class Program
 
         directoryZips[zipName] = true;
         Console.WriteLine("Created zip for help files");
+    }
+
+    static void UpdateMainFileEntries(JObject existingFiles, JObject newFiles)
+    {
+        var filesToRemove = new List<string>();
+
+        foreach (var file in existingFiles)
+        {
+            if (newFiles.Properties().Any(p => p.Name == file.Key))
+            {
+                existingFiles[file.Key] = 0;  // Reset counter for updated files
+            }
+            else
+            {
+                int count = (int)file.Value + 1;
+                if (count > 2)
+                {
+                    filesToRemove.Add(file.Key);
+                }
+                else
+                {
+                    existingFiles[file.Key] = count;
+                }
+            }
+        }
+
+        foreach (var file in newFiles.Properties())
+        {
+            existingFiles[file.Name] = 0;  // Add new files with counter 0
+        }
+
+        foreach (var file in filesToRemove)
+        {
+            existingFiles.Remove(file);
+        }
+    }
+
+    static JObject ConvertToIntegerValues(JObject obj)
+    {
+        var result = new JObject();
+        foreach (var kvp in obj)
+        {
+            result[kvp.Key] = 0;
+        }
+        return result;
+    }
+
+    static void UpdateDirectoryZips(JObject existingZips, JObject newZips)
+    {
+        var zipsToRemove = new List<string>();
+
+        foreach (var zip in existingZips)
+        {
+            if (newZips.Properties().Any(p => p.Name == zip.Key))
+            {
+                existingZips[zip.Key] = 0;  // Reset counter for updated zips
+            }
+            else
+            {
+                int count = (int)zip.Value + 1;
+                if (count > 2)
+                {
+                    zipsToRemove.Add(zip.Key);
+                }
+                else
+                {
+                    existingZips[zip.Key] = count;
+                }
+            }
+        }
+
+        foreach (var zip in newZips.Properties())
+        {
+            existingZips[zip.Name] = 0;  // Add new zips with counter 0
+        }
+
+        foreach (var zip in zipsToRemove)
+        {
+            existingZips.Remove(zip);
+        }
     }
 }

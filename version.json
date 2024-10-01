@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.0",
   "comment": "Dialog updates\nGeneral updates.\nThanks Dev Team.",
   "files": {
     "dialogs.js": "pages/common",
@@ -7,10 +7,14 @@
     "configuration.js": "pages/common"
   },
   "mainFiles": {
-    "xlauncherplus.js": true,
-    "xlauncherpluseapi.js": true,
-    "xlauncherplusfs.js": true
+    "xlauncherplus.js": 2,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
+  "directoryZips": {
+    "help.zip": true
+  },
+  "lastFullUpdate": false,
   "dependencies": {
     "adm-zip": "^0.5.16",
     "electron-unhandled": "^5.0.0",
@@ -20,9 +24,5 @@
     "sass": "^1.79.2",
     "sudo-prompt": "^9.2.1",
     "windows-shortcuts": "^0.1.6"
-  },
-  "directoryZips": {
-    "help.zip": true
-  },
-  "lastFullUpdate": false
+  }
 }
