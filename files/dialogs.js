@@ -224,10 +224,6 @@ function lazyLoadStylesheet(href) {
 // Reset app selection
 // Deselects the currently selected row and resets the selected application
 function resetAppSelection() {
-    const selectedRow = document.querySelector('#appTable .table-row.selected');
-    if (selectedRow) {
-        selectedRow.classList.remove('selected');
-    }
     window.selectedApp = null;
     
     const launchButton = document.getElementById('footerLeftButton');
@@ -236,22 +232,10 @@ function resetAppSelection() {
         launchButton.classList.add('disabled');
     }
 
-    const appTable = document.getElementById('appTable');
-    if (appTable) {
-        appTable.blur();
-    }
-
-    const allRows = document.querySelectorAll('#appTable .table-row');
-    allRows.forEach(row => {
-        row.blur();
-        row.style.pointerEvents = 'none';
-    });
-
-    setTimeout(() => {
-        allRows.forEach(row => {
-            row.style.pointerEvents = 'auto';
-        });
-    }, 1000);
+    // Reinitialize the table without changing the page
+    const { mainRowsPerPage } = js.F.getRowVariables();
+    js.F.createTable(currentPage, mainRowsPerPage, false);
+    js.F.updatePagination(false);
 }
 
 // Add new row

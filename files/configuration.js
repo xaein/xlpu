@@ -39,7 +39,9 @@ async function updateFiles() {
         const fileContent = await fetchFile(fileUrl, responseType);
         const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
         const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-        if (!result) {}
+        if (!result) {
+            updateInfoPreview.value += `Failed to update ${fileName}\n`;
+        }
         await new Promise(resolve => setTimeout(resolve, 500));
         updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
         scrollToLine(updateInfoPreview, `✔ ${fileName}`);
@@ -58,6 +60,25 @@ async function updateFiles() {
             await new Promise(resolve => setTimeout(resolve, 500));
             updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
             scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+        }
+    }
+
+    // Handle directory updates
+    if (versionInfo.directoryZips) {
+        for (const [zipName, shouldUpdate] of Object.entries(versionInfo.directoryZips)) {
+            if (shouldUpdate) {
+                updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
+                const zipUrl = `${baseUrl}/files/${zipName}`;
+                const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
+                const dirName = path.basename(zipName, '.zip');
+                const result = await e.Api.invoke('update-directories', dirName, zipBuffer);
+                if (result) {
+                    updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${zipName}`, `✔ ${zipName}`);
+                } else {
+                    updateInfoPreview.value += `Failed to update ${zipName}\n`;
+                }
+                scrollToLine(updateInfoPreview, `✔ ${zipName}`);
+            }
         }
     }
 
@@ -284,6 +305,11 @@ async function initializeUpdateConfig() {
             mainFiles.forEach(file => {
                 updateInfoPreview.value += `- ${file}\n`;
             });
+            if (versionInfo.directoryZips) {
+                Object.keys(versionInfo.directoryZips).forEach(zipName => {
+                    updateInfoPreview.value += `- ${zipName}\n`;
+                });
+            }
             if (updateButton) {
                 updateButton.disabled = false;
                 if (!updateButton.hasListener) {

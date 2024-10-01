@@ -1,9 +1,15 @@
 // File system operations
 
+// Electron dependencies
+const { dialog, BrowserWindow } = require('electron');
+
+// Node.js core modules
 const fs = require('fs-extra');
 const path = require('path');
-const { dialog, BrowserWindow } = require('electron');
 const os = require('os');
+
+// Third-party modules
+const AdmZip = require('adm-zip');
 
 class FileSystemOperations {
     constructor(appDir) {
@@ -11,6 +17,7 @@ class FileSystemOperations {
     }
 
     // Check TRIGGERcmd file
+    // Checks if the TRIGGERcmd file exists in the user's home directory
     checkTriggerCmdFile() {
         const userHomeDir = os.homedir();
         const filePath = path.join(userHomeDir, '.TRIGGERcmdData', 'commands.json');
@@ -65,6 +72,7 @@ class FileSystemOperations {
     }
 
     // Check if file exists
+    // Returns true if the file exists, false otherwise
     async fileExists(filePath) {
         try {
             await fs.access(filePath);
@@ -239,6 +247,27 @@ class FileSystemOperations {
             await fs.writeFile(configPath, content.trim(), 'utf8');
             return true;
         } catch (error) {
+            return false;
+        }
+    }
+
+    // Update directories
+    // Extracts contents from a zip buffer to update specified directories
+    async updateDirectories(dirName, zipBuffer) {
+        try {
+            const tempPath = path.join(os.tmpdir(), `${dirName}.zip`);
+            await fs.writeFile(tempPath, Buffer.from(zipBuffer));
+
+            const zip = new AdmZip(tempPath);
+            const extractPath = path.join(this.appDir, dirName);
+
+            await fs.remove(extractPath);
+            zip.extractAllTo(this.appDir, true);
+            await fs.unlink(tempPath);
+
+            return true;
+        } catch (error) {
+            console.error(`Error updating ${dirName}:`, error);
             return false;
         }
     }

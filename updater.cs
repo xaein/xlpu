@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
+using System.IO.Compression;
 
 class Program
 {
@@ -19,7 +20,9 @@ class Program
         string destDir = @"f:\coding\xlpu\files";
         string versionJsonPath = @"f:\coding\xlpu\version.json";
         string updateComment = "No comment provided";
-        List<string> gitCommitLines = new List<string>();
+        bool forceFullUpdate = args.Contains("-f");
+        bool updateNodeModules = args.Contains("-n");
+        bool updateHelpFiles = args.Contains("-h");
 
         // Check for the -c flag and concatenate all following arguments as the comment
         int commentIndex = Array.IndexOf(args, "-c");
@@ -36,11 +39,6 @@ class Program
         {
             Directory.CreateDirectory(destDir);
         }
-
-        bool forceFullUpdate = args.Contains("-f");
-        bool isFullUpdate = forceFullUpdate;
-        bool fullUpdateExcludingMain = false;
-        bool minorIncremented = false;
 
         // Read the existing version information
         JObject versionJson;
@@ -71,21 +69,36 @@ class Program
                 ["mainFiles"] = new JObject(),
                 ["lastFullUpdate"] = true
             };
-            isFullUpdate = true;
+            forceFullUpdate = true;
         }
+
+        bool isFullUpdate = forceFullUpdate;
+        bool fullUpdateExcludingMain = false;
+        bool minorIncremented = false;
 
         // Create new JSON objects to track changes
         var newFilesSection = new JObject();
         var newMainFilesSection = new JObject();
+        var directoryZips = new JObject();
 
-        Console.WriteLine("");
+        Console.WriteLine();
         Console.WriteLine("Starting update process...");
-        Console.WriteLine("");
+        Console.WriteLine();
 
         // Process files and directories
         bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate);
 
-        if (filesChanged || forceFullUpdate)
+        if (updateNodeModules)
+        {
+            CreateDependencyZips(sourceDir, destDir, versionJson, directoryZips);
+        }
+
+        if (updateHelpFiles)
+        {
+            CreateHelpZip(sourceDir, destDir, directoryZips);
+        }
+
+        if (filesChanged || forceFullUpdate || updateNodeModules || updateHelpFiles)
         {
             minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
             if (minorIncremented || forceFullUpdate)
@@ -128,6 +141,12 @@ class Program
             }
         }
 
+        // Update the directoryZips section
+        if (directoryZips.Count > 0)
+        {
+            versionJson["directoryZips"] = directoryZips;
+        }
+
         // Update the version and add the comment
         if (isFullUpdate)
         {
@@ -142,6 +161,7 @@ class Program
             ["comment"] = versionJson["comment"],
             ["files"] = versionJson["files"],
             ["mainFiles"] = versionJson["mainFiles"],
+            ["directoryZips"] = versionJson["directoryZips"],
             ["lastFullUpdate"] = versionJson["lastFullUpdate"]
         };
 
@@ -151,7 +171,7 @@ class Program
         Console.WriteLine("Updated version to: " + versionJson["version"]);
         Console.WriteLine("Included comment:");
         Console.WriteLine(updateComment);
-        Console.WriteLine("");
+        Console.WriteLine();
         Console.WriteLine("Update process completed.");
 
         // Add GitHub update after the update process
@@ -165,14 +185,18 @@ class Program
         Console.WriteLine();
         Console.WriteLine("Options:");
         Console.WriteLine("  -f              Force a full update, copying all files");
+        Console.WriteLine("  -n              Update node_modules (create zip files for dependencies)");
+        Console.WriteLine("  -h              Update help files (create zip file for help directory)");
         Console.WriteLine("  -c <comment>    Add a comment to the version.json file");
         Console.WriteLine("                  Use '|' to separate lines in the comment");
         Console.WriteLine("                  For best results, use \" \" around the comment");
         Console.WriteLine();
+        Console.WriteLine("Note: The -c option should always be the last option if used.");
+        Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  updater.exe -c \"Updated UI components\"");
-        Console.WriteLine("  updater.exe -c \"Line 1 | Line 2 | Line 3\"");
-        Console.WriteLine("  updater.exe -f -c \"Major update|Fixed bug #123|Added new feature\"");
+        Console.WriteLine("  updater.exe -f -c \"Forced full update with new features\"");
+        Console.WriteLine("  updater.exe -n -h -c \"Updated dependencies and help files\"");
+        Console.WriteLine("  updater.exe -c \"Minor update|Fixed bug #123|Added new feature\"");
     }
 
     static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)
@@ -358,5 +382,112 @@ class Program
         {
             existingFiles[file.Key] = file.Value;
         }
+    }
+
+    static void CreateDependencyZips(string sourceDir, string destDir, JObject versionJson, JObject directoryZips)
+    {
+        string nodeModulesDir = Path.Combine(sourceDir, "node_modules");
+        if (!Directory.Exists(nodeModulesDir))
+        {
+            Console.WriteLine("node_modules directory not found.");
+            return;
+        }
+
+        string packageJsonPath = Path.Combine(sourceDir, "package.json");
+        if (!File.Exists(packageJsonPath))
+        {
+            Console.WriteLine("package.json not found.");
+            return;
+        }
+
+        JObject packageJson = JObject.Parse(File.ReadAllText(packageJsonPath));
+        var currentDependencies = packageJson["dependencies"] as JObject;
+
+        if (currentDependencies == null)
+        {
+            Console.WriteLine("No dependencies found in package.json.");
+            return;
+        }
+
+        var oldDependencies = versionJson["dependencies"] as JObject ?? new JObject();
+        var changedDependencies = new List<string>();
+
+        foreach (var dep in currentDependencies)
+        {
+            string depName = dep.Key;
+            string currentVersion = dep.Value.ToString().TrimStart('^', '~', 'v');
+            string oldVersion = oldDependencies[depName]?.ToString();
+
+            if (oldVersion != currentVersion)
+            {
+                changedDependencies.Add(depName);
+                Console.WriteLine($"Dependency {depName} changed from {oldVersion} to {currentVersion}");
+            }
+        }
+
+        if (changedDependencies.Count > 0)
+        {
+            string zipName = "node_modules.zip";
+            string zipPath = Path.Combine(destDir, zipName);
+            
+            using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+            using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
+            {
+                foreach (var depName in changedDependencies)
+                {
+                    var dirPath = Path.Combine(nodeModulesDir, depName);
+                    if (Directory.Exists(dirPath))
+                    {
+                        AddDirectoryToZip(archive, dirPath, Path.Combine("node_modules", depName));
+                    }
+                }
+            }
+
+            directoryZips[zipName] = true;
+            Console.WriteLine($"Created zip for node_modules with {changedDependencies.Count} updated dependencies");
+
+            versionJson["dependencies"] = currentDependencies;
+        }
+        else
+        {
+            Console.WriteLine("No changes in dependencies, skipping node_modules zip creation.");
+        }
+    }
+
+    static void AddDirectoryToZip(ZipArchive archive, string sourceDir, string entryName)
+    {
+        foreach (string filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+        {
+            string relativePath = filePath.Substring(sourceDir.Length).TrimStart(Path.DirectorySeparatorChar);
+            string zipEntryName = Path.Combine(entryName, relativePath);
+            
+            using (Stream fileStream = File.OpenRead(filePath))
+            using (Stream zipEntryStream = archive.CreateEntry(zipEntryName).Open())
+            {
+                fileStream.CopyTo(zipEntryStream);
+            }
+        }
+    }
+
+    static void CreateHelpZip(string sourceDir, string destDir, JObject directoryZips)
+    {
+        string helpDir = Path.Combine(sourceDir, "help");
+        if (!Directory.Exists(helpDir))
+        {
+            Console.WriteLine("help directory not found.");
+            return;
+        }
+
+        string zipName = "help.zip";
+        string zipPath = Path.Combine(destDir, zipName);
+        
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
+        {
+            AddDirectoryToZip(archive, helpDir, "");
+        }
+
+        directoryZips[zipName] = true;
+        Console.WriteLine("Created zip for help files");
     }
 }
