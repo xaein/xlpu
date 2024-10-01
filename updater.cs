@@ -8,6 +8,8 @@ using System.IO.Compression;
 
 class Program
 {
+    // Main entry point
+    // Handles the update process for xLauncher Plus
     static void Main(string[] args)
     {
         if (args.Length == 0)
@@ -16,10 +18,13 @@ class Program
             return;
         }
 
+        // Define source and destination directories, and other variables
         string sourceDir = @"f:\coding\xlauncherplus";
         string destDir = @"f:\coding\xlpu\files";
         string versionJsonPath = @"f:\coding\xlpu\version.json";
         string updateComment = "No comment provided";
+
+        // Check for command line arguments
         bool forceFullUpdate = args.Contains("-f");
         bool updateNodeModules = args.Contains("-n");
         bool updateHelpFiles = args.Contains("-h");
@@ -47,29 +52,6 @@ class Program
         {
             versionJson = JObject.Parse(File.ReadAllText(versionJsonPath));
             currentVersion = versionJson["version"]?.ToString() ?? currentVersion;
-
-            // Convert mainFiles from JArray to JObject if necessary
-            if (versionJson["mainFiles"] is JArray mainFilesArray)
-            {
-                var mainFilesObject = new JObject();
-                foreach (var file in mainFilesArray)
-                {
-                    mainFilesObject[file.ToString()] = 0;  // Initialize with 0
-                }
-                versionJson["mainFiles"] = mainFilesObject;
-            }
-
-            // Ensure dependencies exist
-            if (versionJson["dependencies"] == null)
-            {
-                versionJson["dependencies"] = new JObject();
-            }
-
-            // Ensure directoryZips exist
-            if (versionJson["directoryZips"] == null)
-            {
-                versionJson["directoryZips"] = new JObject();
-            }
         }
         else
         {
@@ -79,13 +61,14 @@ class Program
                 ["comment"] = updateComment,
                 ["files"] = new JObject(),
                 ["mainFiles"] = new JObject(),
-                ["dependencies"] = new JObject(),
                 ["directoryZips"] = new JObject(),
-                ["lastFullUpdate"] = true
+                ["lastFullUpdate"] = true,
+                ["dependencies"] = new JObject()
             };
             forceFullUpdate = true;
         }
 
+        // Initialize flags for update process
         bool isFullUpdate = forceFullUpdate;
         bool fullUpdateExcludingMain = false;
         bool minorIncremented = false;
@@ -95,6 +78,7 @@ class Program
         var newMainFilesSection = new JObject();
         var directoryZips = new JObject();
 
+        // Display update process start message
         Console.WriteLine();
         Console.WriteLine("Starting update process...");
         Console.WriteLine();
@@ -102,6 +86,7 @@ class Program
         // Process files and directories
         bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate);
 
+        // Create zip files for dependencies if requested
         if (updateNodeModules)
         {
             CreateDependencyZips(sourceDir, destDir, versionJson, directoryZips);
@@ -112,13 +97,13 @@ class Program
             CreateHelpZip(sourceDir, destDir, directoryZips);
         }
 
+        // Increment version if needed
         if (filesChanged || forceFullUpdate)
         {
             minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
             if (minorIncremented || forceFullUpdate)
             {
                 Console.WriteLine(forceFullUpdate ? "Forced full update." : "Minor version incremented. Performing full update...");
-                // Perform a full copy as if the directory was empty
                 newFilesSection.RemoveAll();
                 newMainFilesSection.RemoveAll();
                 ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, true);
@@ -128,7 +113,6 @@ class Program
             else if (fullUpdateExcludingMain)
             {
                 Console.WriteLine("Patch 10% update. Performing full update excluding main files...");
-                // Perform a full copy excluding main files
                 newFilesSection.RemoveAll();
                 ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, false, sourceDir, true);
                 versionJson["lastFullUpdate"] = false; 
@@ -152,7 +136,7 @@ class Program
             versionJson["files"] = newFilesSection;
             if (forceFullUpdate || minorIncremented)
             {
-                versionJson["mainFiles"] = ConvertToIntegerValues(newMainFilesSection);
+                versionJson["mainFiles"] = newMainFilesSection;
             }
             else
             {
@@ -198,6 +182,8 @@ class Program
         UpdateGitHub(versionJson["version"].ToString());
     }
 
+    // Display help information
+    // Shows usage instructions and available options for the updater
     static void DisplayHelp()
     {
         Console.WriteLine("XLauncher Plus Updater");
@@ -219,6 +205,8 @@ class Program
         Console.WriteLine("  updater.exe -c \"Minor update|Fixed bug #123|Added new feature\"");
     }
 
+    // Process directory for updates
+    // Recursively processes files and directories, updating the version information
     static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)
     {
         bool filesChanged = false;
@@ -266,6 +254,8 @@ class Program
         return filesChanged;
     }
 
+    // Increment version number
+    // Updates the version in the version.json file
     static bool IncrementVersion(JObject versionJson, out bool fullUpdateExcludingMain)
     {
         string version = versionJson["version"]?.ToString() ?? "1.0.0";
@@ -294,6 +284,8 @@ class Program
         return minorIncremented;
     }
 
+    // Get relative path
+    // Returns the relative path from the base directory to the file
     static string GetRelativePath(string baseDir, string filePath)
     {
         Uri baseUri = new Uri(baseDir + Path.DirectorySeparatorChar);
@@ -301,6 +293,8 @@ class Program
         return Uri.UnescapeDataString(baseUri.MakeRelativeUri(fileUri).ToString().Replace('/', Path.DirectorySeparatorChar));
     }
 
+    // Compare two files
+    // Returns true if the files are identical, false otherwise
     static bool FilesAreEqual(string filePath1, string filePath2)
     {
         byte[] file1 = File.ReadAllBytes(filePath1);
@@ -318,6 +312,8 @@ class Program
         return true;
     }
 
+    // Update GitHub
+    // Pushes the update to the GitHub repository
     static void UpdateGitHub(string version)
     {
         string repoPath = @"f:\coding\xlpu";
@@ -343,6 +339,8 @@ class Program
         }
     }
 
+    // Run Git command
+    // Executes a Git command in the specified working directory
     static void RunGitCommand(string workingDirectory, string arguments)
     {
         using (Process process = new Process())
@@ -396,6 +394,8 @@ class Program
         }
     }
 
+    // Merge file entries
+    // Merges the new file entries into the existing file entries
     static void MergeFileEntries(JObject existingFiles, JObject newFiles)
     {
         foreach (var file in newFiles)
@@ -404,6 +404,8 @@ class Program
         }
     }
 
+    // Create dependency zip files
+    // Creates zip files for updated dependencies
     static void CreateDependencyZips(string sourceDir, string destDir, JObject versionJson, JObject directoryZips)
     {
         string nodeModulesDir = Path.Combine(sourceDir, "node_modules");
@@ -475,6 +477,8 @@ class Program
         }
     }
 
+    // Add directory to zip
+    // Adds the specified directory to the zip archive
     static void AddDirectoryToZip(ZipArchive archive, string sourceDir, string entryName)
     {
         foreach (string filePath in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
@@ -490,6 +494,8 @@ class Program
         }
     }
 
+    // Create help zip file
+    // Creates a zip file for the help directory
     static void CreateHelpZip(string sourceDir, string destDir, JObject directoryZips)
     {
         string helpDir = Path.Combine(sourceDir, "help");
@@ -512,6 +518,8 @@ class Program
         Console.WriteLine("Created zip for help files");
     }
 
+    // Update main file entries
+    // Updates the main file entries in the version.json file
     static void UpdateMainFileEntries(JObject existingFiles, JObject newFiles)
     {
         var filesToRemove = new List<string>();
@@ -520,7 +528,7 @@ class Program
         {
             if (newFiles.Properties().Any(p => p.Name == file.Key))
             {
-                existingFiles[file.Key] = 0;  // Reset counter for updated files
+                existingFiles[file.Key] = 0;
             }
             else
             {
@@ -538,7 +546,7 @@ class Program
 
         foreach (var file in newFiles.Properties())
         {
-            existingFiles[file.Name] = 0;  // Add new files with counter 0
+            existingFiles[file.Name] = 0;
         }
 
         foreach (var file in filesToRemove)
@@ -547,16 +555,8 @@ class Program
         }
     }
 
-    static JObject ConvertToIntegerValues(JObject obj)
-    {
-        var result = new JObject();
-        foreach (var kvp in obj)
-        {
-            result[kvp.Key] = 0;
-        }
-        return result;
-    }
-
+    // Update directory zip entries
+    // Updates the directory zip entries in the version.json file
     static void UpdateDirectoryZips(JObject existingZips, JObject newZips)
     {
         var zipsToRemove = new List<string>();
