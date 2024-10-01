@@ -48,26 +48,23 @@ async function updateFiles() {
     }
 
     // Update main files
-    for (const [fileName, shouldUpdate] of Object.entries(versionInfo.mainFiles)) {
-        if (shouldUpdate) {
-            mainFilesUpdated = true;
-            updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
-            const fileUrl = `${baseUrl}/files/${fileName}`;
-            const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
-            const fileContent = await fetchFile(fileUrl, responseType);
-            const destinationPath = js.F.joinPath(appDir, fileName);
-            const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-            await new Promise(resolve => setTimeout(resolve, 500));
-            updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
-            scrollToLine(updateInfoPreview, `✔ ${fileName}`);
-        }
+    for (const fileName of Object.keys(versionInfo.mainFiles)) {
+        mainFilesUpdated = true;
+        updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
+        const fileUrl = `${baseUrl}/files/${fileName}`;
+        const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
+        const fileContent = await fetchFile(fileUrl, responseType);
+        const destinationPath = js.F.joinPath(appDir, fileName);
+        const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
+        scrollToLine(updateInfoPreview, `✔ ${fileName}`);
     }
 
     // Handle directory updates
     if (versionInfo.directoryZips) {
-        for (const [zipName, shouldUpdate] of Object.entries(versionInfo.directoryZips)) {
-            if (shouldUpdate) {
-                try {
+        for (const zipName of Object.keys(versionInfo.directoryZips)) {
+            try {
                     updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
                     const zipUrl = `${baseUrl}/files/${zipName}`;
                     const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
@@ -91,7 +88,6 @@ async function updateFiles() {
                 } catch (error) {
                     console.error(`Error updating ${zipName}:`, error);
                     updateInfoPreview.value += `Error updating ${zipName}: ${error.message}\n`;
-                }
             }
         }
     }
