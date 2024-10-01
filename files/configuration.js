@@ -28,72 +28,80 @@ async function updateFiles() {
     const versionInfo = await getVersionInfo();
     const appDir = await e.Api.invoke('get-app-dir');
     const updateInfoPreview = document.getElementById('updateInfoPreview');
-    const baseUrl = window.xldbv.uurl;
+    const baseUrl = `${window.xldbv.uurl}/files`;
     let mainFilesUpdated = false;
+    let nodeModulesUpdated = false;
 
     // Update normal files
-    for (const [fileName, destinationDir] of Object.entries(versionInfo.files)) {
-        updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
-        const fileUrl = `${baseUrl}/files/${fileName}`;
-        const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
-        const fileContent = await fetchFile(fileUrl, responseType);
-        const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
-        const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-        if (!result) {
-            updateInfoPreview.value += `Failed to update ${fileName}\n`;
+    if (versionInfo.files) {
+        for (const [fileName, destinationDir] of Object.entries(versionInfo.files)) {
+            updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
+            const fileUrl = `${baseUrl}/${fileName}`;
+            const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
+            const fileContent = await fetchFile(fileUrl, responseType);
+            const destinationPath = js.F.joinPath(appDir, destinationDir, fileName);
+            const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
+            if (!result) {
+                updateInfoPreview.value += `Failed to update ${fileName}\n`;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
+            scrollToLine(updateInfoPreview, `✔ ${fileName}`);
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
-        updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
-        scrollToLine(updateInfoPreview, `✔ ${fileName}`);
     }
 
     // Update main files
-    for (const fileName of Object.keys(versionInfo.mainFiles)) {
-        mainFilesUpdated = true;
-        updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
-        const fileUrl = `${baseUrl}/files/${fileName}`;
-        const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
-        const fileContent = await fetchFile(fileUrl, responseType);
-        const destinationPath = js.F.joinPath(appDir, fileName);
-        const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
-        scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+    if (versionInfo.mainFiles) {
+        for (const fileName of Object.keys(versionInfo.mainFiles)) {
+            mainFilesUpdated = true;
+            updateInfoPreview.value = updateInfoPreview.value.replace(`- ${fileName}`, `↓ ${fileName}`);
+            const fileUrl = `${baseUrl}/${fileName}`;
+            const responseType = fileName.endsWith('.exe') ? 'arraybuffer' : 'text';
+            const fileContent = await fetchFile(fileUrl, responseType);
+            const destinationPath = js.F.joinPath(appDir, fileName);
+            const result = await e.Api.invoke('write-file', destinationPath, fileContent, responseType === 'arraybuffer');
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${fileName}`, `✔ ${fileName}`);
+            scrollToLine(updateInfoPreview, `✔ ${fileName}`);
+        }
     }
 
     // Handle directory updates
     if (versionInfo.directoryZips) {
         for (const zipName of Object.keys(versionInfo.directoryZips)) {
             try {
-                    updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
-                    const zipUrl = `${baseUrl}/files/${zipName}`;
-                    const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
-                    
-                    // Write the zip file directly to the app directory
-                    const zipPath = await e.Api.invoke('get-file-path', '', zipName);
-                    await e.Api.invoke('write-file', zipPath, zipBuffer, true);
-                    
-                    // Extract the zip file
-                    const result = await e.Api.invoke('extract-zip', zipPath);
-                    
-                    // Remove the zip file after extraction
-                    await e.Api.invoke('remove-file', zipPath);
+                updateInfoPreview.value = updateInfoPreview.value.replace(`- ${zipName}`, `↓ ${zipName}`);
+                const zipUrl = `${baseUrl}/${zipName}`;
+                const zipBuffer = await fetchFile(zipUrl, 'arraybuffer');
+                
+                // Write the zip file directly to the app directory
+                const zipPath = await e.Api.invoke('get-file-path', '', zipName);
+                await e.Api.invoke('write-file', zipPath, zipBuffer, true);
+                
+                // Extract the zip file
+                const result = await e.Api.invoke('extract-zip', zipPath);
+                
+                // Remove the zip file after extraction
+                await e.Api.invoke('remove-file', zipPath);
 
-                    if (result) {
-                        updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${zipName}`, `✔ ${zipName}`);
-                    } else {
-                        updateInfoPreview.value += `Failed to update ${zipName}\n`;
+                if (result) {
+                    updateInfoPreview.value = updateInfoPreview.value.replace(`↓ ${zipName}`, `✔ ${zipName}`);
+                    if (zipName === 'node_modules.zip') {
+                        nodeModulesUpdated = true;
                     }
-                    scrollToLine(updateInfoPreview, `✔ ${zipName}`);
-                } catch (error) {
-                    console.error(`Error updating ${zipName}:`, error);
-                    updateInfoPreview.value += `Error updating ${zipName}: ${error.message}\n`;
+                } else {
+                    updateInfoPreview.value += `Failed to update ${zipName}\n`;
+                }
+                scrollToLine(updateInfoPreview, `✔ ${zipName}`);
+            } catch (error) {
+                console.error(`Error updating ${zipName}:`, error);
+                updateInfoPreview.value += `Error updating ${zipName}: ${error.message}\n`;
             }
         }
     }
 
-    // Display message if main files were updated
-    if (mainFilesUpdated) {
+    // Display message if main files or node_modules were updated
+    if (mainFilesUpdated || nodeModulesUpdated) {
         updateInfoPreview.value += '\nApplication will need to be relaunched for changes to take effect.';
         scrollToLine(updateInfoPreview, 'Application will need to be relaunched for changes to take effect.');
     }
