@@ -88,7 +88,6 @@ class FileSystemOperations {
             // Clean up the zip file
             await fs.unlink(zipPath);
 
-            console.log(`Successfully extracted ${zipFileName} to ${extractPath}`);
             return true;
         } catch (error) {
             console.error(`Error extracting zip file ${zipPath}:`, error);
