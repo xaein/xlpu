@@ -1,18 +1,19 @@
 {
-  "version": "1.0.2",
-  "comment": "Dialog updates\nGeneral updates.\nThanks Dev Team.",
+  "version": "1.0.3",
+  "comment": "Update to the launching application so that it shouldnt show up when we launch things.",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common",
-    "configuration.js": "pages/common"
+    "configuration.js": "pages/common",
+    "xlaunch.exe": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 1,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 2,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
   "directoryZips": {
-    "help.zip": 1
+    "help.zip": 2
   },
   "lastFullUpdate": false,
   "dependencies": {
