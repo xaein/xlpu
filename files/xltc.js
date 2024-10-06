@@ -20,8 +20,8 @@ class TriggerCmdGenerator {
             for (const [appName, command] of Object.entries(appsData)) {
                 const capitalizedAppName = appName.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-                if (this.configOpts.tcao === 'all' || 
-                    (this.configOpts.tcao === 'favourited' && await this.isFavorited(appName))) {
+                if (this.configOpts.triggercmd.addCommands === 'all' || 
+                    (this.configOpts.triggercmd.addCommands === 'favourited' && await this.isFavorited(appName))) {
                     gamesList.push({
                         trigger: "XLauncher: " + capitalizedAppName,
                         command: "xlaunch " + appName,
@@ -39,7 +39,7 @@ class TriggerCmdGenerator {
             const jsonFilePath = path.join(userDirectory, subfolder, "commands.json");
 
             let finalCommands = [];
-            if (this.configOpts.tcuo === 'keep') {
+            if (this.configOpts.triggercmd.overwriteFile === 'keep') {
                 try {
                     const existingContent = await fs.readFile(jsonFilePath, 'utf8');
                     const existingCommands = JSON.parse(existingContent);

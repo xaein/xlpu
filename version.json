@@ -1,6 +1,6 @@
 {
-  "version": "1.0.6",
-  "comment": "Sass Module update\nSystem tray update\nMore System tray update, fixed a bug i made by changing a thing\nAlso other bug fixes",
+  "version": "1.0.7",
+  "comment": "Sass Module update\nSystem tray update\nMore System tray update, fixed a bug i made by changing a thing\nAlso other bug fixes, real fix this time",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common",
@@ -40,9 +40,7 @@
     "xltc.js": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 2,
-    "xlauncherplusfs.js": 2
+    "xlauncherplus.js": 2
   },
   "directoryZips": {
     "node_modules.zip": true
