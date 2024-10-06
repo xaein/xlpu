@@ -1,6 +1,6 @@
 {
-  "version": "1.0.5",
-  "comment": "Sass Module update\nSystem tray update\nMore System tray update, fixed a bug i made by changing a thing",
+  "version": "1.0.6",
+  "comment": "Sass Module update\nSystem tray update\nMore System tray update, fixed a bug i made by changing a thing\nAlso other bug fixes",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common",
@@ -36,12 +36,13 @@
     "tables.scss": "pages/themes/styles",
     "welcome.scss": "pages/themes/styles",
     "themebuilder.js": "utils",
-    "xlstitch.js": "utils"
+    "xlstitch.js": "utils",
+    "xltc.js": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 1,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
   "directoryZips": {
     "node_modules.zip": true

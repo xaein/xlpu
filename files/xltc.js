@@ -75,7 +75,10 @@ class TriggerCmdGenerator {
         try {
             const xldbfContent = await fs.readFile(xldbfPath, 'utf8');
             const xldbf = JSON.parse(xldbfContent);
-            return xldbf.hasOwnProperty(appName);
+            if (xldbf.favourites && Array.isArray(xldbf.favourites)) {
+                return xldbf.favourites.includes(appName);
+            }
+            return false;
         } catch (error) {
             return false;
         }
