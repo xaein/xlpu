@@ -280,7 +280,7 @@ safeIpc('update-tray-menu', (event, recentApps) => {
 // Shows or hides the system tray icon
 safeIpc('update-tray-visibility', (event, show) => {
     const xldbv = fsOps.getVariables(utilsDir);
-    xldbv.configOpts.showTray = show;
+    xldbv.configOpts.tray.show = show;
     fsOps.updateVars(path.join(utilsDir, 'xldbv.json'), xldbv);
     createTray();
 });
@@ -292,7 +292,7 @@ safeIpc('update-tray-visibility', (event, show) => {
 // Creates the system tray icon and initializes its menu
 function createTray() {
     const xldbv = fsOps.getVariables(utilsDir);
-    const showTray = xldbv && xldbv.configOpts && xldbv.configOpts.showTray !== false;
+    const showTray = xldbv && xldbv.configOpts && xldbv.configOpts.tray && xldbv.configOpts.tray.show !== false;
 
     if (showTray && !tray) {
         const trayIcon = nativeImage.createFromPath(trayIconPath);
@@ -475,7 +475,7 @@ function createWindow() {
     mainWindow.on('close', (event) => {
         if (!isExiting) {
             const xldbv = fsOps.getVariables(utilsDir);
-            if (xldbv && xldbv.configOpts && xldbv.configOpts.closeToTray) {
+            if (xldbv && xldbv.configOpts && xldbv.configOpts.tray && xldbv.configOpts.tray.closeTo) {
                 event.preventDefault();
                 mainWindow.hide();
             } else {
@@ -488,7 +488,7 @@ function createWindow() {
     // Handle window minimize event
     mainWindow.on('minimize', (event) => {
         const xldbv = fsOps.getVariables(utilsDir);
-        if (xldbv && xldbv.configOpts && xldbv.configOpts.minimizeToTray) {
+        if (xldbv && xldbv.configOpts && xldbv.configOpts.tray && xldbv.configOpts.tray.minimizeTo) {
             event.preventDefault();
             mainWindow.hide();
         }
