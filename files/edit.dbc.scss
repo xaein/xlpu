@@ -1,0 +1,272 @@
+// Database control edit styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Container styles
+// Sets up basic layout for the page
+body {
+    border: none;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+// Main content
+// Flexible column layout with overflow handling
+#mainContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+// Content wrapper
+// Flexible column layout for main content area
+#contentWrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+// Tab container
+// Fixed height container for tabs with background
+#tabContainer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: $tab-background-color;
+}
+
+// Table container
+// Scrollable container for the main table
+#tableContainer {
+    flex: 1;
+    overflow: hidden;
+    .app-table {
+        border-collapse: collapse;
+        border: 1px solid $table-border-color;
+
+        th, td {
+            border: 1px solid $table-border-color;
+            padding: 8px;
+        }
+
+        .app-column {
+            padding-left: 15px;
+        }
+
+        .command-column {
+            padding-left: 8px;
+        }
+    }
+}
+
+// Bottom container
+// Fixed height container for bottom controls
+#bottomContainer {
+    display: flex;
+    flex-direction: column;
+    height: 78px;
+    padding: 0;
+    border-top: 1px solid $table-border-color;
+}
+
+// Edit controls container
+// Sticky container for edit controls at bottom
+#editControlsContainer {
+    flex: 0 0 10px;
+    display: flex;
+    justify-content: space-between;
+    background-color: $background-color;
+    border-bottom: none;
+    position: sticky;
+    bottom: 0;
+    width: calc(100% - 24px);
+    padding: 5px 12px 0;
+}
+
+// Pagination container
+// Sticky container for pagination controls at top
+#paginationContainer {
+    display: flex;
+    justify-content: flex-end;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+// Tab list styles
+// Scrollable container for tab list
+#tabListContainer {
+    flex-grow: 1;
+    padding-right: 0;
+    overflow-x: auto;
+}
+
+// Tab list
+// Horizontally scrollable list of tabs
+#tabList {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: color.scale($tab-background-color, $lightness: -15%) $tab-background-color;
+    padding-bottom: 2px;
+    border-top: none;
+    border-bottom: none;
+    border-right: none;
+    margin-right: 0;
+    overflow-x: scroll;
+
+    &:hover {
+        scrollbar-color: color.scale($tab-background-color, $lightness: -25%) $tab-background-color;
+    }
+
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: $tab-background-color;
+    }
+}
+
+// Tab link styles
+// Individual tab appearance and behavior
+.tablinks {
+    background-color: $tab-background-color;
+    border: none;
+    border-right: 1px solid $table-border-color;
+    padding: 2px 8px 4px;
+    cursor: pointer;
+    transition: background-color $transition-duration ease;
+    height: 100%;
+    white-space: nowrap;
+    font-size: 14px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
+    color: $text-color;
+
+    &:hover {
+        background-color: color.scale($tab-background-color, $lightness: -10%);
+    }
+
+    &.active {
+        background-color: $tab-active-background-color;
+        color: $text-color;
+    }
+}
+
+// Category header styles
+// Layout for category headers in tabs
+.category-header {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    background-color: $tab-background-color;
+}
+
+// Category wrapper
+// Container for category name and buttons
+.category-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 8px;
+}
+
+// Category name
+// Bold text for category names
+span {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+// Category button wrapper
+// Container for category action buttons
+.category-button-wrapper {
+    display: flex;
+    gap: 5px;
+}
+
+// Edit buttons
+// Container for edit action buttons
+.edit-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+// Edit and Category buttons
+// Shared styles for action buttons
+.edit-buttons button,
+.category-button-wrapper button {
+    padding: 6px 12px;
+    font-size: $pagination-font-size;
+    cursor: pointer;
+    background-color: $default-button-color;
+    border: 1px solid $table-border-color;
+    border-radius: 3px;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: $text-color;
+    transition: background-color $transition-duration ease;
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+}
+
+// Add buttons
+// Hover styles for add action buttons
+#addRowButton,
+#addCategoryButton {
+    &:hover:not(:disabled) {
+        background-color: color.scale($greenbutton-hover-color, $lightness: 5%);
+    }
+}
+
+// Edit buttons
+// Hover styles for edit action buttons
+#editRowButton,
+#renameCategoryButton {
+    &:hover:not(:disabled) {
+        background-color: color.scale($default-button-color, $lightness: -10%);
+    }
+}
+
+// Remove buttons
+// Hover styles for remove action buttons
+#removeRowButton,
+#removeCategoryButton {
+    &:hover:not(:disabled) {
+        background-color: color.scale($redbutton-hover-color, $lightness: 5%);
+    }
+}
+
+// Pagination styles
+// Layout for pagination controls within edit controls
+.custom-pagination-controls {
+    display: flex;
+    gap: 5px;
+    padding: 0;
+    margin-bottom: 0;
+    justify-content: flex-end;
+}
+
+// Page buttons
+// Container for page navigation buttons
+#pageButtons {
+    display: flex;
+    gap: 1px;
+}

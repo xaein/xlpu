@@ -28,7 +28,7 @@ async function categoryAdd() {
             closeDialog('categoryAdd');
 
             await js.F.loadTabButtons(categoryName);
-        } catch (error) {}
+        } catch {}
     }
 }
 
@@ -171,8 +171,9 @@ async function launchApp() {
         appNameElement.textContent = window.selectedApp;
         countdownElement.textContent = `Closing in ${countdown}s`;
 
+        js.F.updateRecentApps(window.selectedApp);
         e.Api.invoke('launch-app', window.selectedApp).catch(() => {});
-
+        
         const interval = setInterval(() => {
             countdown -= 1;
             countdownElement.textContent = `Closing in ${countdown}s`;
@@ -201,7 +202,7 @@ async function lazyLoadDialog(dialogName) {
 
             const container = document.getElementById('dialogContainer') || document.body;
             container.insertAdjacentHTML('beforeend', html);
-        } catch (error) {}
+        } catch {}
     }
 }
 
@@ -376,9 +377,7 @@ async function selectApplicationFile() {
                 okButton.style.cursor = 'pointer';
             }
         }
-    } catch (error) {
-        console.error('Error selecting application file:', error);
-    }
+    } catch {}
 }
 
 // Setup dialog input listeners

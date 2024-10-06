@@ -1,0 +1,385 @@
+// Config Styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Body layout
+// Flex column layout for full viewport height
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+// Main content area
+// Flexible scrollable content with top padding
+#mainContent {
+    flex: 1;
+    overflow: auto;
+    padding-top: 10px;
+}
+
+// Bottom wrapper
+// Full width container at the bottom
+#bottomWrapper {
+    width: 100%;
+}
+
+// Footer
+// Top border for the footer section
+.footer {
+    border-top: 1px solid $table-border-color;
+}
+
+// Config content
+// Flexible column layout with gap and padding
+.config-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 30px);
+    width: calc(100% - 2px);
+    gap: 1px;
+    padding: 1px;
+}
+
+// Config navigation container
+// Styled container for navigation elements
+.config-nav-container {
+    background-color: $theme-list-background-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+// Config navigation
+// Darker background for navigation area
+.config-nav {
+    background-color: color.scale($theme-list-background-color, $lightness: -5%);
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+// Config list
+// Horizontal list for configuration options
+#configList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: 1px;
+
+    li {
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: background-color $transition-duration;
+        border-radius: 4px;
+        font-size: 0.9em;
+
+        &:hover {
+            background-color: $main-table-hover-color;
+        }
+
+        &.selected {
+            background-color: $main-table-selected-color;
+            color: $text-color;
+        }
+    }
+}
+
+// Config details
+// Main area for displaying configuration details
+.config-details {
+    flex: 1;
+    background-color: $background-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+
+    p {
+        margin-top: 5px;
+        margin-bottom: 8px;
+        font-size: 1.0em;
+        color: $text-color;
+        &.section-separator {
+            margin-top: 8px;
+        }
+    }
+}
+
+// Config display
+// Container for configuration display with padding
+#configDisplay {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: $text-color;
+    padding: 10px;
+}
+
+// Form elements
+// Styles for form groups and input elements
+.form-group {
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+
+    label {
+        margin-right: 8px;
+        min-width: 40px;
+        font-size: 0.85em;
+        color: $text-color;
+        display: inline-flex;
+        align-items: center;
+        line-height: 22px;
+        vertical-align: middle;
+        position: relative;
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 10px;
+            margin-left: 5px;
+        }
+    }
+
+    select, input[type="text"], input[type="number"] {
+        padding: 2px 3px;
+        border: 1px solid $input-border-color;
+        border-radius: 3px;
+        background-color: $input-background-color;
+        color: $input-text-color;
+        margin-right: 16px;
+        font-size: 0.85em;
+        height: 22px;
+        box-sizing: border-box;
+    }
+
+    #leftEncapsule,
+    #rightEncapsule,
+    #messageSeperator {
+        min-width: 50px;
+        padding: 1px 2px;
+        text-align: center;
+    }
+
+    &.compact {
+        margin-bottom: 6px;
+        
+        label {
+            min-width: 30px;
+            font-size: 0.8em;
+            line-height: 20px;
+        }
+
+        select {
+            min-width: 60px;
+            padding: 1px 2px;
+            height: 20px;
+            text-align: center;
+        }
+    }
+
+    &.icon-group {
+        display: inline-flex;
+        margin-right: 15px;
+
+        label {
+            line-height: 20px;
+        }
+
+        select {
+            min-width: 50px;
+            padding: 1px 2px;
+            text-align: center;
+            height: 20px;
+        }
+    }
+
+    &.preview-group {
+        display: flex;
+        align-items: flex-start;
+        margin-top: 10px;
+
+        label {
+            margin-right: 8px;
+            min-width: 40px;
+            font-size: 0.85em;
+            color: $text-color;
+            line-height: 22px;
+            padding-top: 3px;
+        }
+
+        .log-preview {
+            flex: 1;
+            font-family: monospace;
+            background-color: color.scale($background-color, $lightness: -5%);
+            padding: 5px;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+            color: $text-color;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+        }
+    }
+}
+
+// Button style
+// Styles for buttons with hover and disabled states
+.btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color $transition-duration;
+
+    &.btn-primary {
+        background-color: $greenbutton-background-color;
+        color: $footer-button-text-color;
+
+        &:hover:not(:disabled) {
+            background-color: $greenbutton-hover-color;
+        }
+        
+        &.disabled,
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+// Update TriggerCMD section
+// Layout and styles for TriggerCMD configuration
+#triggercmdConfig {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    padding-left: 0;
+
+    .triggercmd-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding-left: 0;
+    }
+
+    .triggercmd-button-group {
+        margin-top: 20px;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+        .status-message {
+            margin-bottom: 10px;
+            font-style: italic;
+            font-size: 0.9em;
+            transition: color $transition-duration;
+
+            &.updating {
+                color: $progress-bar-secondary;
+            }
+
+            &.success {
+                color: $greenbutton-background-color;
+            }
+
+            &.error {
+                color: $redbutton-background-color;
+            }
+        }
+    }
+}
+
+// Update section
+// Layout and styles for update configuration
+#updateConfig {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+
+    .preview-group {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        margin-top: 2px;
+        margin-bottom: 10px;
+
+        .update-preview {
+            flex-grow: 1;
+            width: 100%;
+            resize: none;
+            background-color: color.scale($background-color, $lightness: -5%);
+            color: $text-color;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            box-sizing: border-box;
+            padding: 15px;
+        }
+    }
+
+    .update-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 5px;
+        padding-bottom: 10px;
+
+        label {
+            display: flex;
+            align-items: center;
+            font-size: 0.85em;
+            margin-right: 15px;
+
+            input[type="checkbox"] {
+                margin-right: 5px;
+            }
+        }
+
+        select {
+            padding: 2px 3px;
+            border: 1px solid $input-border-color;
+            border-radius: 3px;
+            background-color: $input-background-color;
+            color: $input-text-color;
+            font-size: 0.85em;
+            height: 22px;
+        }
+
+        button {
+            margin-left: auto;
+        }
+    }
+}
+
+// Scrollbar
+// Custom scrollbar styles for webkit browsers
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: $scrollbar-track-color;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $scrollbar-thumb-color;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $scrollbar-thumb-hover-color;
+}

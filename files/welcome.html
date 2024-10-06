@@ -59,7 +59,7 @@
                     
                     js.F.updateJsF();
                     initializePage();
-                } catch (error) {}
+                } catch {}
             }
         }
     </script>
@@ -80,7 +80,7 @@
             try {
                 // Update firstRun value
                 window.xldbv.firstRun = 2;
-                console.log('Updating firstRun to 2');
+                
                 // Validate and save the updated xldbv
                 if (js.F.validateXldbvJson(window.xldbv)) {
                     js.F.setData('xldbv', window.xldbv);
@@ -91,10 +91,7 @@
                 } else {
                     throw new Error('Invalid xldbv data');
                 }
-            } catch (error) {
-                console.error('Error updating firstRun:', error);
-                // You might want to show an error message to the user here
-            }
+            } catch {}
         }
     </script>
 </body>

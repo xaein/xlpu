@@ -1,0 +1,94 @@
+// Table styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// General table styles
+// Defines the basic layout and appearance of application tables
+.app-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+    padding: 0;
+    table-layout: fixed;
+    background-color: $background-color;
+    border: 1px solid $table-border-color;
+}
+
+// Table header and cell styles
+// Sets up the layout for table headers and cells
+.app-table th, .app-table td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid $table-border-color;
+    vertical-align: middle;
+}
+
+// Table header styles
+// Defines the appearance of table headers
+.app-table th {
+    background-color: $tab-background-color;
+    color: $table-header-text-color;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+// Table body row styles
+// Defines the appearance and behavior of table rows
+.app-table tbody tr {
+    background-color: $background-color;
+    transition: background-color $transition-duration ease;
+    cursor: pointer;
+}
+
+.app-table tbody tr:not(.empty-row):hover {
+    background-color: $main-table-hover-color;
+}
+
+.app-table tbody tr:not(.empty-row).selected {
+    background-color: $main-table-selected-color;
+}
+
+// Empty row styles
+// Defines the height for empty rows
+.empty-row {
+    height: $table-row-height;
+}
+
+// Cell text styles
+// Ensures text in cells doesn't wrap
+.app-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// Table container styles
+// Defines the layout for the table container
+.table-container {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: $table-border-color $background-color;
+}
+
+// General column styles
+// Defines the width and padding for general columns
+.app-column {
+    width: 200px;
+    min-width: 200px;
+    padding-left: 15px;
+}
+
+// Command column styles
+// Defines the width and text behavior for command columns
+.command-column {
+    width: auto;
+    min-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

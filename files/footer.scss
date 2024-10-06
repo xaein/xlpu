@@ -1,0 +1,95 @@
+// Footer styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Container styles
+// Sets up the layout for the footer container
+.footer {
+    background-color: $background-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+}
+
+// Footer container
+// Sticky container at the bottom with flex layout
+#footerContainer {
+    flex: 0 0 20px;
+    border-top: none;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background-color: $background-color;
+    margin-top: 0;
+}
+
+// Section styles
+// Defines layout for left and right footer sections
+.footer-left, .footer-right {
+    display: flex;
+    align-items: center;
+}
+
+// Button styles
+// Shared styles for footer buttons
+.redbutton, .greenbutton {
+    padding: 6px 12px;
+    font-size: 0.9em;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color $transition-duration ease;
+    color: $footer-button-text-color;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: color.scale($redbutton-background-color, $lightness: -10%);
+    }
+}
+
+// Red button styles
+// Specific styles for red buttons
+.redbutton {
+    background-color: $redbutton-background-color;
+
+    &:hover:not(:disabled) {
+        background-color: $redbutton-hover-color;
+    }
+}
+
+// Green button styles
+// Specific styles for green buttons
+.greenbutton {
+    background-color: $greenbutton-background-color;
+
+    &:hover:not(:disabled) {
+        background-color: $greenbutton-hover-color;
+    }
+
+    &:disabled {
+        background-color: $launch-button-disabled-color;
+    }
+}
+
+// Launch button styles
+// Styles for the launch button in the footer
+#footerLeftButton {
+    &:disabled {
+        background-color: $launch-button-disabled-color;
+    }
+
+    &:not(:disabled) {
+        background-color: $launch-button-enabled-color;
+    }
+}

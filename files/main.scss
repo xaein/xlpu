@@ -1,0 +1,220 @@
+// Main styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Root variables
+// Defines CSS variables for global use
+:root {
+    --main-table-highlight-width: #{$main-table-highlight-width}; 
+    --main-table-highlight-height: #{$main-table-highlight-height}; 
+    --main-table-highlight-point-depth: #{$main-table-highlight-point-depth}; 
+    --main-table-highlight-corner-radius: #{$main-table-highlight-corner-radius}; 
+    --main-table-highlight-shape-type: #{$main-table-highlight-shape-type};
+    --main-table-hover-color: #{$main-table-hover-color};
+    --main-table-selected-color: #{$main-table-selected-color};
+}
+
+// Layout containers
+// Styles for main content and bottom wrapper
+#tabContent {
+    display: block;
+    overflow: hidden;
+    flex-grow: 1;
+}
+
+#bottomWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+    bottom: 0;
+    height: 90px;
+}
+
+#paginationWrapper {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    height: 24px;
+    z-index: 2;
+}
+
+#footerContainer {
+    z-index: 1;
+    max-height: 20px;
+}
+
+// App table styles
+// Defines the layout and appearance of the main application table
+#appTable {
+    width: 100%;
+    table-layout: fixed;
+    z-index: 200;
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0;
+        border: none;
+        height: $table-row-height;
+        box-sizing: border-box;
+    }
+
+    tbody tr {
+        height: $table-row-height;
+        position: relative;
+        cursor: pointer;
+        background-color: $background-color;
+        border-top: 1px solid $table-border-color;
+        border-bottom: 1px solid $table-border-color;
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+
+            path {
+                transition: fill $transition-duration ease;
+            }
+        }
+
+        &:hover svg path {
+            fill: $main-table-hover-color;
+        }
+
+        &.selected svg path {
+            fill: $main-table-selected-color;
+        }
+
+        &:hover, &.selected {
+            background-color: transparent;
+        }
+    }
+}
+
+// Star column styles
+// Defines the appearance of the star rating column
+.star-column {
+    width: 45%;
+    text-align: right;
+    padding-right: 10px;
+    height: $table-row-height;
+    line-height: $table-row-height;
+    transition: all $transition-duration ease;
+    box-sizing: border-box;
+}
+
+// Star icon styles
+// Defines the appearance and behavior of star icons
+.star-icon {
+    cursor: pointer;
+    font-size: 1.2em;
+    color: $star-color;
+    text-shadow: -1px -1px 0 $star-bc, 1px -1px 0 $star-bc, -1px 1px 0 $star-bc, 1px 1px 0 $star-bc;
+    transition: color $transition-duration ease;
+    float: right;
+
+    &.starred {
+        color: $starred-color;
+    }
+
+    &.animate {
+        animation: fillStar $transition-duration ease forwards;
+    }
+}
+
+@keyframes fillStar {
+    0% { color: $star-color; }
+    100% { color: $starred-color; }
+}
+
+// App name cell styles
+// Defines the appearance of the application name cell
+.app-name-cell {
+    width: 55%;
+    text-align: left;
+    padding-left: 10px;
+    height: $table-row-height;
+    line-height: $table-row-height;
+    transition: all $transition-duration ease;
+    box-sizing: border-box;
+}
+
+// App table row styles
+// Ensures consistent height for table rows
+#appTable.app-table tbody tr {
+    height: $table-row-height;
+}
+
+// Empty row styles
+// Defines the appearance of empty rows in the table
+.empty-row {
+    pointer-events: none;
+    height: $table-row-height;
+    
+    &::before {
+        display: none;
+    }
+    
+    .app-name-cell {
+        background-color: transparent !important;
+    }
+    
+    td {
+        height: 100%;
+    }
+}
+
+// Text visibility
+// Ensures text is visible when row is selected or hovered
+#appTable tbody tr:hover td,
+#appTable tbody tr.selected td {
+    color: $text-color;
+    position: relative;
+    z-index: 1;
+}
+
+// Footer button styles
+// Defines the appearance of the footer left button
+#footerLeftButton {
+    &:disabled {
+        background-color: $launch-button-disabled-color;
+    }
+
+    &:not(:disabled) {
+        background-color: $launch-button-enabled-color;
+    }
+}
+
+// Table row highlight
+// Defines the appearance of highlighted table rows
+#appTable tbody tr {
+    position: relative;
+    
+    svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    &:hover svg path {
+        fill: var(--main-table-hover-color);
+    }
+
+    &.selected svg path {
+        fill: var(--main-table-selected-color);
+    }
+}

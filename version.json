@@ -1,19 +1,50 @@
 {
-  "version": "1.0.3",
-  "comment": "Update to the launching application so that it shouldnt show up when we launch things.",
+  "version": "1.0.4",
+  "comment": "Sass Module update\nSystem tray update",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common",
     "configuration.js": "pages/common",
-    "xlaunch.exe": "utils"
+    "xlaunch.exe": "utils",
+    "edit.config.html": "pages",
+    "edit.dbc.html": "pages",
+    "edit.themes.html": "pages",
+    "initialize.html": "pages",
+    "logging.html": "pages",
+    "main.html": "pages",
+    "welcome.html": "pages",
+    "common.js": "pages/common",
+    "conversioncheck.js": "pages/common",
+    "loadsave.js": "pages/common",
+    "systray.js": "pages/common",
+    "tables.js": "pages/common",
+    "configcon.g.html": "pages/include",
+    "configcon.u.html": "pages/include",
+    "base.theme.scss": "pages/themes/styles",
+    "base.universal.scss": "pages/themes/styles",
+    "dialogs.scss": "pages/themes/styles",
+    "edit.config.scss": "pages/themes/styles",
+    "edit.dbc.scss": "pages/themes/styles",
+    "edit.themes.m.scss": "pages/themes/styles",
+    "edit.themes.p.scss": "pages/themes/styles",
+    "footer.scss": "pages/themes/styles",
+    "header.scss": "pages/themes/styles",
+    "loadsave.scss": "pages/themes/styles",
+    "logging.scss": "pages/themes/styles",
+    "main.scss": "pages/themes/styles",
+    "pagination.scss": "pages/themes/styles",
+    "tables.scss": "pages/themes/styles",
+    "welcome.scss": "pages/themes/styles",
+    "themebuilder.js": "utils",
+    "xlstitch.js": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 2,
-    "xlauncherpluseapi.js": 2,
-    "xlauncherplusfs.js": 2
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
   },
   "directoryZips": {
-    "help.zip": 2
+    "node_modules.zip": true
   },
   "lastFullUpdate": false,
   "dependencies": {
@@ -22,7 +53,7 @@
     "electron-window-state": "^5.0.3",
     "fs-extra": "^11.2.0",
     "node-fetch": "^3.3.2",
-    "sass": "^1.79.2",
+    "sass": "^1.79.4",
     "sudo-prompt": "^9.2.1",
     "windows-shortcuts": "^0.1.6"
   }

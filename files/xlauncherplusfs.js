@@ -90,7 +90,7 @@ class FileSystemOperations {
 
             return true;
         } catch (error) {
-            console.error(`Error extracting zip file ${zipPath}:`, error);
+            
             return false;
         }
     }

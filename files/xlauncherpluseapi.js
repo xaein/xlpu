@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('e', {
                 ipcRenderer.send(channel, data);
             }
         },
+
         // Invoke methods in the main process and wait for result
         invoke: (channel, ...args) => {
             let validChannels = [
@@ -23,19 +24,24 @@ contextBridge.exposeInMainWorld('e', {
                 'remove-file', 'rename-file', 'run-xlstitch', 'update-favs', 'update-vars',
                 'write-file', 'check-triggercmd-file', 'update-xlaunch-config',
                 'generate-triggercmd', 'add-to-path', 'remove-from-path', 'fetch-url',
-                'open-external', 'get-desktop-dir', 'extract-zip'
+                'open-external', 'get-desktop-dir', 'extract-zip',
+                'create-tray', 'update-tray-menu', 'update-tray-visibility'
             ];
             if (validChannels.includes(channel)) {
                 return ipcRenderer.invoke(channel, ...args);
             }
         },
-        // Handle app closing event and theme compile progress
+
+        // Handle app closing event, theme compile progress, and launch app from tray
         on: (channel, func) => {
-            let validChannels = ['app-closing', 'theme-compile-progress'];
+            let validChannels = [
+                'app-closing', 'theme-compile-progress'
+            ];
             if (validChannels.includes(channel)) {
                 ipcRenderer.on(channel, (event, ...args) => func(...args));
             }
         },
+
         // Remove listeners
         removeListener: (channel) => {
             if (channel) {
@@ -44,6 +50,7 @@ contextBridge.exposeInMainWorld('e', {
                 ipcRenderer.removeAllListeners();
             }
         },
+
         // Remove all listeners for a specific channel or all channels
         removeAllListeners: (channel) => {
             if (channel) {
@@ -52,6 +59,7 @@ contextBridge.exposeInMainWorld('e', {
                 ipcRenderer.removeAllListeners();
             }
         },
+
         // Expose console.log
         log: (...args) => console.log(...args),
         // Expose console.error

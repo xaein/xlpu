@@ -31,11 +31,13 @@ async function loadFileWithDelay(appDir, directory, fileName) {
         updateUIForFile(fileName);
 
         const result = await e.Api.invoke('get-file', filePath);
-        const data = result.data;
+        let data = result.data;
 
-        // Check if the file is xldbf.json and if it's empty
-        if (fileName === 'xldbf.json' && (!data || data.trim().length === 0)) {
-            xldbf = {};
+        // Use the new conversionCheck function
+        data = await js.F.conversionCheck(fileName, data);
+
+        if (fileName === 'xldbf.json') {
+            xldbf = JSON.parse(data);
             js.F.setData('xldbf', xldbf);
             window.xldbf = xldbf;
         } else {
@@ -81,6 +83,21 @@ function updateUIForFile(fileName) {
 function processAndStoreData(fileName, data) {
     if (fileName === 'xldbv.json') {
         const variables = JSON.parse(data);
+        
+        // Check and add new tray-related variables if they don't exist
+        if (!variables.configOpts) {
+            variables.configOpts = {};
+        }
+        if (variables.configOpts.showTray === undefined) {
+            variables.configOpts.showTray = true;
+        }
+        if (variables.configOpts.minimizeToTray === undefined) {
+            variables.configOpts.minimizeToTray = false;
+        }
+        if (variables.configOpts.closeToTray === undefined) {
+            variables.configOpts.closeToTray = false;
+        }
+
         js.F.setData('xldbv', variables);
         xldbv = variables;
         totalFiles += 3;
@@ -89,6 +106,15 @@ function processAndStoreData(fileName, data) {
         }
     } else if (fileName === 'xldbf.json') {
         const xldbfData = JSON.parse(data);
+        
+        // Ensure xldbfData has 'favourites' and 'recent' arrays
+        if (!Array.isArray(xldbfData.favourites)) {
+            xldbfData.favourites = [];
+        }
+        if (!Array.isArray(xldbfData.recent)) {
+            xldbfData.recent = [];
+        }
+
         xldbf = xldbfData;
         js.F.setData('xldbf', xldbfData);
     } else if (fileName === 'xlaunch.cfg') {
@@ -130,13 +156,6 @@ async function initializeFiles() {
             throw new Error('Failed to load xldbv.json');
         }
 
-        // Check for updates if aupd is set to 'on'
-        if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
-            const updateMessage = await checkForUpdates();
-            js.F.updateStatusMessage(updateMessage);
-        }
-
-        // Check firstRun status
         if (window.xldbv.firstRun === 1) {
             js.F.updateCurrentFile('First run startup detected.. Progressing to first-time setup...');
             js.F.updateProgress(100);
@@ -146,13 +165,11 @@ async function initializeFiles() {
             js.F.updateProgress(100);
             return true;
         } else {
-            // Check for updates if aupd is set to 'on'
             if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
                 const updateMessage = await checkForUpdates();
                 js.F.updateStatusMessage(updateMessage);
             }
 
-            // Load other files
             await loadFileWithDelay(appDir, 'utils', window.xldbv.mainXLFC);
             if (Array.isArray(window.xldbv.xldbFiles)) {
                 for (const file of window.xldbv.xldbFiles) {
@@ -187,10 +204,6 @@ async function checkForUpdates() {
         const currentVersion = window.xldbv.version;
         if (latestVersion.version !== currentVersion) {
             window.updateAvailable = true;
-            const windowTitle = document.querySelector('.window-title');
-            if (windowTitle) {
-                windowTitle.textContent += ' (Update Available)';
-            }
             js.F.setData('updateAvailable', true);
             return `Update available: ${latestVersion.version}`;
         } else {
@@ -347,9 +360,7 @@ async function saveAllData() {
                 // Format the content before writing
                 const formattedContent = formatJSONString(content);
                 await e.Api.invoke('write-file', filePath, formattedContent);
-            } catch (error) {
-                // Error handling removed
-            }
+            } catch {}
         }
         
         processedFiles++;
@@ -360,9 +371,7 @@ async function saveAllData() {
         updateSaveProgress(100, '');
         try {
             await e.Api.invoke('run-xlstitch');
-        } catch (error) {
-            // Error handling removed
-        }
+        } catch {}
         await new Promise(resolve => setTimeout(resolve, delay));
     }
 
@@ -375,9 +384,7 @@ async function saveAllData() {
             const { data } = await e.Api.invoke('get-file', filePath);
             newData[fileName] = data;
             js.F.setData('preloadedData', data, fileName);
-        } catch (error) {
-            // Error handling removed
-        }
+        } catch {}
 
         processedFiles++;
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -392,9 +399,7 @@ async function saveAllData() {
             // Parse the JSON string back into an object
             newData[mainXLFC] = mainXLFCData;
             js.F.setData('preloadedData', mainXLFCData, mainXLFC);
-        } catch (error) {
-            // Error handling removed
-        }
+        } catch {}
 
         // Update tempData with the new data
         Object.assign(window.tempData, newData);

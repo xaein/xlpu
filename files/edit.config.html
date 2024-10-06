@@ -59,7 +59,7 @@
                     js.F.updateJsF();
                     initializePage();
 
-                } catch (error) {}
+                } catch {}
             }
         }
     </script>
@@ -92,6 +92,7 @@
                 document.getElementById('footerContainer').innerHTML = footerHtml;
                 window.configSections = configSections;
             });
+
 
             await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -160,9 +161,8 @@
                         }
                         js.F.closeDialog('configConfirm');
                     })
-                    .catch(error => {
+                    .catch(() => {
                         js.F.closeDialog('configConfirm');
-                        // Optionally show an error dialog here
                     });
             } else if (action === 'discard') {
                 js.F.loadConfigSection(pendingSection);
@@ -190,18 +190,16 @@
         // Deep comparison function
         // This function performs a deep comparison between two objects
         function isEqual(obj1, obj2) {
-            const keys1 = Object.keys(obj1).sort();
-            const keys2 = Object.keys(obj2).sort();
+            if (obj1 === obj2) return true;
+            if (typeof obj1 !== 'object' || typeof obj2 !== 'object' || obj1 == null || obj2 == null) return false;
 
-            if (keys1.length !== keys2.length) {
-                return false;
-            }
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
 
-            for (let i = 0; i < keys1.length; i++) {
-                const key = keys1[i];
-                if (key !== keys2[i] || obj1[key] !== obj2[key]) {
-                    return false;
-                }
+            if (keys1.length !== keys2.length) return false;
+
+            for (const key of keys1) {
+                if (!keys2.includes(key) || !isEqual(obj1[key], obj2[key])) return false;
             }
 
             return true;
@@ -210,17 +208,22 @@
         // Check for unsaved changes
         // This function checks if there are any unsaved changes in the current section
         function hasUnsavedChanges() {
+            let result;
             switch (currentSection) {
                 case 'general':
-                    return !js.F.isEqual(originalGeneralConfig, js.F.getConfig(currentSection));
+                    result = !js.F.isEqual(originalGeneralConfig, js.F.getConfig(currentSection));
+                    break;
                 case 'triggercmd':
-                    return !js.F.isEqual(originalTriggerCmdConfig, js.F.getConfig(currentSection));
+                    result = !js.F.isEqual(originalTriggerCmdConfig, js.F.getConfig(currentSection));
+                    break;
                 case 'update':
                     const currentConfig = js.F.getConfig(currentSection);
-                    return !js.F.isEqual(originalUpdateConfig, currentConfig);
+                    result = !js.F.isEqual(originalUpdateConfig, currentConfig);
+                    break;
                 default:
-                    return false;
+                    result = false;
             }
+            return result;
         }
 
         // Update save button state
@@ -248,32 +251,46 @@
                 if (currentSection === 'general') {
                     js.F.setData('xlaunchConfig', config);
                     const xlaunchCfgContent = js.F.generateXlaunchCfgContent();
-                    await e.Api.invoke('write-file', xlaunchCfgPath, xlaunchCfgContent);
+                    e.Api.invoke('write-file', xlaunchCfgPath, xlaunchCfgContent);
                     
                     xldbvTemp.favourite = config.favourite;
+                    xldbvTemp.configOpts.tray = {
+                        show: config.tray.show,
+                        minimizeTo: config.tray.minimizeTo,
+                        closeTo: config.tray.closeTo
+                    };
+
+                    await js.F.updateTrayVisibility(config.tray.show);
 
                     if (!skipSaveDialog) {
                         await showSaveConfigDialog('general');
                     }
                 } else if (currentSection === 'triggercmd') {
                     const addToPathCheckbox = document.getElementById('addToPath');
-                    if (addToPathCheckbox && addToPathCheckbox.checked !== xldbvTemp.configOpts.inPath) {
+                    if (addToPathCheckbox && addToPathCheckbox.checked !== xldbvTemp.configOpts.triggercmd.inPath) {
                         if (addToPathCheckbox.checked) {
                             await e.Api.invoke('add-to-path');
-                            xldbvTemp.configOpts.inPath = true;
+                            xldbvTemp.configOpts.triggercmd.inPath = true;
                         } else {
                             await e.Api.invoke('remove-from-path');
-                            xldbvTemp.configOpts.inPath = false;
+                            xldbvTemp.configOpts.triggercmd.inPath = false;
                         }
                     }
-                    xldbvTemp.configOpts = { ...xldbvTemp.configOpts, ...config };
+                    xldbvTemp.configOpts.triggercmd = { ...xldbvTemp.configOpts.triggercmd, ...config };
 
                     if (!skipSaveDialog) {
                         await showSaveConfigDialog('triggercmd');
                     }
                 } else if (currentSection === 'update') {
-                    const autoUpdateValue = document.getElementById('checkUpdate')?.checked ? 'on' : 'off';
-                    xldbvTemp.configOpts.aupd = autoUpdateValue;
+                    xldbvTemp.configOpts.updates = {
+                        autoCheck: document.getElementById('checkUpdate')?.checked,
+                        periodic: {
+                            enable: document.getElementById('periodicUpdateCheck')?.checked,
+                            interval: parseInt(document.getElementById('updateFrequency')?.value, 10)
+                        }
+                    };
+
+                    updatePeriodicCheck();
 
                     if (!skipSaveDialog) {
                         await showSaveConfigDialog('update');
@@ -331,7 +348,8 @@
         function setupConfigurationListeners() {
             const configElements = [
                 'dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
-                'rightEncapsule', 'messageSeperator', 'maxLogEntries', 'favouriteIcon'
+                'rightEncapsule', 'messageSeperator', 'maxLogEntries', 'favouriteIcon',
+                'showTray', 'minimizeToTray', 'closeToTray'
             ];
 
             configElements.forEach(id => {
@@ -354,19 +372,69 @@
                 }, 300));
             }
 
-            const triggerCmdElements = document.querySelectorAll('input[name="triggerCMDUpdateOption"], input[name="triggerCMDAppsOption"], #autoGenerateTriggerCMD, #addToPath');
-            triggerCmdElements.forEach(element => {
+            function setupTriggerCmdListeners() {
+                const triggerCmdElements = [
+                    ...document.querySelectorAll('input[name="triggerCMDUpdateOption"]'),
+                    ...document.querySelectorAll('input[name="triggerCMDAppsOption"]'),
+                    document.getElementById('autoGenerateTriggerCMD'),
+                    document.getElementById('addToPath')
+                ];
+
+                triggerCmdElements.forEach(element => {
+                    if (element) {
+                        element.addEventListener('change', updateSaveButtonState);
+                    }
+                });
+
+                const updateTriggerCMDButton = document.getElementById('updateTriggerCMDFile');
+                if (updateTriggerCMDButton) {
+                    updateTriggerCMDButton.addEventListener('click', js.F.runXltcScript);
+                }
+            }
+
+            const configObserver = new MutationObserver((mutations) => {
+                for (let mutation of mutations) {
+                    if (mutation.type === 'childList') {
+                        const triggerCmdConfig = document.getElementById('triggercmdConfig');
+                        if (triggerCmdConfig) {
+                            setupTriggerCmdListeners();
+                            configObserver.disconnect();
+                            break;
+                        }
+                    }
+                }
+            });
+
+            configObserver.observe(document.getElementById('configDisplay'), { childList: true, subtree: true });
+
+            const updateElements = document.querySelectorAll('#checkUpdate, #periodicUpdateCheck, #updateFrequency');
+            updateElements.forEach(element => {
                 element.addEventListener('change', updateSaveButtonState);
             });
 
-            const updateElement = document.getElementById('checkUpdate');
-            if (updateElement) {
-                updateElement.addEventListener('change', (e) => {
-                    updateSaveButtonState();
-                });
-            }
+            const trayElements = document.querySelectorAll('#showTray, #minimizeToTray, #closeToTray');
+            trayElements.forEach(element => {
+                element.addEventListener('change', updateSaveButtonState);
+            });
         }
 
+        // Update periodic check config
+        // This function updates the periodic check configuration
+        function updatePeriodicCheck() {
+            const updateConfig = window.xldbv.configOpts.updates;
+            
+            if (updateCheckInterval) {
+                clearInterval(updateCheckInterval);
+                updateCheckInterval = null;
+            }
+
+            if (updateConfig.periodic.enable) {
+                js.F.setData('periodicUpdateCheckSetup', false);
+                js.F.setupPeriodicUpdateCheck();
+            } else {
+                js.F.setData('periodicUpdateCheckSetup', false);
+            }
+        }
     </script>
 </body>
 </html>

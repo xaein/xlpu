@@ -1,0 +1,364 @@
+// Dialog styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Container styles
+// Styles for the main launch dialog container
+.launch-dialog {
+    display: none;
+    visibility: hidden;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: $launch-dialog-background-color;
+    border: 2px solid $launch-dialog-border-color;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 0 10px $launch-dialog-box-shadow;
+    width: 300px;
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Specific Font', $font-family;
+
+    // Content styles
+    // Styles for the content area of the dialog
+    .dialog-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-width: 100%;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    // Label styles
+    // Styles for the application name label
+    .app-name-label {
+        width: 100%;
+        text-align: center;
+        font-size: 1.4em;
+        margin: 0 0 10px 0;
+        padding: 5px 0;
+    }
+
+    // Name styles
+    // Styles for the application name display
+    .app-name {
+        width: 100%;
+        text-align: center;
+        font-size: 1.2em;
+        word-wrap: break-word;
+        margin: 0;
+        padding: 5px 0;
+    }
+
+    // Input styles
+    // Styles for the input field to add a new category
+    .add-category-input {
+        width: 90%;
+        padding: 10px;
+        border: 1px solid $launch-dialog-border-color;
+        background-color: $background-color;
+        color: $text-color;
+        margin-top: 10px;
+    }
+
+    // Footer styles
+    // Styles for the footer area of the dialog
+    .dialog-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+
+        // Countdown styles
+        // Styles for the countdown timer
+        .countdown {
+            font-size: 1em;
+        }
+
+        // Button styles
+        // Styles for the close and OK buttons
+        .close-button {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            background-color: $redbutton-background-color;
+            color: $footer-button-text-color;
+            border: 1px solid $redbutton-hover-color;
+            cursor: pointer;
+
+            &:hover {
+                background-color: $redbutton-hover-color;
+            }
+        }
+
+        .ok-button {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            background-color: $greenbutton-background-color;
+            color: $footer-button-text-color;
+            border: 1px solid $greenbutton-hover-color;
+            cursor: pointer;
+
+            &:hover {
+                background-color: $greenbutton-hover-color;
+            }
+        }
+    }
+
+    p {
+        text-align: center;
+        font-size: 0.9em;
+        transition: opacity $transition-duration ease;
+        margin: 0;
+    }
+
+    // Input container styles
+    // Styles for the container holding input fields
+    .input-container {
+        width: 100%;
+
+        .input-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-field {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            label {
+                min-width: 80px; // Adjust this value as needed
+                text-align: right;
+                font-size: 0.9em;
+            }
+
+            input {
+                flex: 1;
+            }
+        }
+    }
+
+    // Add row input styles
+    // Styles for the input field to add a new row
+    .add-row-input {
+        width: 100%;
+        padding: 5px;
+        margin-top: 2px;
+        border: 1px solid $launch-dialog-border-color;
+        background-color: $background-color;
+        color: $text-color;
+    }
+
+    // Progress container styles
+    // Styles for the progress display section
+    .progress-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+    }
+
+    // Progress header styles
+    // Styles for the progress section header
+    .progress-header {
+        text-align: center;
+        width: 100%;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    // Header text styles
+    // Styles for the main header text
+    .header-text {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: $text-color;
+    }
+
+    // Category text styles
+    // Styles for the category or theme name text
+    .category-text {
+        font-size: 1em;
+        color: $text-color;
+        text-align: center;
+        margin-top: 5px;
+        word-wrap: break-word;
+        max-width: 100%;
+    }
+
+    // Progress container styles
+    // Styles for the container holding the progress bar
+    .progress-container {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    // Progress bar styles
+    // Styles for the progress bar itself
+    .progress-bar {
+        position: relative;
+        width: 100%;
+        height: 20px;
+        background-color: $progress-bar-background;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid $table-border-color;
+    }
+
+    // Progress bar fill styles
+    // Styles for the filled portion of the progress bar
+    .progress-bar div:first-child {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        background-color: $progress-bar;
+        transition: width calc($transition-duration * 3) ease-in-out;
+    }
+
+    // Progress text styles
+    // Styles for the text displayed on the progress bar
+    .progress-text {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: $progress-bar-text;
+        font-size: 0.9em;
+        font-weight: bold;
+        transition: color $transition-duration ease-in-out;
+    }
+
+    // Light progress text styles
+    // Styles for the light-colored progress text
+    .progress-text-light {
+        color: $progress-bar-text-changed;
+    }
+
+    // Select file button styles
+    .select-file-button {
+        width: 100%;
+        padding: 10px;
+        background-color: $greenbutton-background-color;
+        color: $footer-button-text-color;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        margin-bottom: 10px;
+        transition: background-color $transition-duration ease;
+
+        &:hover {
+            background-color: $greenbutton-hover-color;
+        }
+    }
+}
+
+// Theme delete dialog styles
+// Styles for the theme deletion confirmation dialog
+#themeDeleteDialog {
+    display: none;
+    visibility: hidden;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: $launch-dialog-background-color;
+    border: 2px solid $launch-dialog-border-color;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 0 10px $launch-dialog-box-shadow;
+    width: 300px;
+    max-width: 80%;
+    font-family: 'Specific Font', $font-family;
+
+    // Dialog content styles
+    // Styles for the content area of the delete dialog
+    .dialog-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-width: 100%;
+        margin-bottom: 10px;
+        text-align: center;
+
+        .app-name-label {
+            width: 100%;
+            text-align: center;
+            font-size: 1.4em;
+            margin: 0 0 10px 0;
+            padding: 5px 0;
+        }
+
+        .app-name {
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            word-wrap: break-word;
+            margin: 0;
+            padding: 5px 0;
+        }
+    }
+
+    // Dialog footer styles
+    // Styles for the footer area of the delete dialog
+    .dialog-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+
+        .close-button {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            background-color: $redbutton-background-color;
+            color: $footer-button-text-color;
+            border: 1px solid $redbutton-hover-color;
+            cursor: pointer;
+
+            &:hover {
+                background-color: $redbutton-hover-color;
+            }
+        }
+
+        .ok-button {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            background-color: $greenbutton-background-color;
+            color: $footer-button-text-color;
+            border: 1px solid $greenbutton-hover-color;
+            cursor: pointer;
+
+            &:hover {
+                background-color: $greenbutton-hover-color;
+            }
+        }
+    }
+}
+
+// Config dialog styles
+// Styles for configuration save and confirm dialogs
+#configSaveDialog,
+#configConfirmDialog {
+    .dialog-content {
+        p {
+            margin-top: 10px;
+            text-align: center;
+        }
+    }
+}

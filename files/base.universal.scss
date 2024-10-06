@@ -1,0 +1,215 @@
+// Universal base styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// HTML and body
+// Basic layout and appearance for HTML and body
+html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: none;
+    background-color: $background-color;
+    color: $text-color;
+    font-family: $font-family;
+}
+
+// Body specific
+// Flex container configuration for body element
+body {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+// Title bar
+// Appearance and behavior for application title bar
+.titlebar {
+    -webkit-app-region: drag;
+    height: 30px;
+    background-color: $title-bar-background-color;
+    padding: 0 0 0 7px;
+    color: $title-bar-text-color;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-shrink: 0;
+
+    .titlebar-icon {
+        height: 16px;
+        width: 16px;
+        margin-right: 3px;
+    }
+}
+
+// Window title
+// Font and positioning for window title text
+.window-title {
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+// Window controls container
+// Layout for window control buttons container
+.window-controls {
+    display: flex;
+    height: 100%;
+    margin-left: auto;
+}
+
+// Title bar button
+// Appearance and behavior for title bar buttons
+.titlebar-button {
+    -webkit-app-region: no-drag;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 46px;
+    height: 100%;
+    border: none;
+    background: transparent;
+    outline: none;
+    color: $title-bar-text-color;
+    transition: background-color $transition-duration;
+    
+    &:hover:not(.help-button) {
+        background-color: $title-bar-button-hover-color;
+    }
+    
+    &.close-button {
+        width: 50px;
+        
+        &:hover {
+            background-color: $close-button-hover-background-color;
+            color: $close-button-hover-text-color;
+        }
+    }
+
+    &.help-button {
+        width: 20px; 
+        font-size: 14px;
+        margin-right: 15px;
+        &:hover {
+            font-weight: bold;
+            color: $greenbutton-background-color;
+        }
+    }
+}
+
+// Footer
+// Appearance settings for footer container
+#footerContainer {
+    background-color: $background-color;
+    border-top: none;
+    padding: 10px 0;
+    z-index: 1;
+}
+
+// Table cell
+// Dimensions and appearance for table cells
+#appTable td {
+    padding: 0;
+    border: none;
+    height: $table-row-height;
+    box-sizing: border-box;
+}
+
+// Tab container
+// Layout and appearance for tab container
+.tab {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid $table-border-color;
+    background-color: $tab-background-color;
+    display: flex;
+    white-space: nowrap;
+}
+
+// Tab button
+// Appearance and behavior for tab buttons
+.tab button {
+    background-color: inherit;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    flex-shrink: 0;
+}
+
+// Tab button hover
+// Hover state appearance for tab buttons
+.tab button:hover {
+    background-color: $table-row-hover-background-color;
+}
+
+// Tab button active
+// Active state appearance for tab buttons
+.tab button.active {
+    background-color: $tab-active-background-color;
+}
+
+// Tab content
+// Layout and appearance for tab content area
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid $table-border-color;
+    border-top: none;
+    overflow-y: auto;
+    flex-grow: 1;
+
+    &.active {
+        display: block;
+    }
+}
+
+// Header
+// Flex behavior for header element
+#header {
+    flex-shrink: 0;
+}
+
+// Content wrapper
+// Layout for main content wrapper
+#contentWrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    margin-bottom: 45px;
+}
+
+// Tab content area
+// Flex behavior and overflow for tab content
+#tabContent {
+    flex-grow: 1;
+    overflow-y: hidden;
+}
+
+// Button container
+// Margin settings for button containers
+.button-container {
+    margin-bottom: 10px;
+}
+
+// Button
+// Appearance for buttons within containers
+.button-container button {
+    background-color: $default-button-color;
+    color: $text-color;
+    border: none;
+    padding: 10px 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+// Root
+// CSS variables for global use
+:root {
+    --table-row-height: #{$table-row-height};
+    --transition-duration: #{$transition-duration};
+}

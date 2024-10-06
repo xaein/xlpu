@@ -55,6 +55,7 @@ function createEditTable(page, rowsPerPage) {
 // Create main table
 // Generates and populates the main table with app entries, applying sorting and filtering
 function createMainTable(page, rowsPerPage, filteredRows) {
+    const favourites = window.xldbf.favourites;
     const rowsToUse = filteredRows || window.rows;
     
     if (rowsPerPage === undefined) {
@@ -73,8 +74,8 @@ function createMainTable(page, rowsPerPage, filteredRows) {
     const sortedRows = rowsToUse.slice().sort((a, b) => {
         const [appNameA] = a.split(',');
         const [appNameB] = b.split(',');
-        const isStarredA = window.xldbf[appNameA];
-        const isStarredB = window.xldbf[appNameB];
+        const isStarredA = favourites.includes(appNameA);
+        const isStarredB = favourites.includes(appNameB);
 
         if (isStarredA && isStarredB) {
             return appNameA.localeCompare(appNameB);
@@ -95,7 +96,7 @@ function createMainTable(page, rowsPerPage, filteredRows) {
         const row = document.createElement('tr');
         row.className = 'table-row';
         const [appName, command] = sortedRows[i].split(',');
-        const isStarred = window.xldbf[appName];
+        const isStarred = favourites.includes(appName);
         
         const starCell = document.createElement('td');
         starCell.className = 'star-column';
@@ -439,17 +440,19 @@ function selectRow(row, appName, isEditPage, isDoubleClick = false) {
 function toggleStar(appName, event) {
     event.stopPropagation();
 
+    const favourites = window.xldbf.favourites;
     const starIcon = event.target.closest('.star-icon');
     if (!starIcon) return;
 
     const favouriteChar = window.xldbv.favourite || '★';
     const animationDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--star-animation-duration')) * 1000 || 300;
 
-    if (window.xldbf[appName]) {
-        delete window.xldbf[appName];
+    const favouriteIndex = favourites.indexOf(appName);
+    if (favouriteIndex !== -1) {
+        favourites.splice(favouriteIndex, 1);
         starIcon.classList.remove('starred', 'animate');
     } else {
-        window.xldbf[appName] = true;
+        favourites.push(appName);
         starIcon.classList.add('starred', 'animate');
     }
 

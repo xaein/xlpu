@@ -42,7 +42,7 @@ async function compileSassThemes(themeName, progressCallback, baseDir = __dirnam
 
         return true;
     } catch (error) {
-        console.error('Error during theme compilation:', error);
+        
         return false;
     }
 }
@@ -64,7 +64,7 @@ async function convertJsonToScss(jsonFilePath, scssFilePath) {
 
         await fs.writeFile(scssFilePath, scssContent);
     } catch (error) {
-        console.error('Error converting JSON to SCSS:', error);
+        
         throw error;
     }
 }
@@ -79,7 +79,7 @@ async function compileSass(file, includePath) {
         });
         return result;
     } catch (error) {
-        console.error(`Error compiling Sass file ${file}:`, error);
+        
         throw error;
     }
 }
@@ -90,7 +90,7 @@ async function cleanDirectory(directory) {
     try {
         await fs.emptyDir(directory);
     } catch (error) {
-        console.error('Error cleaning directory:', error);
+        
         throw error;
     }
 }
@@ -100,7 +100,7 @@ async function cleanDirectory(directory) {
 if (require.main === module) {
     const themeName = process.argv.slice(2).join(' ').trim();
     if (!themeName) {
-        console.error('No theme name provided. Usage: npm run themebuilder -- "theme name"');
+        
         process.exit(1);
     }
     
@@ -111,12 +111,12 @@ if (require.main === module) {
             if (success) {
                 // Success handling (left empty as per original code)
             } else {
-                console.error(`Failed to compile theme "${themeName}"`);
+                
                 process.exit(1);
             }
         })
         .catch(error => {
-            console.error(`Error compiling theme "${themeName}":`, error);
+            
             process.exit(1);
         });
 }

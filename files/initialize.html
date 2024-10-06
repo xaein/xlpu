@@ -48,7 +48,10 @@
                 if (scriptName === 'common' && typeof window.commonFunctions !== 'undefined') {
                     js.F = { ...window.commonFunctions };
                 }
-                if (typeof window.commonFunctions !== 'undefined' && typeof window.loadsave !== 'undefined') {
+                if (typeof window.commonFunctions !== 'undefined' && 
+                    typeof window.loadsave !== 'undefined' && 
+                    typeof window.systrayFunctions !== 'undefined' &&
+                    typeof window.conversioncheckFunctions !== 'undefined') {
                     js.F.updateJsF();
                     initializePage();
                 }
@@ -58,6 +61,8 @@
 
     <script src="common/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
     <script src="common/loadsave.js" onload="handleScriptLoad('loadsave', true)" onerror="handleScriptLoad('loadsave', false)" defer></script>
+    <script src="common/systray.js" onload="handleScriptLoad('systray', true)" onerror="handleScriptLoad('systray', false)" defer></script>
+    <script src="common/conversioncheck.js" onload="handleScriptLoad('conversioncheck', true)" onerror="handleScriptLoad('conversioncheck', false)" defer></script>
 
     <script>
         // Progress update
@@ -120,9 +125,12 @@
             const delay = window.delay * 2;
             
             try {
-                await js.F.initializeFiles();
-                window.xldbv = js.F.getData('xldbv');
-                window.xldbf = js.F.getData('xldbf');
+                // Initialize files first
+                const isFirstRun = await js.F.initializeFiles();
+                
+                // Now initialize the system tray
+                await js.F.initializeTray();
+                js.F.updateTrayMenu(window.xldbf.recent || []);
 
                 const firstRun = window.xldbv.firstRun;
 

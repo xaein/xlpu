@@ -216,7 +216,7 @@ class Program
         {
             string fileName = Path.GetFileName(srcFile);
             if ((isBaseFolder && (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase) && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))) ||
-                (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))))
+                (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".scss", StringComparison.OrdinalIgnoreCase))))
             {
                 string relativePath = GetRelativePath(rootSourceDir, srcFile);
                 string destFilePath = Path.Combine(destFolder, fileName);
@@ -227,7 +227,7 @@ class Program
                     // Add the file to the appropriate section in the new JSON
                     if (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase))
                     {
-                        newMainFilesSection[fileName] = true;
+                        newMainFilesSection[fileName] = 0;
                     }
                     else
                     {

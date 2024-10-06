@@ -36,7 +36,7 @@ async function applySelectedTheme() {
                 throw new Error('Theme compilation failed');
             }
         } catch (error) {
-            console.error("Error in applySelectedTheme:", error);
+            
             await new Promise(resolve => setTimeout(resolve, delay));
             updateApplyButtonState();
             js.F.closeDialog('applyTheme');
@@ -75,7 +75,7 @@ async function compileAndApplyTheme() {
             throw new Error('Theme compilation failed');
         }
     } catch (error) {
-        console.error("Error in compileAndApplyTheme:", error);
+        
         return false;
     } finally {
         e.Api.removeListener('theme-compile-progress');
@@ -114,9 +114,7 @@ async function importTheme() {
             await loadThemeList();
             await selectTheme(importResult.themeName);
         }
-    } catch (error) {
-        console.error('Error importing theme:', error);
-    }
+    } catch {}
 }
 
 // Load theme data
@@ -166,7 +164,7 @@ async function loadThemeList() {
             
             selectTheme(window.xldbv.currentTheme);
         }
-    } catch (error) {}
+    } catch {}
 }
 
 // Preview theme
@@ -246,8 +244,7 @@ async function themePageSetup() {
         await previewTheme(window.currentTheme);
         updateApplyButtonState();
         js.F.adjustPreviewTableRows();
-    } catch (error) {
-    } finally {
+    } catch {} finally {
         isThemePageSetupRunning = false;
     }
 }

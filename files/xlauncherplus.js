@@ -1,5 +1,5 @@
 // Electron app dependencies
-const { app, BrowserWindow, ipcMain, dialog, screen } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Notification, screen, Tray } = require('electron');
 
 // Node.js core modules
 const path = require('path');
@@ -21,7 +21,7 @@ const FileSystemOperations = require('./xlauncherplusfs');
 const TriggerCmdGenerator = require('./utils/xltc.js');
 const xlstitch = require('./utils/xlstitch');
 
-// Define directories
+// Define directories and paths
 const pagesDir = app.isPackaged 
     ? path.join(process.resourcesPath, 'app', 'pages')
     : path.join(__dirname, 'pages');
@@ -29,6 +29,13 @@ const utilsDir = app.isPackaged
     ? path.join(process.resourcesPath, 'app', 'utils')
     : path.join(__dirname, 'utils');
 const fsOps = new FileSystemOperations(__dirname);
+
+// Define icon paths
+const iconPath = path.join(pagesDir, 'common', process.platform === 'win32' ? 'xlauncherplus.ico' : 'xlauncherplus.png');
+const trayIconPath = path.join(pagesDir, 'common', 'xlauncherplus.png');
+
+// Add this variable declaration near the top, after other let declarations
+let tray = null;
 
 // Safe IPC handler
 // Ensures only one handler exists for each channel
@@ -84,6 +91,14 @@ safeIpc('compile-theme', async (event, themeName, delay) => {
         return success;
     } catch (error) {
         return false;
+    }
+});
+
+// Create tray
+// Creates the system tray icon if it doesn't exist
+safeIpc('create-tray', () => {
+    if (!tray) {
+        createTray();
     }
 });
 
@@ -241,6 +256,64 @@ safeIpc('run-xlstitch', async (event) => {
     }
 });
 
+// Show notification
+// Displays a desktop notification
+safeIpc('show-notification', (event, title, body) => {
+    if (Notification.isSupported()) {
+        new Notification({ title, body }).show();
+    }
+});
+
+// Show tray balloon
+// Displays a balloon notification from the tray icon
+safeIpc('show-tray-balloon', (event, title, content) => {
+    showTrayBalloon(title, content);
+});
+
+// Update tray menu
+// Updates the system tray context menu with recent apps
+safeIpc('update-tray-menu', (event, recentApps) => {
+    updateTrayMenu(recentApps);
+});
+
+// Update tray visibility
+// Shows or hides the system tray icon
+safeIpc('update-tray-visibility', (event, show) => {
+    const xldbv = fsOps.getVariables(utilsDir);
+    xldbv.configOpts.showTray = show;
+    fsOps.updateVars(path.join(utilsDir, 'xldbv.json'), xldbv);
+    createTray();
+});
+
+// Functions
+// This section contains various utility functions used throughout the application
+
+// Create tray
+// Creates the system tray icon and initializes its menu
+function createTray() {
+    const xldbv = fsOps.getVariables(utilsDir);
+    const showTray = xldbv && xldbv.configOpts && xldbv.configOpts.showTray !== false;
+
+    if (showTray && !tray) {
+        const trayIcon = nativeImage.createFromPath(trayIconPath);
+        tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
+        tray.setToolTip('xLauncher Plus');
+        updateTrayMenu([]);
+
+        tray.on('double-click', () => {
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+                if (mainWindow.isMinimized()) mainWindow.restore();
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        });
+    } else if (!showTray && tray) {
+        tray.destroy();
+        tray = null;
+    }
+}
+
 // Run xltcp
 // Execute the xltcp utility
 function runXltcp(action) {
@@ -265,6 +338,51 @@ function runXltcp(action) {
         });
     });
 }
+
+// Show tray balloon
+// Displays a balloon notification from the tray icon on Windows
+function showTrayBalloon(title, content) {
+    if (process.platform === 'win32' && tray) {
+        tray.displayBalloon({
+            icon: iconPath,
+            title: title,
+            content: content
+        });
+    }
+}
+
+// Update tray menu
+// Updates the system tray context menu with the provided list of recent apps
+function updateTrayMenu(recentApps) {
+    if (!tray) return;
+
+    const contextMenu = Menu.buildFromTemplate([
+        { label: 'Open xLauncher Plus', click: () => {
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        }},
+        { type: 'separator' },
+        {
+            label: 'Recent',
+            submenu: recentApps.length > 0 ? recentApps.map(app => ({
+                label: app.name,
+                click: () => {
+                    safeIpc('launch-app', app.name);
+                }
+            })) : [{ label: 'No recent apps', enabled: false }]
+        },
+        { type: 'separator' },
+        { label: 'Exit', click: () => app.quit() }
+    ]);
+
+    tray.setContextMenu(contextMenu);
+}
+
+// Logging setup
+// This function sets up console logging for the renderer process
 
 // Setup logging
 // Configures console logging with prefixes based on message level
@@ -356,10 +474,28 @@ function createWindow() {
     // Handle window close event
     mainWindow.on('close', (event) => {
         if (!isExiting) {
-            event.preventDefault();
-            mainWindow.webContents.send('app-closing');
+            const xldbv = fsOps.getVariables(utilsDir);
+            if (xldbv && xldbv.configOpts && xldbv.configOpts.closeToTray) {
+                event.preventDefault();
+                mainWindow.hide();
+            } else {
+                event.preventDefault();
+                mainWindow.webContents.send('app-closing');
+            }
         }
     });
+
+    // Handle window minimize event
+    mainWindow.on('minimize', (event) => {
+        const xldbv = fsOps.getVariables(utilsDir);
+        if (xldbv && xldbv.configOpts && xldbv.configOpts.minimizeToTray) {
+            event.preventDefault();
+            mainWindow.hide();
+        }
+    });
+
+    // Initialize system tray icon and menu
+    createTray();
 }
 
 
@@ -377,7 +513,12 @@ app.whenReady().then(async () => {
 // Window closed
 // Quits the app when all windows are closed (except on macOS)
 app.on('window-all-closed', () => {
-    app.quit();
+    if (process.platform !== 'darwin') {
+        if (tray) {
+            tray.destroy();
+        }
+        app.quit();
+    }
 });
 
 app.on('before-quit', () => {

@@ -1,5 +1,7 @@
 // General utility functions
 
+let updateCheckInterval;
+
 // Debounce function
 // Limits the rate of function calls
 function debounce(func, delay) {
@@ -109,9 +111,7 @@ async function loadTitleBar() {
                 windowTitle.textContent += ' (Update Available)';
             }
         }
-    } catch (error) {
-        // Error handling removed
-    }
+    } catch {}
 }
 
 // Navigation function
@@ -152,9 +152,7 @@ async function removeFile(filePath) {
         if (!result) {
             throw new Error('Failed to remove file');
         }
-    } catch (error) {
-        // Error handling removed
-    }
+    } catch {}
 }
 
 // Set data
@@ -202,7 +200,7 @@ function setupFooterButtons(currentPage) {
                 if (js.F.applySelectedTheme) {
                     js.F.applySelectedTheme();
                 } else {
-                    console.error("applySelectedTheme function not found in js.F");
+                    
                 }
             };
             footerLeftButton.disabled = true;
@@ -255,6 +253,41 @@ function setupHeaderNavigation(currentPage) {
     });
 
     setupSearch(currentPage === 'launchlist');
+}
+
+// Setup periodic update check
+// Configures the interval for periodic update checks
+function setupPeriodicUpdateCheck() {
+    // Check if periodic update check has already been set up
+    if (js.F.getData('periodicUpdate') === true) {
+        
+        return;
+    }
+
+    const xldbvData = js.F.getData('xldbv');
+    if (!xldbvData || !xldbvData.configOpts || !xldbvData.configOpts.updates) {
+        
+        return;
+    }
+
+    const updateConfig = xldbvData.configOpts.updates;
+    if (updateConfig.periodic.enable) {
+        const intervalHours = updateConfig.periodic.interval;
+        const intervalMs = intervalHours * 60 * 60 * 1000;
+        updateCheckInterval = setInterval(() => {
+            if (typeof js.F.checkForUpdates === 'function') {
+                js.F.checkForUpdates(true);
+            } else {
+                
+            }
+        }, intervalMs);
+        
+        
+        // Mark that periodic update check has been set up
+        js.F.setData('periodicUpdate', true);
+    } else {
+        
+    }
 }
 
 // Setup search functionality
@@ -334,19 +367,25 @@ async function updateFavoritesOnExit() {
             return false;
         }
 
-        const cleanedXldbfData = Object.fromEntries(
-            Object.entries(xldbfData)
-                .filter(([key, value]) => typeof key === 'string' && typeof value === 'boolean')
-        );
+        const cleanedXldbfData = {
+            favourites: Array.isArray(xldbfData.favourites) 
+                ? xldbfData.favourites.filter(item => typeof item === 'string')
+                : [],
+            recent: Array.isArray(xldbfData.recent)
+                ? xldbfData.recent.filter(item => typeof item === 'string')
+                : []
+        };
 
-        if (Object.keys(cleanedXldbfData).length === 0) {
+        if (cleanedXldbfData.favourites.length === 0 && cleanedXldbfData.recent.length === 0) {
             return false;
         }
 
-        const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
-        if (!xldbfResult) {
-            return false;
+        const result = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
+        
+        if (!result) {
+            throw new Error('Failed to update xldbf.json');
         }
+        
         return true;
     } catch (error) {
         return false;
@@ -366,21 +405,35 @@ function updateJsF() {
 // Update variables on exit
 // Saves the current state of xldbv
 async function updateVariablesOnExit() {
+    
     const xldbvData = js.F.getData('xldbv');
+    
     try {
         const baseDir = await e.Api.invoke('get-app-dir');
+        
         const utilsDir = xldbvData.directories.utils;
+        
         const xldbvPath = js.F.joinPath(baseDir, utilsDir, 'xldbv.json');
+        
 
+        
         if (!validateXldbvJson(xldbvData)) {
+            
             throw new Error('Invalid xldbv.json structure');
         }
+        
+
+        
         const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, xldbvData);
+        
         if (!xldbvResult) {
+            
             throw new Error('Failed to save xldbv.json');
         }
+        
         return true;
     } catch (error) {
+        
         return false;
     }
 }
@@ -388,7 +441,11 @@ async function updateVariablesOnExit() {
 // Validate xldbv.json structure
 // Checks if the xldbv data object is valid
 function validateXldbvJson(data) {
+    
+    
+
     if (typeof data !== 'object' || data === null) {
+        
         return false;
     }
 
@@ -400,28 +457,32 @@ function validateXldbvJson(data) {
 
     for (const field of requiredStringFields) {
         if (typeof data[field] !== 'string') {
+            
             return false;
         }
     }
 
     const versionRegex = /^\d+\.\d+\.\d+$/;
     if (!versionRegex.test(data.version)) {
+        
         return false;
     }
 
-    // Check for firstRun variable
     if (typeof data.firstRun !== 'number' || ![0, 1, 2].includes(data.firstRun)) {
+        
         return false;
     }
 
     for (const field of requiredObjectFields) {
         if (typeof data[field] !== 'object' || data[field] === null) {
+            
             return false;
         }
     }
 
     for (const field of requiredArrayFields) {
         if (!Array.isArray(data[field])) {
+            
             return false;
         }
     }
@@ -429,46 +490,83 @@ function validateXldbvJson(data) {
     const requiredDirectories = ['utils', 'xldb', 'themes', 'loadScripts'];
     for (const dir of requiredDirectories) {
         if (typeof data.directories[dir] !== 'string') {
+            
             return false;
         }
     }
 
     if (typeof data.rows.main !== 'number' || typeof data.rows.edit !== 'number') {
+        
         return false;
     }
 
-    const configOptsValidValues = {
-        tcuo: ['keep', 'overwrite'],
-        tcao: ['all', 'favourited'],
-        tcag: ['on', 'off', true, false],
-        inPath: [true, false],
-        aupd: ['on', 'off', true, false]
-    };
-
-    if (!data.configOpts) {
+    // Validate configOpts
+    const { configOpts } = data;
+    if (!configOpts || typeof configOpts !== 'object') {
+        
         return false;
     }
 
-    for (const [field, validValues] of Object.entries(configOptsValidValues)) {
-        if (!(field in data.configOpts)) {
-            return false;
-        } else if (field === 'tcag' || field === 'aupd') {
-            if (typeof data.configOpts[field] === 'boolean') {
-                data.configOpts[field] = data.configOpts[field] ? 'on' : 'off';
-            } else if (typeof data.configOpts[field] !== 'string' || !validValues.includes(data.configOpts[field])) {
-                return false;
-            }
-        } else if (field === 'inPath') {
-            if (typeof data.configOpts[field] !== 'boolean') {
-                return false;
-            }
-        } else {
-            if (typeof data.configOpts[field] !== 'string' || !validValues.includes(data.configOpts[field])) {
-                return false;
-            }
+    // Ensure configOpts only contains the expected objects and remove any unexpected properties
+    const expectedConfigOpts = ['tray', 'triggercmd', 'updates'];
+    for (const key in configOpts) {
+        if (!expectedConfigOpts.includes(key)) {
+            
+            delete configOpts[key];
         }
     }
 
+    // Validate tray options
+    if (!configOpts.tray || typeof configOpts.tray !== 'object') {
+        
+        return false;
+    }
+
+    const trayOptions = ['show', 'minimizeTo', 'closeTo'];
+    for (const option of trayOptions) {
+        if (typeof configOpts.tray[option] !== 'boolean') {
+            
+            
+            return false;
+        }
+    }
+
+    // Validate triggercmd options
+    if (!configOpts.triggercmd || typeof configOpts.triggercmd !== 'object') {
+        
+        return false;
+    }
+
+    const triggerCmdOptions = {
+        overwriteFile: ['keep', 'overwrite'],
+        addCommands: ['all', 'favourited'],
+        autoGenerate: [true, false],
+        inPath: [true, false]
+    };
+    for (const [option, validValues] of Object.entries(triggerCmdOptions)) {
+        if (!validValues.includes(configOpts.triggercmd[option])) {
+            
+            
+            return false;
+        }
+    }
+
+    // Validate update options
+    if (!configOpts.updates || typeof configOpts.updates !== 'object') {
+        
+        return false;
+    }
+
+    if (typeof configOpts.updates.autoCheck !== 'boolean' ||
+        typeof configOpts.updates.periodic !== 'object' ||
+        typeof configOpts.updates.periodic.enable !== 'boolean' ||
+        typeof configOpts.updates.periodic.interval !== 'number') {
+        
+        
+        return false;
+    }
+
+    
     return true;
 }
 
@@ -480,9 +578,7 @@ async function writeFile(filePath, content) {
         if (!result) {
             throw new Error('Failed to write file');
         }
-    } catch (error) {
-        // Error handling removed
-    }
+    } catch {}
 }
 
         
@@ -500,8 +596,9 @@ e.Api.on('app-closing', async () => {
 });
 
 // Load title bar when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     loadTitleBar();
+    setupPeriodicUpdateCheck();
 });
 
 // Export common functions

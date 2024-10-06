@@ -1,0 +1,87 @@
+// Theme Preview Styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Dynamic Preview Styles
+// Root variables for theme preview customization
+:root {
+  --preview-title-bar-background-color: #{$title-bar-background-color};
+  --preview-title-bar-text-color: #{$title-bar-text-color};
+  --preview-title-bar-button-hover-color: #{$title-bar-button-hover-color};
+  --preview-font-family: #{$font-family};
+  --preview-background-color: #{$background-color};
+  --preview-text-color: #{$text-color};
+  --preview-text-color-muted: #{$text-color-muted};
+  --preview-transition-duration: #{$transition-duration};
+  --preview-border-color: #{$border-color};
+  --preview-table-border-color: #{$table-border-color};
+  --preview-table-row-height: #{$table-row-height};
+  --preview-table-row-hover-background-color: #{$table-row-hover-background-color};
+  --preview-table-row-selected-background-color: #{$table-row-selected-background-color};
+  --preview-table-header-text-color: #{$table-header-text-color};
+  --preview-table-header-background-color: #{$table-header-background-color};
+  --preview-default-button-color: #{$default-button-color};
+  --preview-default-button-color-dark: #{$default-button-color-dark};
+  --preview-default-button-color-darker: #{$default-button-color-darker};
+  --preview-default-button-color-darkest: #{$default-button-color-darkest};
+  --preview-default-button-color-light: #{$default-button-color-light};
+  --preview-greenbutton-background-color: #{$greenbutton-background-color};
+  --preview-greenbutton-hover-color: #{$greenbutton-hover-color};
+  --preview-redbutton-background-color: #{$redbutton-background-color};
+  --preview-redbutton-hover-color: #{$redbutton-hover-color};
+  --preview-category-button-add-hover-color: #{$category-button-add-hover-color};
+  --preview-category-button-remove-hover-color: #{$category-button-remove-hover-color};
+  --preview-tab-background-color: #{$tab-background-color};
+  --preview-tab-active-background-color: #{$tab-active-background-color};
+  --preview-footer-button-text-color: #{$footer-button-text-color};
+  --preview-footer-background-color: #{$footer-background-color};
+  --preview-launch-dialog-background-color: #{$launch-dialog-background-color};
+  --preview-launch-dialog-border-color: #{$launch-dialog-border-color};
+  --preview-launch-dialog-box-shadow: #{$launch-dialog-box-shadow};
+  --preview-close-button-background-color: #{$close-button-background-color};
+  --preview-close-button-hover-color: #{$close-button-hover-color};
+  --preview-close-button-text-color: #{$close-button-text-color};
+  --preview-close-button-border-color: #{$close-button-border-color};
+  --preview-close-button-hover-background-color: #{$close-button-hover-background-color};
+  --preview-close-button-hover-text-color: #{$close-button-hover-text-color};
+  --preview-progress-bar-background: #{$progress-bar-background};
+  --preview-progress-bar: #{$progress-bar};
+  --preview-progress-bar-secondary: #{$progress-bar-secondary};
+  --preview-progress-bar-text: #{$progress-bar-text};
+  --preview-progress-bar-text-changed: #{$progress-bar-text-changed};
+  --preview-launch-button-enabled-color: #{$launch-button-enabled-color};
+  --preview-launch-button-disabled-color: #{$launch-button-disabled-color};
+  --preview-header-background-color: #{$header-background-color};
+  --preview-star-color: #{$star-color};
+  --preview-starred-color: #{$starred-color};
+  --preview-pagination-font-size: #{$pagination-font-size};
+  --preview-input-background-color: #{$input-background-color};
+  --preview-input-border-color: #{$input-border-color};
+  --preview-input-text-color: #{$input-text-color};
+  --preview-scrollbar-track-color: #{$scrollbar-track-color};
+  --preview-scrollbar-thumb-color: #{$scrollbar-thumb-color};
+  --preview-scrollbar-thumb-hover-color: #{$scrollbar-thumb-hover-color};
+  --preview-theme-list-background-color: #{$theme-list-background-color};
+  --preview-main-table-highlight-width: #{$main-table-highlight-width};
+  --preview-main-table-highlight-height: #{$main-table-highlight-height};
+  --preview-main-table-highlight-point-depth: #{$main-table-highlight-point-depth};
+  --preview-main-table-highlight-corner-radius: #{$main-table-highlight-corner-radius};
+  --preview-main-table-hover-color: #{$main-table-hover-color};
+  --preview-main-table-selected-color: #{$main-table-selected-color};
+  --preview-theme-current-background-color: #{$theme-current-background-color};
+  --preview-theme-current-text-color: #{$theme-current-text-color};
+  --preview-theme-selected-background-color: #{$theme-selected-background-color};
+  --preview-theme-selected-text-color: #{$theme-selected-text-color};
+
+  // Miscellaneous preview variables
+  --preview-favorite-icon: #{$star-color};
+  --preview-favorited-icon: #{$starred-color};
+  --preview-progress-bar-background-color: #{$progress-bar-background};
+  --preview-progress-bar-fill-color: #{$progress-bar};
+  --preview-progress-bar-secondary-fill-color: #{$progress-bar-secondary};
+
+  // Computed styles
+  --preview-tab-hover-background-color: #{color.scale($tab-background-color, $lightness: -10%)};
+  --preview-heading-color: #{$greenbutton-background-color};
+}

@@ -1,0 +1,156 @@
+// Logging styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Container styles
+// Sets up the layout for the footer and log container
+.footer {
+    background-color: $background-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 24px);
+    padding: 10px 12px;
+}
+
+#footerContainer {
+    flex: 0 0 20px;
+    border-top: none;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background-color: $background-color;
+    margin-top: 0;
+}
+
+// Section styles
+// Defines layout for left and right footer sections
+.footer-left, .footer-right {
+    display: flex;
+    align-items: center;
+}
+
+// Button styles
+// Shared styles for footer buttons
+.redbutton, .greenbutton {
+    padding: 6px 12px;
+    font-size: 0.9em;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color $transition-duration ease;
+    color: $footer-button-text-color;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &:hover:not(:disabled) {
+        background-color: color.scale($redbutton-background-color, $lightness: -10%);
+    }
+}
+
+// Red button styles
+// Specific styles for red buttons
+.redbutton {
+    background-color: $redbutton-background-color;
+
+    &:hover:not(:disabled) {
+        background-color: $redbutton-hover-color;
+    }
+}
+
+// Green button styles
+// Specific styles for green buttons
+.greenbutton {
+    background-color: $greenbutton-background-color;
+
+    &:hover:not(:disabled) {
+        background-color: $greenbutton-hover-color;
+    }
+
+    &:disabled {
+        background-color: $launch-button-disabled-color;
+    }
+}
+
+// Launch button styles
+// Styles for the launch button in the footer
+#footerLeftButton {
+    &:disabled {
+        background-color: $launch-button-disabled-color;
+    }
+
+    &:not(:disabled) {
+        background-color: $launch-button-enabled-color;
+    }
+}
+
+// Log container styles
+// Styles for the main log container
+.log-container {
+    height: calc(100vh - 150px);
+    padding: 10px;
+    background-color: $background-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+// Log content styles
+// Styles for the log content area
+.log-content {
+    height: 100%;
+    width: 100%;
+    background-color: color.scale($background-color, $lightness: -5%);
+    color: $text-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    box-sizing: border-box;
+    padding: 10px;
+    overflow: auto;
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+// Log text styles
+// Styles for normal and error log entries
+.log-error, .log-normal {
+    display: block;
+    margin: -7px;
+    padding: -7px;
+}
+
+.log-normal {
+    color: $greenbutton-background-color;
+}
+
+.log-error {
+    color: $redbutton-background-color;
+}
+
+// Scrollbar styles
+// Custom scrollbar appearance for webkit browsers
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: $scrollbar-track-color;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $scrollbar-thumb-color;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $scrollbar-thumb-hover-color;
+}

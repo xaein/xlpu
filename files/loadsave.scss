@@ -1,0 +1,250 @@
+// Load and save styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Container styles
+// Sets up the layout for the loading container
+#loadingContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: calc(100% - 40px);
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+// Text styles
+// Defines the appearance of the initialization text
+.init-text {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-align: center;
+    color: $text-color;
+}
+
+// Progress bar container
+// Styles for the container holding the progress bar
+.progress-container {
+    position: relative;
+    width: 80%;
+    height: 30px;
+    margin-bottom: 10px;
+}
+
+// Progress bar
+// Styles for the progress bar and its fill
+.progress-bar {
+    width: 100%;
+    height: 100%;
+    background-color: $progress-bar-background;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    width: 0;
+    height: 100%;
+    background-color: $progress-bar;
+    transition: width calc($transition-duration * 3) ease-out;
+}
+
+// Progress text
+// Styles for the text displayed on the progress bar
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: $progress-bar-text;
+    transition: color calc($transition-duration * 2) ease-in-out;
+}
+
+.progress-text-light {
+    color: $progress-bar-text-changed;
+}
+
+// Files container
+// Styles for the container holding file information
+#filesContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    height: 60px;
+    overflow: hidden;
+}
+
+// File text styles
+// Styles for displaying current file and category
+#currentFile, #categoryFile {
+    font-size: 1.2em;
+    text-align: center;
+    color: $text-color;
+}
+
+// File display area
+// Styles for the area displaying loaded files
+#fileDisplayArea {
+    height: 70px;
+    width: 80%;
+    overflow: hidden;
+    position: relative;
+    margin-top: -15px;
+}
+
+// Loaded files container
+// Styles for the container of loaded files
+#loadedFiles {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+// Loaded file
+// Styles for individual loaded file entries
+.loaded-file {
+    font-size: 1em;
+    opacity: 1;
+    transition: all 1s ease-out;
+    transform: translateY(0);
+    text-align: center;
+    color: $text-color;
+}
+
+.loaded-file.fade-out {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+// Status message container
+// Styles for the status message container
+#statusMessageContainer {
+    height: 40px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+// Status message
+// Styles for the status message display
+#statusMessage {
+    font-size: 1.2em;
+    text-align: center;
+    color: $text-color;
+    word-wrap: break-word;
+    max-width: 80%;
+}
+
+// Save dialog
+// Styles for the save dialog box
+.save-dialog {
+    display: none;
+    visibility: hidden;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: $launch-dialog-background-color;
+    border: 1px solid $launch-dialog-border-color;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 0 10px $launch-dialog-box-shadow;
+    width: 400px;
+    max-width: 80%;
+    font-family: $font-family;
+
+    .save-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .save-progress-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .save-header, .reload-header {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .save-header-main, .reload-header-main,
+    .save-header-sub, .reload-header-sub {
+        font-size: 1em;
+        color: $text-color;
+    }
+
+    .save-header-category, .reload-header-category {
+        font-size: 0.9em;
+        color: $text-color-muted;
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .save-progress-container {
+        position: relative;
+        width: 100%;
+        height: 20px;
+        margin: 10px 0;
+    }
+
+    .save-percentage, .reload-percentage {
+        position: absolute;
+        font-size: 0.8em;
+        font-weight: bold;
+        color: $text-color;
+    }
+
+    .save-percentage {
+        top: -20px;
+        left: 0;
+    }
+
+    .reload-percentage {
+        bottom: -20px;
+        right: 0;
+    }
+
+    .save-progress-bar {
+        width: 100%;
+        height: 100%;
+        background-color: var(--progress-bar-background);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid $table-border-color;
+    }
+
+    #saveProgressBar {
+        width: 0;
+        height: 100%;
+        background-color: $progress-bar;
+        transition: var(--progress-bar-transition);
+
+        &.reloading {
+            background-color: $progress-bar-secondary;
+        }
+    }
+}
+
+// Root variables
+// Defines CSS variables for global use
+:root {
+  --progress-bar-background: #{$progress-bar-background};
+  --progress-bar-background-replace: #{$progress-bar};
+  --progress-bar-transition: width calc(#{$transition-duration} * 2) ease-out;
+}

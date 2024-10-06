@@ -1,0 +1,102 @@
+// Welcome page styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Page layout
+// Sets up the basic structure for the welcome page
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+// Body styles
+// Defines the overall layout and background for the page
+body {
+    display: flex;
+    flex-direction: column;
+    background-color: $background-color;
+}
+
+// Welcome container
+// Defines the main content area for the welcome page
+#welcome-container {
+    flex: 1;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    color: $text-color;
+    overflow-y: auto;
+}
+
+// Main heading styles
+// Defines the appearance of main headings
+h1 {
+    color: $greenbutton-background-color;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+// Secondary heading styles
+// Defines the appearance of secondary headings
+h2 {
+    color: $greenbutton-background-color;
+    margin-top: 30px;
+}
+
+// List styles
+// Defines the appearance of unordered and ordered lists
+ul, ol {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+// List item styles
+// Defines the spacing between list items
+li {
+    margin-bottom: 10px;
+}
+
+// Green button styles
+// Defines the appearance and behavior of the green button
+.green-button {
+    background-color: $greenbutton-background-color;
+    color: $footer-button-text-color;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    display: block;
+    margin: 30px auto;
+    transition: background-color 0.3s;
+
+    &:hover {
+        background-color: $greenbutton-hover-color;
+    }
+}
+
+// Help link styles
+// Defines the appearance and behavior of the help link
+.help-link {
+    color: $greenbutton-background-color;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color $transition-duration;
+
+    &:hover {
+        color: $greenbutton-hover-color;
+    }
+}
+
+// Media query for smaller screens
+// Adjusts layout for smaller screens
+@media (max-height: 600px) {
+    #welcome-container {
+        padding-bottom: 60px;
+    }
+}

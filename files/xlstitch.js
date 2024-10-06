@@ -48,9 +48,7 @@ async function xlstitch(appDir) {
                     try {
                         const parsedContent = JSON.parse(fileContent.data);
                         Object.assign(allData, parsedContent);
-                    } catch (parseError) {
-                        // Silently continue if parsing fails
-                    }
+                    } catch {}
                 }
             }
             return allData;

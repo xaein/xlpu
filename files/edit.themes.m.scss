@@ -1,0 +1,450 @@
+// Theme editor styles
+
+@use "sass:color";
+@import 'base.theme';
+
+// Body layout
+// Sets up the basic page structure
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+// Main content
+// Styles for the primary content area
+#mainContent {
+  flex: 1;
+  overflow: auto;
+}
+
+// Bottom wrapper
+// Container for the bottom section of the page
+#bottomWrapper {
+  width: 100%;
+}
+
+// Footer
+// Styles for the page footer
+.footer {
+  border-top: 1px solid $table-border-color;
+}
+
+// Theme content
+// Layout for the theme editing content area
+.theme-content {
+  display: flex;
+  padding: 0px;
+  gap: 5px;
+  height: calc(100% - 29px);
+  width: calc(100% - 1px);
+}
+
+// Theme sidebar
+// Styles for the theme list sidebar
+.theme-sidebar {
+  flex: 0 0 160px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+// Theme list containers
+// Styles for the outer and inner theme list containers
+.theme-list-outer-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  background-color: $theme-list-background-color;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  padding: 5px;
+  min-height: 0;
+}
+
+.theme-list-inner-container {
+  flex: 1 1 auto;
+  background-color: color.scale($theme-list-background-color, $lightness: -5%);
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+// Theme list
+// Styles for the list of themes
+#themeList {
+  list-style-type: none;
+  padding: 5px;
+  margin: 0;
+
+  li {
+    padding: 5px;
+    cursor: pointer;
+    transition: background-color $transition-duration;
+    border-radius: 4px;
+    font-size: 0.9em;
+
+    &.current {
+      background-color: $main-table-selected-color;
+      color: $text-color;
+    }
+
+    &.selected {
+      background-color: $main-table-hover-color;
+      color: $text-color;
+    }
+  }
+}
+
+// Theme list controls
+// Styles for the theme list control buttons
+.theme-list-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.theme-control-button {
+  padding: 6px 12px;
+  font-size: $pagination-font-size;
+  cursor: pointer;
+  background-color: $default-button-color;
+  border: 1px solid $table-border-color;
+  border-radius: 3px;
+  color: $text-color;
+  transition: background-color $transition-duration ease;
+  flex: 1;
+
+  &:hover {
+    background-color: color.scale($default-button-color, $lightness: -10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Theme details
+// Styles for the theme details section
+.theme-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+// Theme preview
+// Styles for the theme preview area
+.theme-preview {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--preview-border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--preview-background-color);
+  color: var(--preview-text-color);
+
+  .preview-content {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 1px;
+  }
+
+  .preview-titlebar {
+    height: 15px;
+    background-color: var(--preview-title-bar-background-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+
+    .preview-window-title {
+      flex: 1;
+      color: var(--preview-text-color);
+    }
+
+    .preview-window-controls {
+      display: flex;
+      gap: 4px;
+
+      .preview-titlebar-button {
+        width: 12px;
+        height: 12px;
+        background-color: var(--preview-title-bar-background-color);
+        border: 1px solid var(--preview-text-color);
+        opacity: 0.3;
+        transition: all var(--preview-transition-duration) ease;
+
+        &:hover {
+          opacity: 0.8;
+        }
+
+        &:last-child {
+          &:hover {
+            background-color: var(--preview-redbutton-background-color);
+            border-color: var(--preview-redbutton-background-color);
+            opacity: 1;
+          }
+        }
+      }
+    }
+  }
+
+  .preview-header {
+    height: 24px;
+    background-color: var(--preview-header-background-color);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--preview-border-color);
+
+    .preview-button-container {
+      display: flex;
+      gap: 5px;
+      height: 20px;
+      margin-bottom: -1px;
+
+      .preview-button {
+        padding: 0 8px;
+        font-size: 0.75em;
+        background-color: var(--preview-default-button-color);
+        border: 1px solid var(--preview-border-color);
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        cursor: pointer;
+        height: 100%;
+        min-width: 60px;
+        transition: background-color var(--preview-transition-duration) ease;
+
+        &:hover:not(:disabled) {
+          background-color: var(--preview-default-button-hover-color);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          background-color: var(--preview-default-button-disabled-color);
+        }
+      }
+    }
+  }
+
+  .preview-tab-container {
+    height: 24px;
+    background-color: var(--preview-tab-background-color);
+    display: flex;
+    padding: 4px 4px 0;
+    align-items: center;
+
+    .preview-category-button {
+      width: 20px;
+      height: 20px;
+      background-color: var(--preview-default-button-color);
+      border: 1px solid var(--preview-border-color);
+      margin-right: 8px;
+      border-radius: 0;
+    }
+
+    .preview-tab-wrapper {
+      display: flex;
+      flex-grow: 1;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .preview-tab {
+      height: 20px;
+      width: 60px;
+      padding: 2px 8px;
+      font-size: 0.8em;
+      background-color: var(--preview-tab-background-color);
+      border: 1px solid var(--preview-border-color);
+      border-bottom: none;
+      margin-right: 2px;
+      border-radius: 0;
+      transition: background-color var(--preview-transition-duration) ease;
+      cursor: pointer;
+
+      &.active {
+        background-color: var(--preview-tab-active-background-color);
+      }
+
+      &:hover:not(.active) {
+        background-color: var(--preview-tab-hover-background-color);
+      }
+    }
+  }
+
+  .preview-table-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--preview-background-color);
+    border: 1px solid var(--preview-border-color);
+
+    .preview-table {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .preview-table-header {
+        height: 24px;
+        display: flex;
+        background-color: var(--preview-table-header-background-color);
+        border-bottom: 1px solid var(--preview-border-color);
+
+        .preview-table-header-cell {
+          padding: 4px 8px;
+          font-weight: bold;
+          color: var(--preview-table-header-text-color);
+          border-right: 1px solid var(--preview-border-color);
+
+          &:first-child {
+            flex: 0 0 30%;
+          }
+          &:last-child {
+            flex: 1;
+            border-right: none;
+          }
+        }
+      }
+
+      .preview-table-body {
+        flex: 1;
+        overflow-y: auto;
+
+        .preview-row {
+          height: 17px;
+          display: flex;
+          border-bottom: 1px solid var(--preview-border-color);
+          background-color: var(--preview-background-color);
+          transition: background-color var(--preview-transition-duration);
+
+          &:hover {
+            background-color: var(--preview-table-row-hover-color);
+          }
+
+          &.selected {
+            background-color: var(--preview-table-row-selected-color);
+          }
+
+          > div {
+            &:first-child {
+              flex: 0 0 30%;
+              border-right: 1px solid var(--preview-border-color);
+            }
+            &:last-child {
+              flex: 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .preview-edit-controls {
+    height: 24px;
+    background-color: var(--preview-background-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    border-top: 1px solid var(--preview-border-color);
+
+    .preview-edit-buttons, .preview-pagination {
+      display: flex;
+      gap: 2px;
+
+      .preview-button {
+        width: 12px;
+        height: 12px;
+        padding: 0;
+        cursor: pointer;
+        background-color: var(--preview-default-button-color);
+        border: 1px solid var(--preview-border-color);
+        border-radius: 2px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color var(--preview-transition-duration) ease;
+
+        &:hover {
+          background-color: var(--preview-default-button-hover-color);
+        }
+      }
+    }
+  }
+
+  .preview-footer {
+    height: 23px;
+    padding: 0 4px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--preview-footer-background-color);
+
+    .preview-footer-left,
+    .preview-footer-right{
+      display: flex;
+      gap: 4px;
+    }
+
+    .preview-footer-button {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      margin: 4px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 8px;
+      color: var(--preview-footer-button-text-color);
+
+      &.redbutton {
+        background-color: var(--preview-redbutton-background-color);
+
+        &:hover {
+          background-color: var(--preview-redbutton-hover-color);
+        }
+      }
+
+      &.greenbutton {
+        background-color: var(--preview-greenbutton-background-color);
+
+        &:hover {
+          background-color: var(--preview-greenbutton-hover-color);
+        }
+      }
+    }
+  }
+}
+
+// Scrollbar styles
+// Custom scrollbar appearance for webkit browsers
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: $scrollbar-track-color;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $scrollbar-thumb-color;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: $scrollbar-thumb-hover-color;
+}

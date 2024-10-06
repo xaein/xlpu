@@ -94,7 +94,7 @@ async function updateFiles() {
                 }
                 scrollToLine(updateInfoPreview, `✔ ${zipName}`);
             } catch (error) {
-                console.error(`Error updating ${zipName}:`, error);
+                
                 updateInfoPreview.value += `Error updating ${zipName}: ${error.message}\n`;
             }
         }
@@ -153,12 +153,14 @@ async function setupConfigList() {
 // Load configuration section
 // This function loads the specified configuration section
 function loadConfigSection(section) {
+    
     currentSection = section;
     const configDisplay = document.getElementById('configDisplay');
 
     if (window.configSections && window.configSections[section]) {
         configDisplay.innerHTML = window.configSections[section];
     } else {
+        
         return;
     }
 
@@ -177,14 +179,17 @@ function loadConfigSection(section) {
     updateSelectedConfigItem(section);
     js.F.saveOriginalConfig(section);
     js.F.updateSaveButtonState();
+    
 }
 
 // Get configuration
 // This function retrieves the current configuration for the specified section
 function getConfig(section) {
+    
+    let config;
     switch (section) {
         case 'general':
-            return {
+            config = {
                 dateFormat: document.getElementById('dateFormat').value,
                 timeFormat: document.getElementById('timeFormat').value,
                 construct: document.getElementById('construct').value === '1' ? 'timeFormat dateFormat' : 'dateFormat timeFormat',
@@ -193,110 +198,111 @@ function getConfig(section) {
                 messageSeperator: `'${document.getElementById('messageSeperator').value}'`,
                 messagePrefix: `'${document.getElementById('messagePrefix').value}'`,
                 maxLogEntries: document.getElementById('maxLogEntries').value,
-                favourite: document.getElementById('favouriteIcon').value
+                favourite: document.getElementById('favouriteIcon').value,
+                tray: {
+                    show: document.getElementById('showTray').checked,
+                    minimizeTo: document.getElementById('minimizeToTray').checked,
+                    closeTo: document.getElementById('closeToTray').checked
+                }
             };
+            break;
         case 'triggercmd':
-            return {
-                tcuo: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'overwrite',
-                tcao: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'all',
-                tcag: document.getElementById('autoGenerateTriggerCMD')?.checked ? 'on' : 'off',
+            config = {
+                overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
+                addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited',
+                autoGenerate: document.getElementById('autoGenerateTriggerCMD')?.checked,
                 inPath: document.getElementById('addToPath')?.checked || false
             };
+            break;
         case 'update':
-            const checkUpdateValue = document.getElementById('checkUpdate').checked;
-            return { autoUpdate: checkUpdateValue };
+            config = {
+                autoCheck: document.getElementById('checkUpdate').checked,
+                periodic: {
+                    enable: document.getElementById('periodicUpdateCheck').checked,
+                    interval: parseInt(document.getElementById('updateFrequency').value, 10)
+                }
+            };
+            break;
         default:
-            return {};
+            config = {};
     }
+    
+    return config;
 }
 
 // Initialize general configuration
 // This function initializes the general configuration section
 function initializeGeneralConfig() {
+    
     const xlaunchConfig = js.F.getData('xlaunchConfig');
     populateConfigFields(xlaunchConfig);
     js.F.setupConfigurationListeners();
     setupDateTimeFormatHandlers();
     populateFavouriteIcons();
     updateLogFormatPreview();
+    loadTraySettings();
+    
 }
 
 // Initialize TriggerCMD configuration
 // This function initializes the TriggerCMD configuration section
 function initializeTriggerCmdConfig() {
-    if (!window.xldbv.configOpts) {
-        window.xldbv.configOpts = { tcuo: 'overwrite', tcao: 'all', tcag: 'on', inPath: false };
-    }
+    
+    const triggerCmdConfig = window.xldbv.configOpts.triggercmd;
+    
 
+    // Set TriggerCMD Update Option
     const updateOptionRadios = document.getElementsByName('triggerCMDUpdateOption');
+    updateOptionRadios.forEach(radio => {
+        radio.checked = (radio.value === triggerCmdConfig.overwriteFile);
+    });
+
+    // Set TriggerCMD Apps Option
     const appsOptionRadios = document.getElementsByName('triggerCMDAppsOption');
+    appsOptionRadios.forEach(radio => {
+        radio.checked = (radio.value === triggerCmdConfig.addCommands);
+    });
+
+    // Set Auto Generate TriggerCMD checkbox
     const autoGenerateCheckbox = document.getElementById('autoGenerateTriggerCMD');
+    if (autoGenerateCheckbox) {
+        autoGenerateCheckbox.checked = triggerCmdConfig.autoGenerate;
+    }
+
+    // Set Add to PATH checkbox
     const addToPathCheckbox = document.getElementById('addToPath');
-
-    if (updateOptionRadios.length > 0) {
-        const tcuoValue = window.xldbv.configOpts.tcuo;
-        const tcuoElement = document.querySelector(`input[name="triggerCMDUpdateOption"][value="${tcuoValue}"]`);
-        if (tcuoElement) {
-            tcuoElement.checked = true;
-        }
-    }
-
-    if (appsOptionRadios.length > 0) {
-        const tcaoValue = window.xldbv.configOpts.tcao;
-        const tcaoElement = document.querySelector(`input[name="triggerCMDAppsOption"][value="${tcaoValue}"]`);
-        if (tcaoElement) {
-            tcaoElement.checked = true;
-        }
-    }
-
-    if (autoGenerateCheckbox) {
-        const tcagValue = window.xldbv.configOpts.tcag;
-        autoGenerateCheckbox.checked = tcagValue === 'on' || tcagValue === true;
-    }
-
     if (addToPathCheckbox) {
-        addToPathCheckbox.checked = window.xldbv.configOpts.inPath;
-    }
-
-    originalTriggerCmdConfig = getConfig('triggercmd');
-
-    function saveAndUpdateTriggerCmdConfig() {
-        js.F.updateSaveButtonState();
-    }
-
-    if (updateOptionRadios.length > 0) {
-        updateOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
-    }
-    if (appsOptionRadios.length > 0) {
-        appsOptionRadios.forEach(radio => radio.addEventListener('change', saveAndUpdateTriggerCmdConfig));
-    }
-    if (autoGenerateCheckbox) {
-        autoGenerateCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
-    }
-    if (addToPathCheckbox) {
-        addToPathCheckbox.addEventListener('change', saveAndUpdateTriggerCmdConfig);
-    }
-
-    const updateTriggerCMDButton = document.getElementById('updateTriggerCMDFile');
-    if (updateTriggerCMDButton) {
-        updateTriggerCMDButton.addEventListener('click', runXltcScript);
+        addToPathCheckbox.checked = triggerCmdConfig.inPath;
     }
 
     js.F.updateSaveButtonState();
+    
 }
 
 // Initialize update configuration
 // This function initializes the update configuration section
 async function initializeUpdateConfig() {
+    
     const updateButton = document.getElementById('updateAppButton');
     if (updateButton) {
         updateButton.disabled = true;
     }
 
     const autoUpdateCheckbox = document.getElementById('checkUpdate');
+    const periodicUpdateCheckbox = document.getElementById('periodicUpdateCheck');
+    const updateFrequencySelect = document.getElementById('updateFrequency');
+
     if (autoUpdateCheckbox) {
-        const aupdValue = window.xldbv.configOpts.aupd;
-        autoUpdateCheckbox.checked = aupdValue === 'on' || aupdValue === true;
+        autoUpdateCheckbox.checked = window.xldbv.configOpts.updates.autoCheck;
+    }
+
+    if (periodicUpdateCheckbox) {
+        periodicUpdateCheckbox.checked = window.xldbv.configOpts.updates.periodic.enable;
+    }
+
+    if (updateFrequencySelect) {
+        updateFrequencySelect.value = window.xldbv.configOpts.updates.periodic.interval.toString();
+        updateFrequencySelect.disabled = !periodicUpdateCheckbox.checked;
     }
 
     const updateInfoPreview = document.getElementById('updateInfoPreview');
@@ -355,9 +361,14 @@ async function initializeUpdateConfig() {
     js.F.saveOriginalConfig('update');
 
     function saveAndUpdateConfig() {
-        const autoUpdateCheckbox = document.getElementById('checkUpdate');
         if (autoUpdateCheckbox) {
-            window.xldbv.configOpts.aupd = autoUpdateCheckbox.checked ? 'on' : 'off';
+            window.xldbv.configOpts.updates.autoCheck = autoUpdateCheckbox.checked;
+        }
+        if (periodicUpdateCheckbox) {
+            window.xldbv.configOpts.updates.periodic.enable = periodicUpdateCheckbox.checked;
+        }
+        if (updateFrequencySelect) {
+            window.xldbv.configOpts.updates.periodic.interval = parseInt(updateFrequencySelect.value, 10);
         }
         js.F.updateSaveButtonState();
     }
@@ -365,8 +376,18 @@ async function initializeUpdateConfig() {
     if (autoUpdateCheckbox) {
         autoUpdateCheckbox.addEventListener('change', saveAndUpdateConfig);
     }
+    if (periodicUpdateCheckbox) {
+        periodicUpdateCheckbox.addEventListener('change', () => {
+            updateFrequencySelect.disabled = !periodicUpdateCheckbox.checked;
+            saveAndUpdateConfig();
+        });
+    }
+    if (updateFrequencySelect) {
+        updateFrequencySelect.addEventListener('change', saveAndUpdateConfig);
+    }
 
     js.F.updateSaveButtonState();
+    
 }
 
 // Populate configuration fields
@@ -536,8 +557,8 @@ function updateSelectedConfigItem(selectedSection) {
 async function runXltcScript() {
     try {
         const configOpts = {
-            tcuo: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'overwrite',
-            tcao: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'all'
+            overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
+            addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
         };
         const result = await e.Api.invoke('generate-triggercmd', configOpts);
         const statusElement = document.getElementById('triggerCmdUpdateStatus');
@@ -586,6 +607,15 @@ function generateXlaunchCfgContent() {
     return Object.entries(configBuild)
         .map(([key, value]) => `${key}=${value}`)
         .join('\n');
+}
+
+// Load tray settings
+// This function loads the tray settings from xldbv.configOpts
+function loadTraySettings() {
+    const trayConfig = window.xldbv.configOpts.tray;
+    document.getElementById('showTray').checked = trayConfig.show;
+    document.getElementById('minimizeToTray').checked = trayConfig.minimizeTo;
+    document.getElementById('closeToTray').checked = trayConfig.closeTo;
 }
 
 // Expose functions to the global scope
