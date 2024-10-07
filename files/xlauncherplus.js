@@ -161,21 +161,12 @@ safeIpc('import-theme', async (event, sourcePath, themesDir) => {
 // Launch app
 // Launch an application
 safeIpc('launch-app', async (event, appName) => {
-    const xlaunchPath = path.join(utilsDir, 'xlaunch.exe');
-    const command = `"${xlaunchPath}" "${appName}"`;
-    const options = {
-        name: 'xLauncherPlus'
-    };
-
-    return new Promise((resolve, reject) => {
-        sudo.exec(command, options, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(stdout);
-            }
-        });
-    });
+    try {
+        return await launchApp(appName);
+    } catch (error) {
+        console.error('Error in launch-app IPC handler:', error);
+        throw error;
+    }
 });
 
 // Open help file
@@ -303,14 +294,43 @@ function createTray() {
         tray.on('double-click', () => {
             const mainWindow = BrowserWindow.getAllWindows()[0];
             if (mainWindow) {
-                if (mainWindow.isMinimized()) mainWindow.restore();
-                mainWindow.show();
-                mainWindow.focus();
+                if (mainWindow.isVisible()) {
+                    mainWindow.hide();
+                } else {
+                    if (mainWindow.isMinimized()) mainWindow.restore();
+                    mainWindow.show();
+                    mainWindow.focus();
+                }
             }
         });
     } else if (!showTray && tray) {
         tray.destroy();
         tray = null;
+    }
+}
+
+// Launch app
+// Launch an application
+async function launchApp(appName) {
+    try {
+        const xlaunchPath = path.join(utilsDir, 'xlaunch.exe');
+        const command = `"${xlaunchPath}" "${appName}"`;
+        const options = {
+            name: 'xLauncherPlus'
+        };
+
+        return new Promise((resolve, reject) => {
+            sudo.exec(command, options, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(stdout);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error launching app:', error);
+        throw error;
     }
 }
 
@@ -369,11 +389,20 @@ function updateTrayMenu(recentApps) {
             label: 'Recent',
             submenu: recentApps.length > 0 ? recentApps.map(app => ({
                 label: app.name,
-                click: () => {
-                    safeIpc('launch-app', app.name);
+                click: async () => {
+                    try {
+                        await launchApp(app.name);
+                    } catch (error) {
+                        console.error('Error launching app from tray:', error);
+                    }
                 }
             })) : [{ label: 'No recent apps', enabled: false }]
         },
+        { type: 'separator' },
+        { label: 'Help', click: () => {
+            const helpFilePath = path.join(pagesDir, 'common', 'xlauncher_plus_help.html');
+            require('electron').shell.openExternal(`file://${helpFilePath}`);
+        }},
         { type: 'separator' },
         { label: 'Exit', click: () => {
             const mainWindow = BrowserWindow.getAllWindows()[0];
