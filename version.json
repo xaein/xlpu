@@ -1,5 +1,5 @@
 {
-  "version": "1.0.9",
+  "version": "1.0.8",
   "comment": "Full Update\nSass Module update\nSystem tray update\nBug Fixes to things I broke with array changes...~",
   "files": {
     "edit.config.html": "pages",
@@ -66,6 +66,7 @@
     "xlauncherplusfs.js": 0
   },
   "directoryZips": {
+    "node_modules.zip": 0,
     "help.zip": 0
   },
   "lastFullUpdate": true,
