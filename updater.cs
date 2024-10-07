@@ -438,27 +438,14 @@ class Program
         string nodeModulesDir = Path.Combine(sourceDir, "node_modules");
         string packageJsonPath = Path.Combine(sourceDir, "package.json");
 
-        if (!Directory.Exists(nodeModulesDir))
+        if (!Directory.Exists(nodeModulesDir) || !File.Exists(packageJsonPath))
         {
-            Console.WriteLine("node_modules directory not found.");
-            return;
-        }
-
-        if (!File.Exists(packageJsonPath))
-        {
-            Console.WriteLine("package.json not found.");
+            Console.WriteLine("node_modules directory or package.json not found.");
             return;
         }
 
         JObject packageJson = JObject.Parse(File.ReadAllText(packageJsonPath));
-        var currentDependencies = packageJson["dependencies"] as JObject;
-
-        if (currentDependencies == null)
-        {
-            Console.WriteLine("No dependencies found in package.json.");
-            return;
-        }
-
+        var currentDependencies = packageJson["dependencies"] as JObject ?? new JObject();
         var oldDependencies = versionJson["dependencies"] as JObject ?? new JObject();
         var changedDependencies = new List<string>();
 
@@ -468,13 +455,10 @@ class Program
             string currentVersion = dep.Value.ToString();
             string oldVersion = oldDependencies[depName]?.ToString();
 
-            if (oldVersion != currentVersion)
+            if (IsNewerVersion(currentVersion, oldVersion))
             {
-                if (IsNewerVersion(currentVersion, oldVersion))
-                {
-                    changedDependencies.Add(depName);
-                    Console.WriteLine($"Dependency updated: {depName} - Old: {oldVersion}, New: {currentVersion}");
-                }
+                changedDependencies.Add(depName);
+                Console.WriteLine($"Dependency updated: {depName} - Old: {oldVersion}, New: {currentVersion}");
             }
         }
 
@@ -491,12 +475,12 @@ class Program
                     var dirPath = Path.Combine(nodeModulesDir, depName);
                     if (Directory.Exists(dirPath))
                     {
-                        AddDirectoryToZip(archive, dirPath, Path.Combine("node_modules", depName));
+                        AddDirectoryToZip(archive, dirPath, depName);  // Changed this line
                     }
                 }
             }
 
-            directoryZips[zipName] = 0;  // Set counter to 0 for new or updated zip
+            directoryZips[zipName] = 0;
             Console.WriteLine($"Created zip for node_modules with {changedDependencies.Count} updated dependencies");
         }
         else
@@ -504,7 +488,6 @@ class Program
             Console.WriteLine("No changes in dependencies, skipping node_modules zip creation.");
         }
 
-        // Update the dependencies in versionJson
         versionJson["dependencies"] = JObject.FromObject(currentDependencies);
     }
 
