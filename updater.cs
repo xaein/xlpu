@@ -63,7 +63,8 @@ class Program
                 ["mainFiles"] = new JObject(),
                 ["directoryZips"] = new JObject(),
                 ["lastFullUpdate"] = true,
-                ["dependencies"] = new JObject()
+                ["dependencies"] = new JObject(),
+                ["enableGitUpdate"] = false  // Default to false for new files
             };
             forceFullUpdate = true;
         }
@@ -73,18 +74,28 @@ class Program
         bool fullUpdateExcludingMain = false;
         bool minorIncremented = false;
 
+        // Increment version immediately
+        minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
+        if (forceFullUpdate)
+        {
+            isFullUpdate = true;
+            fullUpdateExcludingMain = false; // Force full update includes everything
+        }
+
+        // Display update process start message with the new version
+        Console.WriteLine();
+        Console.WriteLine($"Starting update process for version {versionJson["version"]}...");
+        Console.WriteLine();
+
         // Create new JSON objects to track changes
         var newFilesSection = new JObject();
         var newMainFilesSection = new JObject();
         var directoryZips = new JObject();
 
-        // Display update process start message
-        Console.WriteLine();
-        Console.WriteLine("Starting update process...");
-        Console.WriteLine();
+        string[] mainFileNames = { "xlauncherplus.js", "xlauncherpluseapi.js", "xlauncherplusfs.js" };
+        string[] ExcludeFiles = { "cleanup.exe" };
 
-        // Process files and directories
-        bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate);
+        bool filesChanged = ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, forceFullUpdate, fullUpdateExcludingMain, mainFileNames, ExcludeFiles);
 
         // Create zip files for dependencies if requested
         if (updateNodeModules)
@@ -97,35 +108,31 @@ class Program
             CreateHelpZip(sourceDir, destDir, directoryZips);
         }
 
-        // Increment version if needed
-        if (filesChanged || forceFullUpdate)
+        // Determine update type based on version increment and force flag
+        if (minorIncremented || forceFullUpdate)
         {
-            minorIncremented = IncrementVersion(versionJson, out fullUpdateExcludingMain);
-            if (minorIncremented || forceFullUpdate)
-            {
-                Console.WriteLine(forceFullUpdate ? "Forced full update." : "Minor version incremented. Performing full update...");
-                newFilesSection.RemoveAll();
-                newMainFilesSection.RemoveAll();
-                ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, true);
-                versionJson["lastFullUpdate"] = true;
-                isFullUpdate = true;
-            }
-            else if (fullUpdateExcludingMain)
-            {
-                Console.WriteLine("Patch 10% update. Performing full update excluding main files...");
-                newFilesSection.RemoveAll();
-                ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, false, sourceDir, true);
-                versionJson["lastFullUpdate"] = false; 
-                isFullUpdate = true;
-            }
-            else
-            {
-                versionJson["lastFullUpdate"] = false;
-            }
+            Console.WriteLine(forceFullUpdate ? "Forced full update." : "Minor version incremented. Performing full update...");
+            newFilesSection.RemoveAll();
+            newMainFilesSection.RemoveAll();
+            ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, true, sourceDir, true, false, mainFileNames, ExcludeFiles);
+            versionJson["lastFullUpdate"] = true;
+            isFullUpdate = true;
+        }
+        else if (fullUpdateExcludingMain)
+        {
+            Console.WriteLine("Patch 10% update. Performing full update excluding main files...");
+            newFilesSection.RemoveAll();
+            ProcessDirectory(sourceDir, destDir, versionJson, newFilesSection, newMainFilesSection, false, sourceDir, true, true, mainFileNames, ExcludeFiles);
+            versionJson["lastFullUpdate"] = false; 
+            isFullUpdate = true;
+        }
+        else
+        {
+            versionJson["lastFullUpdate"] = false;
         }
 
         // Merge new files with existing files if it's not a full update
-        if (!(bool)versionJson["lastFullUpdate"])
+        if (!isFullUpdate)
         {
             MergeFileEntries(versionJson["files"] as JObject, newFilesSection);
             UpdateMainFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
@@ -137,18 +144,17 @@ class Program
             if (forceFullUpdate || minorIncremented)
             {
                 versionJson["mainFiles"] = newMainFilesSection;
+                versionJson["directoryZips"] = directoryZips;
             }
             else
             {
                 UpdateMainFileEntries(versionJson["mainFiles"] as JObject, newMainFilesSection);
+                UpdateDirectoryZips(versionJson["directoryZips"] as JObject, directoryZips);
             }
         }
 
-        // Update the directoryZips section
-        if (directoryZips.Count > 0)
-        {
-            versionJson["directoryZips"] = directoryZips;
-        }
+        // Remove main files from the files section
+        RemoveMainFilesFromFilesSection(versionJson, mainFileNames);
 
         // Update the version and add the comment
         if (isFullUpdate)
@@ -166,7 +172,8 @@ class Program
             ["mainFiles"] = versionJson["mainFiles"],
             ["directoryZips"] = versionJson["directoryZips"],
             ["lastFullUpdate"] = versionJson["lastFullUpdate"],
-            ["dependencies"] = versionJson["dependencies"]
+            ["dependencies"] = versionJson["dependencies"],
+            ["enableGitUpdate"] = versionJson["enableGitUpdate"]  // This will maintain the existing value
         };
 
         // Write the updated version information back to the file
@@ -178,8 +185,16 @@ class Program
         Console.WriteLine();
         Console.WriteLine("Update process completed.");
 
-        // Add GitHub update after the update process
-        UpdateGitHub(versionJson["version"].ToString());
+        // Add GitHub update after the update process, if enabled
+        bool enableGitUpdate = versionJson["enableGitUpdate"]?.ToObject<bool>() ?? false;
+        if (enableGitUpdate)
+        {
+            UpdateGitHub(versionJson["version"].ToString());
+        }
+        else
+        {
+            Console.WriteLine("Git update is disabled.");
+        }
     }
 
     // Display help information
@@ -207,34 +222,48 @@ class Program
 
     // Process directory for updates
     // Recursively processes files and directories, updating the version information
-    static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate)
+    static bool ProcessDirectory(string srcFolder, string destFolder, JObject versionJson, JObject newFilesSection, JObject newMainFilesSection, bool isBaseFolder, string rootSourceDir, bool forceFullUpdate, bool fullUpdateExcludingMain, string[] mainFileNames, string[] excludeFiles)
     {
         bool filesChanged = false;
-
+        
         // Loop through each file in the source folder
         foreach (var srcFile in Directory.GetFiles(srcFolder))
         {
             string fileName = Path.GetFileName(srcFile);
-            if ((isBaseFolder && (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase) && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))) ||
-                (!isBaseFolder && (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || fileName.EndsWith(".scss", StringComparison.OrdinalIgnoreCase))))
+
+            // Check if the file should be excluded
+            if (excludeFiles.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            bool isMainFile = isBaseFolder && mainFileNames.Contains(fileName, StringComparer.OrdinalIgnoreCase);
+
+            if (fileName.EndsWith(".js", StringComparison.OrdinalIgnoreCase) || 
+                fileName.EndsWith(".html", StringComparison.OrdinalIgnoreCase) || 
+                fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || 
+                fileName.EndsWith(".scss", StringComparison.OrdinalIgnoreCase))
             {
                 string relativePath = GetRelativePath(rootSourceDir, srcFile);
                 string destFilePath = Path.Combine(destFolder, fileName);
                 if (forceFullUpdate || !File.Exists(destFilePath) || !FilesAreEqual(srcFile, destFilePath))
                 {
                     File.Copy(srcFile, destFilePath, true);
-
-                    // Add the file to the appropriate section in the new JSON
-                    if (fileName.StartsWith("xlauncher", StringComparison.OrdinalIgnoreCase))
+                    
+                    if (isMainFile)
                     {
-                        newMainFilesSection[fileName] = 0;
+                        if (!fullUpdateExcludingMain)
+                        {
+                            newMainFilesSection[fileName] = 0;
+                            filesChanged = true;
+                        }
                     }
                     else
                     {
                         string directory = Path.GetDirectoryName(relativePath).Replace("\\", "/");
                         newFilesSection[fileName] = directory;
+                        filesChanged = true;
                     }
-                    filesChanged = true;
                 }
             }
         }
@@ -247,7 +276,7 @@ class Program
                 !folderName.Equals("dist", StringComparison.OrdinalIgnoreCase) &&
                 !folderName.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
-                filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir, forceFullUpdate);
+                filesChanged |= ProcessDirectory(srcSubFolder, destFolder, versionJson, newFilesSection, newMainFilesSection, false, rootSourceDir, forceFullUpdate, fullUpdateExcludingMain, mainFileNames, excludeFiles);
             }
         }
 
@@ -258,30 +287,28 @@ class Program
     // Updates the version in the version.json file
     static bool IncrementVersion(JObject versionJson, out bool fullUpdateExcludingMain)
     {
-        string version = versionJson["version"]?.ToString() ?? "1.0.0";
-        var versionParts = version.Split(new char[] { '.' });
-
-        int major = int.Parse(versionParts[0]);
-        int minor = int.Parse(versionParts[1]);
-        int patch = int.Parse(versionParts[2]);
-
-        bool minorIncremented = false;
         fullUpdateExcludingMain = false;
+        string currentVersion = versionJson["version"].ToString();
+        var versionParts = currentVersion.Split('.').Select(int.Parse).ToArray();
 
-        patch++;
-        if (patch > 99)
+        versionParts[2]++; // Increment patch version
+
+        if (versionParts[2] > 99)
         {
-            patch = 0;
-            minor++;
-            minorIncremented = true;
+            versionParts[1]++;
+            versionParts[2] = 0;
+            return true; // Minor version incremented
         }
-        else if (patch % 10 == 0)
+
+        if (versionParts[2] % 10 == 0) // Every 10th patch
         {
             fullUpdateExcludingMain = true;
         }
 
-        versionJson["version"] = $"{major}.{minor}.{patch}";
-        return minorIncremented;
+        string newVersion = string.Join(".", versionParts);
+        versionJson["version"] = newVersion;
+
+        return false; // Minor version not incremented
     }
 
     // Get relative path
@@ -438,13 +465,16 @@ class Program
         foreach (var dep in currentDependencies)
         {
             string depName = dep.Key;
-            string currentVersion = dep.Value.ToString().TrimStart('^', '~', 'v');
+            string currentVersion = dep.Value.ToString();
             string oldVersion = oldDependencies[depName]?.ToString();
 
             if (oldVersion != currentVersion)
             {
-                changedDependencies.Add(depName);
-                Console.WriteLine($"Dependency {depName} changed from {oldVersion} to {currentVersion}");
+                if (IsNewerVersion(currentVersion, oldVersion))
+                {
+                    changedDependencies.Add(depName);
+                    Console.WriteLine($"Dependency updated: {depName} - Old: {oldVersion}, New: {currentVersion}");
+                }
             }
         }
 
@@ -466,15 +496,16 @@ class Program
                 }
             }
 
-            directoryZips[zipName] = true;
+            directoryZips[zipName] = 0;  // Set counter to 0 for new or updated zip
             Console.WriteLine($"Created zip for node_modules with {changedDependencies.Count} updated dependencies");
-
-            versionJson["dependencies"] = currentDependencies;
         }
         else
         {
             Console.WriteLine("No changes in dependencies, skipping node_modules zip creation.");
         }
+
+        // Update the dependencies in versionJson
+        versionJson["dependencies"] = JObject.FromObject(currentDependencies);
     }
 
     // Add directory to zip
@@ -514,7 +545,7 @@ class Program
             AddDirectoryToZip(archive, helpDir, "");
         }
 
-        directoryZips[zipName] = true;
+        directoryZips[zipName] = 0;  // Set counter to 0 for new or updated zip
         Console.WriteLine("Created zip for help files");
     }
 
@@ -589,6 +620,38 @@ class Program
         foreach (var zip in zipsToRemove)
         {
             existingZips.Remove(zip);
+        }
+    }
+
+    // Compare two versions
+    // Returns true if version1 is newer than version2, false otherwise
+    private static bool IsNewerVersion(string currentVersion, string oldVersion)
+    {
+        if (string.IsNullOrEmpty(oldVersion)) return true;
+
+        var currentParts = currentVersion.TrimStart('^', '~', 'v').Split('.').Select(int.Parse).ToArray();
+        var oldParts = oldVersion.TrimStart('^', '~', 'v').Split('.').Select(int.Parse).ToArray();
+
+        for (int i = 0; i < Math.Min(currentParts.Length, oldParts.Length); i++)
+        {
+            if (currentParts[i] > oldParts[i]) return true;
+            if (currentParts[i] < oldParts[i]) return false;
+        }
+
+        return currentParts.Length > oldParts.Length;
+    }
+
+    // Remove main files from files section
+    // Removes the main files from the files section in the version.json file
+    private static void RemoveMainFilesFromFilesSection(JObject versionJson, string[] mainFileNames)
+    {
+        var filesSection = versionJson["files"] as JObject;
+        if (filesSection != null)
+        {
+            foreach (var mainFile in mainFileNames)
+            {
+                filesSection.Remove(mainFile);
+            }
         }
     }
 }

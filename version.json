@@ -1,11 +1,7 @@
 {
-  "version": "1.0.9",
-  "comment": "Sass Module update\nSystem tray update\nBug Fixes to things I broke with array changes",
+  "version": "1.0.8",
+  "comment": "Full Update\nSass Module update\nSystem tray update\nBug Fixes to things I broke with array changes...~",
   "files": {
-    "dialogs.js": "pages/common",
-    "themes.js": "pages/common",
-    "configuration.js": "pages/common",
-    "xlaunch.exe": "utils",
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
     "edit.themes.html": "pages",
@@ -14,12 +10,35 @@
     "main.html": "pages",
     "welcome.html": "pages",
     "common.js": "pages/common",
+    "configuration.js": "pages/common",
     "conversioncheck.js": "pages/common",
+    "dialogs.js": "pages/common",
     "loadsave.js": "pages/common",
+    "pagination.js": "pages/common",
     "systray.js": "pages/common",
     "tables.js": "pages/common",
+    "themes.js": "pages/common",
+    "window.js": "pages/common",
     "configcon.g.html": "pages/include",
+    "configcon.t.html": "pages/include",
     "configcon.u.html": "pages/include",
+    "footer.html": "pages/include",
+    "header.html": "pages/include",
+    "pagination.html": "pages/include",
+    "titlebar.html": "pages/include",
+    "applytheme.html": "pages/include/dialog",
+    "categoryadd.html": "pages/include/dialog",
+    "categoryremove.html": "pages/include/dialog",
+    "categoryrename.html": "pages/include/dialog",
+    "configconfirm.html": "pages/include/dialog",
+    "configsave.html": "pages/include/dialog",
+    "databaseconfirm.html": "pages/include/dialog",
+    "databasesave.html": "pages/include/dialog",
+    "launch.html": "pages/include/dialog",
+    "rowadd.html": "pages/include/dialog",
+    "rowedit.html": "pages/include/dialog",
+    "rowremove.html": "pages/include/dialog",
+    "themedelete.html": "pages/include/dialog",
     "base.theme.scss": "pages/themes/styles",
     "base.universal.scss": "pages/themes/styles",
     "dialogs.scss": "pages/themes/styles",
@@ -36,16 +55,20 @@
     "tables.scss": "pages/themes/styles",
     "welcome.scss": "pages/themes/styles",
     "themebuilder.js": "utils",
+    "xlaunch.exe": "utils",
     "xlstitch.js": "utils",
-    "xltc.js": "utils"
+    "xltc.js": "utils",
+    "xltcp.exe": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 2
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
   },
   "directoryZips": {
-    "node_modules.zip": true
+    "node_modules.zip": 0
   },
-  "lastFullUpdate": false,
+  "lastFullUpdate": true,
   "dependencies": {
     "adm-zip": "^0.5.16",
     "electron-unhandled": "^5.0.0",
@@ -55,5 +78,6 @@
     "sass": "^1.79.4",
     "sudo-prompt": "^9.2.1",
     "windows-shortcuts": "^0.1.6"
-  }
+  },
+  "enableGitUpdate": true
 }

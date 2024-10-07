@@ -1,0 +1,44 @@
+{
+  "name": "xlauncherplus",
+  "version": "1.0.0",
+  "description": "xLauncher Plus",
+  "main": "xlauncherplus.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "cleanup -start && npm run builddist && cleanup -finish && npm run defaulttheme && npm run makeinstupd",
+    "builddist": "electron-packager . --config=build.json --out=dist --overwrite --icon=./pages/common/xlauncherplus.ico",
+    "themebuilder": "node utils/themebuilder.js",
+    "defaulttheme": "node dist/xlauncherplus/resources/app/utils/themebuilder.js \"green light\"",
+    "makeinstupd": "makensis xlauncherplusinstaller.nsi && makensis xlauncherplusupdate.nsi"
+  },
+  "build": {
+    "appId": "com.xaeindaei.xlauncherplus",
+    "win": {
+      "target": "nsis",
+      "icon": "./pages/common/xlauncherplus.ico"
+    },
+    "mac": {
+      "icon": "./pages/common/xlauncherplus.icns"
+    },
+    "linux": {
+      "icon": "./pages/common/xlauncherplus.png"
+    }
+  },
+  "author": "Xaein Daei",
+  "license": "ISC",
+  "devDependencies": {
+    "@electron/packager": "^18.3.5",
+    "electron": "^32.1.2"
+  },
+  "keywords": [],
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-unhandled": "^5.0.0",
+    "electron-window-state": "^5.0.3",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "sass": "^1.79.4",
+    "sudo-prompt": "^9.2.1",
+    "windows-shortcuts": "^0.1.6"
+  }
+}
