@@ -165,7 +165,7 @@ async function initializeFiles() {
             js.F.updateProgress(100);
             return true;
         } else {
-            if (window.xldbv.configOpts && window.xldbv.configOpts.aupd === 'on') {
+            if (window.xldbv.configOpts && window.xldbv.configOpts.updates && window.xldbv.configOpts.updates.autoCheck) {
                 const updateMessage = await checkForUpdates();
                 js.F.updateStatusMessage(updateMessage);
             }

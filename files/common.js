@@ -82,36 +82,66 @@ async function lazyLoadScript(src) {
 }
 
 // Load title bar
-// Fetches and sets up the titlebar HTML
+// Fetches and sets up the titlebar HTML or updates existing titlebar
 async function loadTitleBar() {
+    // Ensure the DOM is loaded before proceeding
+    if (document.readyState === 'loading') {
+        return new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', () => {
+                loadTitleBar().then(resolve);
+            });
+        });
+    }
+
     try {
+        let titlebarContainer = document.querySelector('.titlebar-container');
+        
+        // Remove the existing titlebar if it exists
+        if (titlebarContainer) {
+            titlebarContainer.remove();
+        }
+
+        // Create and append the new titlebar
         const response = await fetch('include/titlebar.html');
         const titlebarHtml = await response.text();
-        document.body.insertAdjacentHTML('afterbegin', titlebarHtml);
-
-        document.querySelector('.help-button').addEventListener('click', () => {
+        
+        // Create a temporary container
+        const temp = document.createElement('div');
+        temp.innerHTML = titlebarHtml;
+        
+        // Append the new titlebar to the body
+        document.body.insertAdjacentElement('afterbegin', temp.firstElementChild);
+        
+        titlebarContainer = document.querySelector('.titlebar-container');
+        
+        // Set up event listeners for titlebar buttons
+        document.querySelector('.help-button')?.addEventListener('click', () => {
             openHelpFile();
         });
 
-        document.querySelector('.minimize-button').addEventListener('click', () => {
+        document.querySelector('.minimize-button')?.addEventListener('click', () => {
             e.Api.invoke('minimize-window');
         });
-        document.querySelector('.maximize-button').addEventListener('click', () => {
+        document.querySelector('.maximize-button')?.addEventListener('click', () => {
             e.Api.invoke('maximize-window');
         });
-        document.querySelector('.close-button').addEventListener('click', () => {
+        document.querySelector('.close-button')?.addEventListener('click', () => {
             e.Api.invoke('close-window');
         });
 
-        const updateAvailable = js.F.getData('updateAvailable');
-
-        if (updateAvailable) {
-            const windowTitle = document.querySelector('.window-title');
-            if (windowTitle) {
-                windowTitle.textContent += ' (Update Available)';
+        // Update the title text
+        const windowTitle = titlebarContainer?.querySelector('.window-title');
+        if (windowTitle) {
+            let titleText = 'xLauncher Plus';
+            const updateAvailable = js.F.getData('updateAvailable');
+            if (updateAvailable) {
+                titleText += ' (Update Available)';
             }
+            windowTitle.textContent = titleText;
         }
-    } catch {}
+    } catch (error) {
+        console.error('Error loading titlebar:', error);
+    }
 }
 
 // Navigation function
