@@ -40,7 +40,7 @@
     "xltc.js": "utils"
   },
   "mainFiles": {
-    "xlauncherplus.js": 0
+    "xlauncherplus.js": 1
   },
   "directoryZips": {
     "node_modules.zip": true
