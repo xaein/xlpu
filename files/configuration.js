@@ -557,8 +557,10 @@ function updateSelectedConfigItem(selectedSection) {
 async function runXltcScript() {
     try {
         const configOpts = {
-            overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
-            addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
+            triggercmd: {
+                overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
+                addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
+            }
         };
         const result = await e.Api.invoke('generate-triggercmd', configOpts);
         const statusElement = document.getElementById('triggerCmdUpdateStatus');

@@ -406,15 +406,17 @@ async function saveAllData() {
         js.F.setData('tempData', window.tempData);
 
         // Check if tcag is set to 'on' and run xltc.js
-        if (window.xldbv.configOpts.tcag === 'on') {
+        if (window.xldbv.configOpts.triggercmd.autoGenerate === true) {
             updateReloadProgress(98, 'Generating TriggerCMD File');
 
             await new Promise(resolve => setTimeout(resolve, delay));
 
             try {
                 const configOpts = {
-                    tcuo: window.xldbv.configOpts.tcuo,
-                    tcao: window.xldbv.configOpts.tcao
+                    triggercmd: {
+                        overwriteFile: window.xldbv.configOpts.triggercmd.overwriteFile,
+                        addCommands: window.xldbv.configOpts.triggercmd.addCommands
+                    }
                 };
                 const result = await e.Api.invoke('generate-triggercmd', configOpts);
                 updateReloadProgress(99, 'Generated TriggerCMD File');

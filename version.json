@@ -1,6 +1,6 @@
 {
-  "version": "1.0.7",
-  "comment": "Sass Module update\nSystem tray update\nMore System tray update, fixed a bug i made by changing a thing\nAlso other bug fixes, real fix this time",
+  "version": "1.0.8",
+  "comment": "Sass Module update\nSystem tray update\nBug Fixes to things I broke with array changes",
   "files": {
     "dialogs.js": "pages/common",
     "themes.js": "pages/common",
@@ -39,9 +39,7 @@
     "xlstitch.js": "utils",
     "xltc.js": "utils"
   },
-  "mainFiles": {
-    "xlauncherplus.js": 2
-  },
+  "mainFiles": {},
   "directoryZips": {
     "node_modules.zip": true
   },
