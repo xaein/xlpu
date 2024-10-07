@@ -13,11 +13,8 @@ class TriggerCmdGenerator {
         const filePath = path.join(this.appDir, 'utils', this.mainXLFC);
 
         try {
-            console.log('Reading file:', filePath);
             const fileContent = await fs.readFile(filePath, 'utf8');
             const appsData = JSON.parse(fileContent);
-            console.log('Apps data loaded, count:', Object.keys(appsData).length);
-
             const gamesList = [];
 
             for (const [appName, command] of Object.entries(appsData)) {
@@ -25,8 +22,6 @@ class TriggerCmdGenerator {
 
                 const shouldAdd = this.configOpts.addCommands === 'all' || 
                     (this.configOpts.addCommands === 'favourited' && await this.isFavorited(appName));
-
-                console.log(`App: ${appName}, Should add: ${shouldAdd}`);
 
                 if (shouldAdd) {
                     gamesList.push({
@@ -41,18 +36,13 @@ class TriggerCmdGenerator {
                 }
             }
 
-            console.log('Games list created, count:', gamesList.length);
-
             const userDirectory = os.homedir();
             const subfolder = ".TRIGGERcmdData";
             const jsonFilePath = path.join(userDirectory, subfolder, "commands.json");
 
-            console.log('Target file path:', jsonFilePath);
-
             let finalCommands = [];
             if (this.configOpts.overwriteFile === 'keep') {
                 try {
-                    console.log('Reading existing commands file');
                     const existingContent = await fs.readFile(jsonFilePath, 'utf8');
                     const existingCommands = JSON.parse(existingContent);
                     
@@ -62,22 +52,17 @@ class TriggerCmdGenerator {
                     );
                     
                     finalCommands = [...nonXLauncherCommands, ...gamesList];
-                    console.log('Merged commands, total count:', finalCommands.length);
                 } catch (error) {
-                    console.log('No existing file or error reading it, using only new commands');
                     finalCommands = gamesList;
                 }
             } else {
-                console.log('Overwriting with new commands only');
                 finalCommands = gamesList;
             }
 
             const combinedJson = JSON.stringify(finalCommands, null, 2);
 
-            console.log('Writing to file:', jsonFilePath);
             await fs.writeFile(jsonFilePath, combinedJson);
 
-            console.log('File written successfully');
             return true;
         } catch (error) {
             console.error('Error generating commands:', error);

@@ -375,7 +375,13 @@ function updateTrayMenu(recentApps) {
             })) : [{ label: 'No recent apps', enabled: false }]
         },
         { type: 'separator' },
-        { label: 'Exit', click: () => app.quit() }
+        { label: 'Exit', click: () => {
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+                isExiting = true;
+                mainWindow.webContents.send('app-closing');
+            }
+        }}
     ]);
 
     tray.setContextMenu(contextMenu);
