@@ -84,15 +84,6 @@ async function lazyLoadScript(src) {
 // Load title bar
 // Fetches and sets up the titlebar HTML or updates existing titlebar
 async function loadTitleBar() {
-    // Ensure the DOM is loaded before proceeding
-    if (document.readyState === 'loading') {
-        return new Promise(resolve => {
-            document.addEventListener('DOMContentLoaded', () => {
-                loadTitleBar().then(resolve);
-            });
-        });
-    }
-
     try {
         let titlebarContainer = document.querySelector('.titlebar-container');
         
@@ -130,14 +121,18 @@ async function loadTitleBar() {
         });
 
         // Update the title text
-        const windowTitle = titlebarContainer?.querySelector('.window-title');
+        const windowTitle = document.querySelector('.titlebar .window-title');
         if (windowTitle) {
             let titleText = 'xLauncher Plus';
             const updateAvailable = js.F.getData('updateAvailable');
             if (updateAvailable) {
                 titleText += ' (Update Available)';
-            }
+            } 
+            
             windowTitle.textContent = titleText;
+            windowTitle.style.display = 'none';
+            windowTitle.offsetHeight;
+            windowTitle.style.display = '';
         }
     } catch (error) {
         console.error('Error loading titlebar:', error);

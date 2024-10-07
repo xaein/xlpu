@@ -166,7 +166,7 @@ async function initializeFiles() {
             return true;
         } else {
             if (window.xldbv.configOpts && window.xldbv.configOpts.updates && window.xldbv.configOpts.updates.autoCheck) {
-                const updateMessage = await checkForUpdates();
+                const updateMessage = await initialUpdateCheck();
                 js.F.updateStatusMessage(updateMessage);
             }
 
@@ -192,8 +192,8 @@ async function initializeFiles() {
     }
 }
 
-// Check for updates
-async function checkForUpdates() {
+// Initial update check
+async function initialUpdateCheck() {
     try {
         const uurl = window.xldbv.uurl;
         const response = await e.Api.invoke('fetch-url', `${uurl}/version.json`);
@@ -205,6 +205,16 @@ async function checkForUpdates() {
         if (latestVersion.version !== currentVersion) {
             window.updateAvailable = true;
             js.F.setData('updateAvailable', true);
+
+            // Update the title bar text
+            const windowTitle = document.querySelector('.titlebar .window-title');
+            if (windowTitle) {
+                windowTitle.textContent = 'xLauncher Plus (Update Available)';
+                windowTitle.style.display = 'none';
+                windowTitle.offsetHeight;
+                windowTitle.style.display = '';
+            }
+
             return `Update available: ${latestVersion.version}`;
         } else {
             window.updateAvailable = false;
