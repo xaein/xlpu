@@ -66,8 +66,7 @@
     "xlauncherplusfs.js": 0
   },
   "directoryZips": {
-    "node_modules.zip": 0,
-    "help.zip": 0
+    "node_modules.zip": 0
   },
   "lastFullUpdate": true,
   "dependencies": {

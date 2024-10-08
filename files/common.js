@@ -86,10 +86,7 @@ async function lazyLoadScript(src) {
 async function loadTitleBar() {
     try {
         let titlebarContainer = document.querySelector('.titlebar-container');
-        
-        if (titlebarContainer) {
-            titlebarContainer.remove();
-        }
+        const updateAvailable = js.F.getData('updateAvailable') || false;
 
         const response = await fetch('include/titlebar.html');
         const titlebarHtml = await response.text();      
@@ -114,7 +111,6 @@ async function loadTitleBar() {
         const windowTitle = document.querySelector('.titlebar .window-title');
         if (windowTitle) {
             let titleText = 'xLauncher Plus';
-            const updateAvailable = js.F.getData('updateAvailable');
             if (updateAvailable) {
                 titleText += ' (Update Available)';
             } 
