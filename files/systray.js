@@ -3,15 +3,13 @@
 // Check for updates
 // Checks for available updates and notifies if found
 async function checkForUpdates(isPeriodic = false) {
-    
-    
     try {
         const baseUrl = window.xldbv.uurl;
         const url = `${baseUrl}/version.json`;
         const versionInfo = await e.Api.invoke('fetch-url', url, 'json');
+        const currentVersion = js.F.getData('xldbv')?.version || 'Unknown';
         
-        const currentVersion = window.xldbv.version;
-        if (currentVersion !== versionInfo.version) {
+        if (js.F.compareVersions(versionInfo.version, currentVersion) > 0) {
             if (isPeriodic) {
                 showAlert('Update Available', `A new version (${versionInfo.version}) of xLauncher Plus is available.`);
             }
@@ -19,7 +17,7 @@ async function checkForUpdates(isPeriodic = false) {
             // Update the title bar text
             const windowTitle = document.querySelector('.titlebar .window-title');
             if (windowTitle) {
-                windowTitle.textContent = 'xLauncher Plus (Update Available)';
+                windowTitle.textContent = `xLauncher Plus v${currentVersion} (Update Available)`;
                 windowTitle.style.display = 'none';
                 windowTitle.offsetHeight;
                 windowTitle.style.display = '';
@@ -27,7 +25,6 @@ async function checkForUpdates(isPeriodic = false) {
 
             // Set a flag or update UI to indicate an update is available
             js.F.setData('updateAvailable', true);
-            
         }
     } catch {}
 }

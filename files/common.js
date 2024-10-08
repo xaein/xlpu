@@ -2,6 +2,23 @@
 
 let updateCheckInterval;
 
+// Compare versions
+// Compares two semantic version strings
+function compareVersions(v1, v2) {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const part1 = parts1[i] || 0;
+        const part2 = parts2[i] || 0;
+        
+        if (part1 > part2) return 1;
+        if (part1 < part2) return -1;
+    }
+    
+    return 0;
+}
+
 // Debounce function
 // Limits the rate of function calls
 function debounce(func, delay) {
@@ -87,6 +104,7 @@ async function loadTitleBar() {
     try {
         let titlebarContainer = document.querySelector('.titlebar-container');
         const updateAvailable = js.F.getData('updateAvailable') || false;
+        const currentVersion = js.F.getData('xldbv')?.version || 'Unknown';
 
         const response = await fetch('include/titlebar.html');
         const titlebarHtml = await response.text();      
@@ -110,7 +128,7 @@ async function loadTitleBar() {
 
         const windowTitle = document.querySelector('.titlebar .window-title');
         if (windowTitle) {
-            let titleText = 'xLauncher Plus';
+            let titleText = `xLauncher Plus v${currentVersion}`;
             if (updateAvailable) {
                 titleText += ' (Update Available)';
             } 
@@ -120,7 +138,9 @@ async function loadTitleBar() {
             windowTitle.offsetHeight;
             windowTitle.style.display = '';
         }
-    } catch {}
+    } catch (error) {
+        console.error('Error loading title bar:', error);
+    }
 }
 
 // Navigation function
@@ -612,6 +632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Export common functions
 window.commonFunctions = {
+    compareVersions,
     debounce,
     exitApp,
     getData,
@@ -620,10 +641,13 @@ window.commonFunctions = {
     lazyLoadScript,
     loadTitleBar,
     navigateTo,
+    openHelpFile,
     removeFile,
     setData,
     setupFooterButtons,
     setupHeaderNavigation,
+    setupPeriodicUpdateCheck,
+    setupSearch,
     updateFavoritesOnExit,
     updateJsF,
     updateVariablesOnExit,

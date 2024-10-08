@@ -311,7 +311,7 @@ async function initializeUpdateConfig() {
     try {
         const versionInfo = await js.F.getVersionInfo();
         const currentVersion = window.xldbv.version;
-        if (currentVersion !== versionInfo.version) {
+        if (js.F.compareVersions(versionInfo.version, currentVersion) > 0) {
             updateInfoPreview.value += `New version available: ${versionInfo.version}\n\n`;
             
             // Check if versionInfo.comment exists and is not empty before adding it
@@ -352,7 +352,7 @@ async function initializeUpdateConfig() {
                 }
             }
         } else {
-            updateInfoPreview.value += `You are using the latest version (${currentVersion}).\n`;
+            updateInfoPreview.value += `You are using the latest version.\n`;
         }
     } catch (error) {
         updateInfoPreview.value += `Error fetching version info: ${error.message}\n`;

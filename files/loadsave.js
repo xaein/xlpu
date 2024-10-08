@@ -202,14 +202,14 @@ async function initialUpdateCheck() {
         }
         const latestVersion = response.data;
         const currentVersion = window.xldbv.version;
-        if (latestVersion.version !== currentVersion) {
+        if (js.F.compareVersions(latestVersion.version, currentVersion) > 0) {
             window.updateAvailable = true;
             js.F.setData('updateAvailable', true);
 
             // Update the title bar text
             const windowTitle = document.querySelector('.titlebar .window-title');
             if (windowTitle) {
-                windowTitle.textContent = 'xLauncher Plus (Update Available)';
+                windowTitle.textContent = `xLauncher Plus v${currentVersion} (Update Available)`;
                 windowTitle.style.display = 'none';
                 windowTitle.offsetHeight;
                 windowTitle.style.display = '';
