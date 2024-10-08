@@ -15,9 +15,19 @@ async function checkForUpdates(isPeriodic = false) {
             if (isPeriodic) {
                 showAlert('Update Available', `A new version (${versionInfo.version}) of xLauncher Plus is available.`);
             }
+            
+            // Update the title bar text
+            const windowTitle = document.querySelector('.titlebar .window-title');
+            if (windowTitle) {
+                windowTitle.textContent = 'xLauncher Plus (Update Available)';
+                windowTitle.style.display = 'none';
+                windowTitle.offsetHeight;
+                windowTitle.style.display = '';
+            }
+
             // Set a flag or update UI to indicate an update is available
             js.F.setData('updateAvailable', true);
-            js.F.loadTitleBar();
+            
         }
     } catch {}
 }

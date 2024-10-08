@@ -87,29 +87,20 @@ async function loadTitleBar() {
     try {
         let titlebarContainer = document.querySelector('.titlebar-container');
         
-        // Remove the existing titlebar if it exists
         if (titlebarContainer) {
             titlebarContainer.remove();
         }
 
-        // Create and append the new titlebar
         const response = await fetch('include/titlebar.html');
-        const titlebarHtml = await response.text();
-        
-        // Create a temporary container
+        const titlebarHtml = await response.text();      
         const temp = document.createElement('div');
         temp.innerHTML = titlebarHtml;
-        
-        // Append the new titlebar to the body
         document.body.insertAdjacentElement('afterbegin', temp.firstElementChild);
-        
         titlebarContainer = document.querySelector('.titlebar-container');
         
-        // Set up event listeners for titlebar buttons
         document.querySelector('.help-button')?.addEventListener('click', () => {
             openHelpFile();
         });
-
         document.querySelector('.minimize-button')?.addEventListener('click', () => {
             e.Api.invoke('minimize-window');
         });
@@ -120,7 +111,6 @@ async function loadTitleBar() {
             e.Api.invoke('close-window');
         });
 
-        // Update the title text
         const windowTitle = document.querySelector('.titlebar .window-title');
         if (windowTitle) {
             let titleText = 'xLauncher Plus';
@@ -134,9 +124,7 @@ async function loadTitleBar() {
             windowTitle.offsetHeight;
             windowTitle.style.display = '';
         }
-    } catch (error) {
-        console.error('Error loading titlebar:', error);
-    }
+    } catch {}
 }
 
 // Navigation function

@@ -1,6 +1,6 @@
 {
   "version": "1.0.9",
-  "comment": "Full Update\nGeneral Bug Fixes, node updates as well",
+  "comment": "Full Update\nSass Module update\nSystem tray update\nTitle bar fixes",
   "files": {
     "edit.config.html": "pages",
     "edit.dbc.html": "pages",
