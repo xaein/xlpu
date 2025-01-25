@@ -1,0 +1,77 @@
+{
+  "version": "1.0.15",
+  "comment": "Update Changes:\n  * Updated the update page of the configuration section to show the link for the version changes even\n    if you are up to date with the version\n\n ## Includes v1.0.14 changes ##\n",
+  "patch": 10,
+  "files": {
+    "common": {
+      "files": [
+        "launchlist.html",
+        "logging.html",
+        "edit.config.html"
+      ],
+      "include": {
+        "files": [
+          "loader.html",
+          "configcon.u.html"
+        ]
+      },
+      "script": {
+        "files": [
+          "dialogs.js",
+          "window.js",
+          "common.js",
+          "configuration.js",
+          "updater.js"
+        ]
+      },
+      "themes": {
+        "files": [],
+        "base": {
+          "files": [
+            "base.universal.scss",
+            "footer.scss",
+            "launchlist.scss",
+            "edit.config.scss",
+            "edit.dbc.scss",
+            "edit.themes.m.scss",
+            "logging.scss",
+            "tables.scss"
+          ]
+        }
+      }
+    },
+    "utils": {
+      "files": [
+        "xlstitch.js",
+        "xltc.js",
+        "xltb.exe",
+        "xltb.js",
+        "xlu.exe"
+      ]
+    }
+  },
+  "mainFiles": {
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
+  },
+  "directoryZips": {
+    "node_modules.zip": 2,
+    "help.zip": 2
+  },
+  "rem": [
+    "main.scss",
+    "themebuilder.js",
+    "xltcp.exe"
+  ],
+  "lastFullUpdate": false,
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-window-state": "^5.0.3",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "windows-shortcuts": "^0.1.6",
+    "@vscode/sudo-prompt": "^9.3.1",
+    "sass": "^1.83.0"
+  }
+}
