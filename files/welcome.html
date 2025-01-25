@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="xLauncher Plus - A Node.js Electron-based app launcher">
+    <meta name="author" content="Xaein Daei">
+    <title>xLauncher Plus</title>
+    <link rel="stylesheet" href="themes/compiled/base.universal.css">
+    <link rel="stylesheet" href="themes/compiled/welcome.css">
+    <link rel="icon" href="icon/xlauncherplus.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="welcome-container">
+        <h1>Welcome to xLauncher Plus</h1>
+        <p>xLauncher Plus is an enhanced version of xLauncher, providing a graphical user interface for managing and launching applications.</p>
+        
+        <h2>Key Features</h2>
+        <ul>
+            <li>Application Management: Easily add, edit, and remove applications from your launcher.</li>
+            <li>Category Support: Organize your applications into categories for better management.</li>
+            <li>Custom Commands: Launch applications with custom commands and arguments.</li>
+        </ul>
+
+        <h2>Getting Started</h2>
+        <p>To begin using xLauncher Plus:</p>
+        <ol>
+            <li>Add your applications using the editor interface you'll see next.</li>
+            <li>Organize your applications into categories if desired.</li>
+            <li>Use the tabbed interface to switch between different views or categories.</li>
+            <li>Launch your applications with a single click!</li>
+        </ol>
+
+        <p>For more detailed information and advanced usage, please refer to the <span class="help-link" onclick="js.F.openHelpFile()">documentation</span>.</p>
+
+        <button id="start-button" class="green-button">Start Adding Applications</button>
+    </div>
+
+    <script>
+        // Global initialization
+        // Sets up the js.F object for common functions
+        let js = { F: {} };
+        window.js = js;
+
+        // Script loading and initialization
+        // Loads common functions and sets up the welcome page
+        async function handleScriptLoad(scriptName, success) {
+            if (success && typeof window.commonFunctions !== 'undefined') {
+                js.F = { ...window.commonFunctions };
+                
+                try {
+                    const variables = js.F.getData('xldbv') || {};
+                    const scriptsToLoad = variables.loadScripts || [];
+                    const scriptDir = variables.directories?.scripts || 'script';
+
+                    await Promise.all(scriptsToLoad.map(script => {
+                        const fullPath = `${scriptDir}/${script}`;
+                        return js.F.lazyLoadScript(fullPath);
+                    }));
+                    
+                    js.F.updateJsF();
+                    initializePage();
+                } catch (error) {}
+            }
+        }
+    </script>
+    
+    <script src="script/common.js" onload="handleScriptLoad('common', true)" onerror="handleScriptLoad('common', false)" defer></script>
+    
+    <script>
+        // Page initialization
+        // Sets up the title bar buttons and start button event listener
+        async function initializePage() {
+            window.xldbv = js.F.getData('xldbv');
+            document.getElementById('start-button').addEventListener('click', handleStartButtonClick);
+        }
+
+        // Handle start button click
+        // Changes firstRun to 2 and navigates to edit.dbc.html
+        async function handleStartButtonClick() {
+            try {
+                window.xldbv.firstRun = 2;
+                if (js.F.validateXldbvJson(window.xldbv)) {
+                    js.F.setData('xldbv', window.xldbv);
+                    await js.F.updateVariablesOnExit();
+                    window.location.href = 'edit.dbc.html';
+                } else {
+                    throw new Error('Invalid xldbv data');
+                }
+            } catch (error) {}
+        }
+    </script>
+</body>
+</html>

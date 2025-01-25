@@ -1,0 +1,76 @@
+{
+  "version": "1.0.14",
+  "comment": "Update Changes:\n * Internal Updater changes.\n   ~ Can now remove unused files.\n   ~ Will now update app on relaunch, better for ensuring updates apply correctly.\n   ~ Rebuild themes if any .scss or .thm files change.\n\nThis update sets up the new updating system, that will be fully implemented in the next update.",
+  "patch": 10,
+  "files": {
+    "common": {
+      "files": [
+        "launchlist.html",
+        "logging.html"
+      ],
+      "include": {
+        "files": [
+          "loader.html",
+          "configcon.u.html"
+        ]
+      },
+      "script": {
+        "files": [
+          "dialogs.js",
+          "window.js",
+          "common.js",
+          "configuration.js",
+          "updater.js"
+        ]
+      },
+      "themes": {
+        "files": [],
+        "base": {
+          "files": [
+            "base.universal.scss",
+            "footer.scss",
+            "launchlist.scss",
+            "edit.config.scss",
+            "edit.dbc.scss",
+            "edit.themes.m.scss",
+            "logging.scss",
+            "tables.scss"
+          ]
+        }
+      }
+    },
+    "utils": {
+      "files": [
+        "xlstitch.js",
+        "xltc.js",
+        "xltb.exe",
+        "xltb.js",
+        "xlu.exe"
+      ]
+    }
+  },
+  "mainFiles": {
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
+  },
+  "directoryZips": {
+    "node_modules.zip": 1,
+    "help.zip": 1
+  },
+  "rem": [
+    "main.scss",
+    "themebuilder.js",
+    "xltcp.exe"
+  ],
+  "lastFullUpdate": false,
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-window-state": "^5.0.3",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "windows-shortcuts": "^0.1.6",
+    "@vscode/sudo-prompt": "^9.3.1",
+    "sass": "^1.83.0"
+  }
+}

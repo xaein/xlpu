@@ -1,0 +1,4 @@
+csharp/*/bin
+csharp/*/obj
+previous/*.html
+previous/*.css

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+  <defs>
+    <mask id="triangleMask">
+      <rect width="100" height="100" fill="white"/>
+      <polygon points="0,10 15,50 0,90" fill="black"/>
+      <polygon points="100,10 85,50 100,90" fill="black"/>
+    </mask>
+  </defs>
+  <rect width="100" height="100" fill="currentColor" opacity="0.3" mask="url(#triangleMask)"/>
+</svg> 

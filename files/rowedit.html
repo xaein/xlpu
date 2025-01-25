@@ -1,0 +1,24 @@
+<div id="rowEditDialog" class="launch-dialog">
+    <div class="dialog-content">
+        <div class="app-name-label">Edit Application:</div>
+        <div class="input-container">
+            <div class="input-row">
+                <button id="selectFileButton" class="select-file-button" onclick="js.F.selectApplicationFile()">Select File</button>
+                <div class="input-fields">
+                    <div class="input-field">
+                        <label for="appNameInput">Name:</label>
+                        <input type="text" id="appNameInput" class="add-row-input" placeholder="Enter app name">
+                    </div>
+                    <div class="input-field">
+                        <label for="appCmdInput">Command:</label>
+                        <input type="text" id="appCmdInput" class="add-row-input" placeholder="Enter command">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dialog-footer">
+        <button class="ok-button" onclick="js.F.rowEdit()">OK</button>
+        <button class="close-button" onclick="js.F.closeDialog('rowEdit')">Cancel</button>
+    </div>
+</div>

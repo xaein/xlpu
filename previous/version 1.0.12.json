@@ -1,0 +1,67 @@
+{
+  "version": "1.0.12",
+  "comment": "Update Changes:\n - Updated the initialization to have the application logo and reconfigured the text and added a loading\n    animation instead of the progress bar.\n - App can launch with system start up (creates shortcut in start up folder).\n - App can launch minimized on start (set up so its only doing this if launch with start up is enabled).\n - Updates to utility apps, now embedded c# applications.\n - Minor bug fixes to the main files of the application.\n - Node module updates (version updates).",
+  "patch": 10,
+  "files": {
+    "common": {
+      "files": [
+        "edit.config.html",
+        "initialize.html"
+      ],
+      "include": {
+        "files": [
+          "configcon.g.html",
+          "configcon.t.html",
+          "loader.html"
+        ],
+        "dialog": {
+          "files": [
+            "categoryadd.html"
+          ]
+        }
+      },
+      "script": {
+        "files": [
+          "common.js",
+          "configuration.js",
+          "loadsave.js"
+        ]
+      },
+      "themes": {
+        "base": {
+          "files": [
+            "edit.config.scss",
+            "loadsave.scss"
+          ]
+        }
+      }
+    },
+    "utils": {
+      "files": [
+        "xltc.js",
+        "xlaunch.exe"
+      ]
+    }
+  },
+  "rem": [
+  ],
+  "lastFullUpdate": false,
+  "mainFiles": {
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
+  },
+  "directoryZips": {
+    "node_modules.zip": 0,
+    "help.zip": 0
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-window-state": "^5.0.3",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "windows-shortcuts": "^0.1.6",
+    "@vscode/sudo-prompt": "^9.3.1",
+    "sass": "^1.83.0"
+  }
+}

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+  <path d="
+    M 0 40
+    Q 0 0 40 0
+    H 60
+    Q 100 0 100 40
+    V 60
+    Q 100 100 60 100
+    H 40
+    Q 0 100 0 60
+    Z
+  " fill="currentColor" opacity="0.3" />
+</svg>

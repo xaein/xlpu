@@ -1,0 +1,67 @@
+{
+  "version": "1.0.13",
+  "comment": "Update Changes:\n * Theme fixes to include an application border, will require reapplication of your theme.\n * Updates to the updater system to facilitate the removal of unused files from the application.\n\n ## Includes 1.0.12 updates as well. ##",
+  "patch": 10,
+  "files": {
+    "common": {
+      "files": [
+        "launchlist.html",
+        "logging.html"
+      ],
+      "include": {
+        "files": [
+          "loader.html"
+        ]
+      },
+      "script": {
+        "files": [
+          "dialogs.js",
+          "window.js"
+        ]
+      },
+      "themes": {
+        "files": [],
+        "base": {
+          "files": [
+            "base.universal.scss",
+            "footer.scss",
+            "launchlist.scss",
+            "edit.config.scss",
+            "edit.dbc.scss",
+            "edit.themes.m.scss",
+            "logging.scss",
+            "tables.scss"
+          ]
+        }
+      }
+    },
+    "utils": {
+      "files": [
+        "themebuilder.js",
+        "xlstitch.js",
+        "xltc.js"
+      ]
+    }
+  },
+  "rem": [
+  ],
+  "lastFullUpdate": false,
+  "mainFiles": {
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
+  },
+  "directoryZips": {
+    "node_modules.zip": 0,
+    "help.zip": 0
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-window-state": "^5.0.3",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "windows-shortcuts": "^0.1.6",
+    "@vscode/sudo-prompt": "^9.3.1",
+    "sass": "^1.83.0"
+  }
+}

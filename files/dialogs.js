@@ -1,0 +1,830 @@
+// Dialog management and interaction
+
+// Add Category Entry
+// Creates a new category and associated file
+async function categoryAdd() {
+    const categoryNameInput = document.getElementById('categoryNameInput');
+    const categoryName = categoryNameInput.value.trim();
+
+    if (categoryName) {
+        const fileName = `${categoryName}.xlfc`;
+        
+        if (!window.tempData) {
+            window.tempData = {};
+        }
+        const initialData = { " ": " " };
+        window.tempData[fileName] = JSON.stringify(initialData);
+
+        js.F.setData('tempData', window.tempData);
+
+        try {
+            const appDir = await e.Api.invoke('get-app-dir');
+            const xldbDir = js.F.dirVar('xldb');
+            const filePath = js.F.joinPath(appDir, xldbDir, fileName);
+            await e.Api.invoke('write-file', filePath, JSON.stringify(initialData));
+
+            updateVariables('addCategory', fileName);
+
+            closeDialog('categoryAdd');
+
+            await js.F.loadTabButtons(categoryName);
+        } catch (error) {}
+    }
+}
+
+// Remove Category Entry
+// Deletes a category and its associated file
+async function categoryRemove() {
+    const categoryName = document.getElementById('categoryToRemove').textContent;
+    if (categoryName) {
+        const tabList = document.getElementById('tabList');
+        const button = Array.from(tabList.children).find(btn => btn.textContent === categoryName);
+        if (button) {
+            tabList.removeChild(button);
+        }
+
+        const fileName = `${categoryName}.xlfc`;
+        
+        delete window.tempData[fileName];
+        js.F.setData('tempData', window.tempData);
+
+        updateVariables('removeCategory', fileName);
+
+        const appDir = await e.Api.invoke('get-app-dir');
+        const xldbDir = js.F.dirVar('xldb');
+        const filePath = js.F.joinPath(appDir, xldbDir, fileName);
+        const result = await e.Api.invoke('remove-file', filePath);
+        if (!result.success) {}
+
+        js.F.loadTabButtons();
+        closeDialog('categoryRemove');
+    }
+}
+
+// Rename Category Entry
+// Changes the name of a category and updates associated file
+async function categoryRename() {
+    const currentCategoryName = document.getElementById('currentCategoryName').textContent;
+    const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+    const newCategoryName = newCategoryNameInput.value.trim();
+    if (newCategoryName && currentCategoryName !== newCategoryName) {
+        const tabList = document.getElementById('tabList');
+        const activeTab = document.querySelector('.tablinks.active');
+        if (activeTab) {
+            activeTab.textContent = newCategoryName;
+            activeTab.classList.remove('active');
+        }
+
+        const oldFileName = `${currentCategoryName}.xlfc`;
+        const newFileName = `${newCategoryName}.xlfc`;
+        
+        window.tempData[newFileName] = window.tempData[oldFileName];
+        delete window.tempData[oldFileName];
+        js.F.setData('tempData', window.tempData);
+
+        updateVariables('renameCategory', { oldFileName, newFileName });
+
+        const appDir = await e.Api.invoke('get-app-dir');
+        const xldbDir = js.F.dirVar('xldb');
+        const oldFilePath = js.F.joinPath(appDir, xldbDir, oldFileName);
+        const newFilePath = js.F.joinPath(appDir, xldbDir, newFileName);
+        await e.Api.invoke('rename-file', oldFilePath, newFilePath);
+
+        js.F.loadTabButtons();
+
+        const newTab = Array.from(tabList.children).find(tab => tab.textContent === newCategoryName);
+        if (newTab) {
+            newTab.classList.add('active');
+            js.F.loadFileData(newFileName);
+        }
+
+        closeDialog('categoryRename');
+    }
+}
+
+// Hide Dialog Box
+// Hides the specified dialog
+function closeDialog(dialogName) {
+    const dialog = document.getElementById(`${dialogName}Dialog`);
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.style.visibility = 'hidden';
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalOverlay) {
+        modalOverlay.style.display = 'none';
+    }
+
+    if (dialogName === 'launch') {
+        resetAppSelection();
+    }
+}
+
+// Delete Row Entry
+// Removes the selected row from the current category
+async function confirmRowRemove() {
+    const appName = document.getElementById('appToRemove').textContent;
+
+    const activeTab = document.querySelector('.tablinks.active');
+    if (!activeTab) {
+        return;
+    }
+
+    const categoryName = activeTab.textContent.toLowerCase();
+    const fileName = `${categoryName}.xlfc`;
+
+    if (window.tempData[fileName]) {
+        const fileData = JSON.parse(window.tempData[fileName]);
+        delete fileData[appName];
+        window.tempData[fileName] = JSON.stringify(fileData);
+
+        js.F.setData('tempData', window.tempData);
+    }
+
+    const xldbf = js.F.getData('xldbf') || {};
+    if (xldbf[appName]) {
+        delete xldbf[appName];
+        js.F.setData('xldbf', xldbf);
+    }
+
+    await js.F.loadFileData(fileName);
+    closeDialog('rowRemove');
+}
+
+// Handle JSON Circular
+// Handles circular references in JSON.stringify
+function getCircularReplacer() {
+    const seen = new WeakSet();
+    return (key, value) => {
+        if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+                return "[Circular]";
+            }
+            seen.add(value);
+        }
+        return value;
+    };
+}
+
+// Start App Process
+// Launches selected app and displays countdown before closing
+async function launchApp() {
+    if (window.selectedApp) {
+        await showDialog('launch');
+        let countdown = 5;
+        const appNameElement = document.getElementById('appName');
+        const countdownElement = document.getElementById('countdown');
+        appNameElement.textContent = window.selectedApp;
+        countdownElement.textContent = `Closing in ${countdown}s`;
+
+        js.F.updateRecentApps(window.selectedApp);
+        e.Api.invoke('launch-app', 'xlaunch.exe', window.selectedApp).catch(() => {});
+        
+        const interval = setInterval(() => {
+            countdown -= 1;
+            countdownElement.textContent = `Closing in ${countdown}s`;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                closeDialog('launch');
+                
+                resetAppSelection();
+            }
+        }, 1000);
+    }
+}
+
+// Load Dialog Dynamic
+// Dynamically loads dialog HTML and CSS
+async function lazyLoadDialog(dialogName) {
+    const dialogId = `${dialogName}Dialog`;
+    if (!document.getElementById(dialogId)) {
+        try {
+            const htmlFileName = `${dialogName.toLowerCase()}.html`;
+            const dialogsDir = js.F.dirVar('includes', 'dialogs');
+            const compiledDir = js.F.dirVar('themes', 'compiled');
+
+            const [html] = await Promise.all([
+                fetch(`${dialogsDir}/${htmlFileName}`).then(response => response.text()),
+                lazyLoadStylesheet(`${compiledDir}/dialogs.css`)
+            ]);
+
+            let container = document.getElementById('dialogContainer');
+            if (!container) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                container = document.getElementById('dialogContainer');
+            }
+            
+            container = container || document.body;
+            container.insertAdjacentHTML('beforeend', html);
+        } catch (error) {}
+    }
+}
+
+// Load Style Dynamic
+// Dynamically loads a CSS file
+function lazyLoadStylesheet(href) {
+    return new Promise((resolve, reject) => {
+        if (!document.querySelector(`link[href="${href}"]`)) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = resolve;
+            link.onerror = reject;
+            document.head.appendChild(link);
+        } else {
+            resolve();
+        }
+    });
+}
+
+// Reset App State
+// Clears selected row and resets application state
+function resetAppSelection() {
+    window.selectedApp = null;
+    
+    // Just remove selection from any selected rows
+    const selectedRows = document.querySelectorAll('#appTable .table-row.selected');
+    selectedRows.forEach(row => {
+        row.classList.remove('selected');
+        const highlight = row.querySelector('.row-highlight');
+        if (highlight) {
+            highlight.style.opacity = '0';
+        }
+    });
+    
+    const launchButton = document.getElementById('footerLeftButton');
+    if (launchButton) {
+        launchButton.disabled = true;
+        launchButton.classList.add('disabled');
+    }
+}
+
+// Add Row Entry
+// Adds a new row to the current category
+async function rowAdd() {
+    const appNameInput = document.getElementById('appNameInput');
+    const appCmdInput = document.getElementById('appCmdInput');
+    const appName = appNameInput.value.trim();
+    const appCmd = appCmdInput.value.trim();
+
+    appNameInput.value = '';
+    appCmdInput.value = '';
+
+    if (!appName || !appCmd) {
+        return;
+    }
+
+    const activeTab = document.querySelector('.tablinks.active');
+    if (!activeTab) {
+        return;
+    }
+
+    const categoryName = activeTab.textContent;
+    const fileName = `${categoryName}.xlfc`;
+
+    if (!window.tempData[fileName]) {
+        window.tempData[fileName] = JSON.stringify({});
+    }
+    let fileData = JSON.parse(window.tempData[fileName]);
+
+    if (fileData[" "] === " ") {
+        delete fileData[" "];
+    }
+
+    fileData[appName] = appCmd;
+
+    window.tempData[fileName] = JSON.stringify(fileData);
+
+    js.F.setData('tempData', window.tempData);
+
+    await js.F.loadFileData(fileName);
+    closeDialog('rowAdd');
+}
+
+// Edit Row Entry
+// Updates an existing row in the current category
+async function rowEdit() {
+    const appNameInput = document.getElementById('appNameInput');
+    const appCmdInput = document.getElementById('appCmdInput');
+    
+    if (!appNameInput || !appCmdInput) {
+        return;
+    }
+
+    const newAppName = appNameInput.value.trim();
+    const newAppCmd = appCmdInput.value.trim();
+
+    if (!newAppName || !newAppCmd) {
+        return;
+    }
+
+    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    if (!selectedRow) {
+        return;
+    }
+
+    const oldAppName = selectedRow.querySelector('.app-column').textContent;
+
+    const activeTab = document.querySelector('.tablinks.active');
+    if (!activeTab) {
+        return;
+    }
+    const currentCategory = activeTab.textContent;
+    const currentFileName = `${currentCategory}.xlfc`;
+
+    if (window.tempData[currentFileName]) {
+        let categoryData = JSON.parse(window.tempData[currentFileName]);
+        if (oldAppName !== newAppName) {
+            delete categoryData[oldAppName];
+        }
+        categoryData[newAppName] = newAppCmd;
+        window.tempData[currentFileName] = JSON.stringify(categoryData);
+    }
+
+    closeDialog('rowEdit');
+
+    js.F.loadFileData(currentFileName);
+    js.F.updateSaveButtonState();
+}
+
+// Remove Row Entry
+// Initiates removal of a row from the current category
+async function rowRemove() {
+    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    if (!selectedRow) {
+        return;
+    }
+
+    const appName = selectedRow.querySelector('.app-column').textContent.trim();
+
+    await showDialog('rowRemove');
+    document.getElementById('appToRemove').textContent = appName;
+}
+
+// Select App File
+// Opens file selection dialog for application path
+async function selectApplicationFile() {
+    try {
+        const defaultDir = await e.Api.invoke('get-desktop-dir');
+        const result = await e.Api.invoke('open-file-dialog', {
+            title: 'Select Application File',
+            defaultPath: defaultDir,
+            properties: ['openFile'],
+            filters: [
+                { name: 'Applications', extensions: ['lnk', 'url', 'exe', 'bat', 'vbs', 'cmd'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const filePath = result.filePaths[0];
+            const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
+            
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            
+            if (appNameInput && appCmdInput) {
+                appNameInput.value = shortcutInfo?.name || '';
+                appCmdInput.value = shortcutInfo?.target || filePath;
+            }
+            
+            const okButton = document.querySelector('.dialog-footer .ok-button');
+            if (okButton) {
+                okButton.disabled = false;
+                okButton.style.opacity = '1';
+                okButton.style.cursor = 'pointer';
+            }
+        }
+    } catch (error) {
+    }
+}
+
+// Setup Input Events
+// Configures input field event listeners for dialogs
+function setupDialogInputListeners(dialogName) {
+    switch (dialogName) {
+        case 'categoryAdd':
+            const categoryNameInput = document.getElementById('categoryNameInput');
+            categoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'categoryRename':
+            const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+            newCategoryNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowAdd':
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            appCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+        case 'rowEdit':
+            const editAppNameInput = document.getElementById('appNameInput');
+            const editAppCmdInput = document.getElementById('appCmdInput');
+            editAppNameInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            editAppCmdInput.addEventListener('input', () => updateOkButtonState(dialogName));
+            break;
+    }
+}
+
+// Show Theme Delete
+// Displays the theme deletion confirmation dialog
+async function showDeleteThemeDialog() {
+    const selectedTheme = document.querySelector('#themeList li.selected');
+    if (!selectedTheme) return;
+
+    const themeName = selectedTheme.textContent;
+    await showDialog('themeDelete');
+    document.getElementById('themeToDelete').textContent = themeName;
+    const confirmDeleteButton = document.getElementById('confirmDeleteTheme');
+    if (confirmDeleteButton) {
+        confirmDeleteButton.onclick = js.F.deleteTheme;
+    }
+}
+
+// Show Theme Import
+// Displays the theme import dialog with options
+async function showImportThemeDialog() {
+    try {
+        await showDialog('themeImport');
+
+        const defaultDir = await e.Api.invoke('get-desktop-dir');
+        const result = await e.Api.invoke('open-file-dialog', {
+            title: 'Select Theme File',
+            defaultPath: defaultDir,
+            filters: [
+                { name: 'Theme Files', extensions: ['thm'] },
+                { name: 'All Files', extensions: ['*'] }
+            ],
+            properties: ['openFile']
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const importPathInput = document.getElementById('themeImportPath');
+            importPathInput.value = result.filePaths[0];
+            importPathInput.setAttribute('value', result.filePaths[0]);
+        } else {
+            closeDialog('themeImport');
+        }
+    } catch (error) {
+        closeDialog('themeImport');
+    }
+}
+
+// Display Dialog Box
+// Shows the specified dialog with modal overlay
+async function showDialog(dialogName, sectionName) {
+    await lazyLoadDialog(dialogName);
+    
+    let modalOverlay = document.getElementById('modalOverlay');
+    if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'modalOverlay';
+        document.body.appendChild(modalOverlay);
+    }
+    modalOverlay.style.display = 'block';
+    
+    js.F.handleResizeModal();
+
+    const dialog = document.getElementById(`${dialogName}Dialog`);
+    if (dialog) {
+        if (dialogName === 'categoryRename') {
+            const activeTab = document.querySelector('.tablinks.active');
+            if (activeTab) {
+                const currentCategoryName = activeTab.textContent;
+                document.getElementById('currentCategoryName').textContent = currentCategoryName;
+
+                const newCategoryNameInput = document.getElementById('newCategoryNameInput');
+                newCategoryNameInput.value = '';
+                newCategoryNameInput.focus();
+
+                newCategoryNameInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        js.F.categoryRename();
+                    }
+                });
+            }
+        }
+
+        if (dialogName === 'categoryRemove') {
+            const activeTab = document.querySelector('.tablinks.active');
+            if (activeTab) {
+                const currentCategoryName = activeTab.textContent;
+                document.getElementById('categoryToRemove').textContent = currentCategoryName;
+            }
+        }
+
+        if (dialogName === 'categoryAdd') {
+            const categoryNameInput = document.getElementById('categoryNameInput');
+            categoryNameInput.value = '';
+            categoryNameInput.focus();
+
+            categoryNameInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.categoryAdd();
+                }
+            });
+        }
+
+        if (dialogName === 'rowRemove') {
+            const selectedRow = document.querySelector('#appTable .table-row.selected');
+            if (selectedRow) {
+                const appName = selectedRow.querySelector('.app-column').textContent;
+                document.getElementById('appToRemove').textContent = appName;
+            }
+        }
+
+        if (dialogName === 'applyTheme') {
+            const headerMain = dialog.querySelector('#applyThemeHeaderMain');
+            const progressBar = dialog.querySelector('#applyThemeProgressBar');
+            const progressText = dialog.querySelector('#applyThemeProgressText');
+
+            if (headerMain) {
+                headerMain.textContent = `Applying Theme: ${window.currentTheme}`;
+            }
+
+            if (progressBar) progressBar.style.width = '0%';
+            if (progressText) progressText.textContent = '0%';
+        }
+
+        if (dialogName === 'save') {
+            const progressBar = dialog.querySelector('#saveProgressBar');
+            const savePercentage = dialog.querySelector('#savePercentage');
+            const reloadPercentage = dialog.querySelector('#reloadPercentage');
+
+            if (progressBar) progressBar.style.width = '0%';
+            if (savePercentage) savePercentage.textContent = '0%';
+            if (reloadPercentage) reloadPercentage.textContent = '0%';
+
+            dialog.querySelector('#saveHeaderMain').textContent = 'Saving:';
+            dialog.querySelector('#saveCategoryLabel').textContent = 'Category:';
+            dialog.querySelector('#saveCurrentCategory').textContent = '';
+            dialog.querySelector('#reloadHeaderMain').textContent = 'Reload Pending';
+            dialog.querySelector('#reloadCategoryLabel').textContent = '';
+            dialog.querySelector('#reloadCurrentCategory').textContent = '';
+
+            progressBar.classList.remove('reloading');
+        }
+
+        if (dialogName === 'themeDelete') {
+            const confirmDeleteButton = document.getElementById('confirmDeleteTheme');
+            if (confirmDeleteButton) {
+                confirmDeleteButton.onclick = js.F.deleteTheme;
+            }
+        }
+
+        if (dialogName === 'themeImport') {
+            dialog.style.opacity = '0';
+            dialog.style.pointerEvents = 'none';
+
+            const importPathInput = document.getElementById('themeImportPath');
+            if (importPathInput) {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+                            const filePath = importPathInput.value;
+                            if (filePath) {
+                                js.F.importTheme(filePath);
+                                closeDialog('themeImport');
+                                observer.disconnect();
+                            }
+                        }
+                    });
+                });
+                observer.observe(importPathInput, { attributes: true });
+            }
+        }
+
+        if (dialogName === 'configSave' && sectionName) {
+            const capitalizedSection = sectionName.charAt(0).toUpperCase() + sectionName.slice(1);
+            const sectionSpan = dialog.querySelector('#configSaveSection');
+            if (sectionSpan) {
+                sectionSpan.textContent = capitalizedSection;
+            }
+        }
+
+        if (dialogName === 'configConfirm' && sectionName) {
+            const capitalizedSection = sectionName.charAt(0).toUpperCase() + sectionName.slice(1);         
+            const sectionSpan = dialog.querySelector('#configConfirmSection');
+            if (sectionSpan) {
+                sectionSpan.textContent = capitalizedSection;
+            }
+        }
+
+        if (dialogName === 'rowAdd') {
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.value = '';
+            appCmdInput.value = '';
+            appNameInput.focus();
+
+            appNameInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowAdd();
+                }
+            });
+
+            appCmdInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowAdd();
+                }
+            });
+        }
+
+        if (dialogName === 'rowEdit') {
+            const appNameInput = document.getElementById('appNameInput');
+            const appCmdInput = document.getElementById('appCmdInput');
+            appNameInput.focus();
+
+            appNameInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowEdit();
+                }
+            });
+
+            appCmdInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    js.F.rowEdit();
+                }
+            });
+        }
+
+        switch (dialogName) {
+            case 'categoryAdd':
+            case 'categoryRename':
+            case 'rowAdd':
+            case 'rowEdit':
+                setupDialogInputListeners(dialogName);
+                updateOkButtonState(dialogName);
+                break;
+        }
+
+        dialog.style.display = 'flex';
+        dialog.style.visibility = 'visible';
+    }
+}
+
+// Show Row Edit
+// Displays the row editing dialog with current values
+async function showRowEditDialog() {
+    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    if (!selectedRow) {
+        return;
+    }
+
+    await showDialog('rowEdit');
+
+    const appName = selectedRow.querySelector('.app-column').textContent;
+    const appCmd = selectedRow.querySelector('.command-column').textContent;
+
+    const appNameInput = document.getElementById('appNameInput');
+    const appCmdInput = document.getElementById('appCmdInput');
+
+    if (appNameInput && appCmdInput) {
+        appNameInput.value = appName;
+        appCmdInput.value = appCmd;
+    }
+}
+
+// Show Save Dialog
+// Displays the save confirmation dialog
+async function showSaveDialog() {
+    await lazyLoadDialog('databasesave');
+    const compiledDir = js.F.dirVar('themes', 'compiled');
+    const scriptsDir = js.F.dirVar('scripts');
+    await lazyLoadStylesheet(`${compiledDir}/loadsave.css`);
+    await js.F.lazyLoadScript(`${scriptsDir}/loadsave.js`);
+    
+    js.F.updateJsF();
+    js.F.updateVariablesOnExit();
+    
+    let modalOverlay = document.getElementById('modalOverlay');
+    if (!modalOverlay) {
+        modalOverlay = document.createElement('div');
+        modalOverlay.id = 'modalOverlay';
+        document.body.appendChild(modalOverlay);
+    }
+    modalOverlay.style.display = 'block';
+    
+    js.F.handleResizeModal();
+    
+    const saveDialog = document.getElementById('saveDialog');
+    if (saveDialog) {
+        const progressBar = document.getElementById('saveProgressBar');
+
+        document.getElementById('saveHeaderMain').textContent = 'Saving:';
+        document.getElementById('saveCategoryLabel').textContent = 'Category:';
+        document.getElementById('saveCurrentCategory').textContent = '';
+        document.getElementById('savePercentage').textContent = '0%';
+        document.getElementById('reloadPercentage').textContent = '0%';
+        document.getElementById('reloadHeaderMain').textContent = 'Reload Pending';
+        document.getElementById('reloadCategoryLabel').textContent = '';
+        document.getElementById('reloadCurrentCategory').textContent = '';
+
+        progressBar.style.width = '0%';
+        progressBar.classList.remove('reloading');
+        
+        document.documentElement.style.setProperty('--progress-bar-background', getComputedStyle(document.documentElement).getPropertyValue('--progress-bar-background').trim());
+
+        saveDialog.style.display = 'flex';
+        saveDialog.style.visibility = 'visible';
+
+        await js.F.saveAllData();
+
+        await new Promise(resolve => setTimeout(resolve, window.delay));
+
+        closeDialog('save');
+    }
+}
+
+// Update OK State
+// Updates the state of dialog OK buttons based on input
+function updateOkButtonState(dialogName) {
+    const dialog = document.getElementById(`${dialogName}Dialog`);
+    const okButton = dialog.querySelector('.ok-button');
+    let shouldEnable = true;
+
+    switch (dialogName) {
+        case 'categoryAdd':
+            shouldEnable = !!document.getElementById('categoryNameInput').value.trim();
+            break;
+        case 'categoryRename':
+            shouldEnable = !!document.getElementById('newCategoryNameInput').value.trim();
+            break;
+        case 'rowAdd':
+            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
+                           !!document.getElementById('appCmdInput').value.trim();
+            break;
+        case 'rowEdit':
+            shouldEnable = !!document.getElementById('appNameInput').value.trim() &&
+                           !!document.getElementById('appCmdInput').value.trim();
+            break;
+    }
+
+    okButton.disabled = !shouldEnable;
+    okButton.style.opacity = shouldEnable ? '1' : '0.5';
+    okButton.style.cursor = shouldEnable ? 'pointer' : 'not-allowed';
+}
+
+// Update App Variables
+// Updates application variables based on specified action
+function updateVariables(operation, data) {
+    let xldbv = js.F.getData('xldbv') || {};
+
+    if (typeof xldbv.xldbFiles === 'string') {
+        xldbv.xldbFiles = xldbv.xldbFiles.split(',');
+    } else if (!Array.isArray(xldbv.xldbFiles)) {
+        xldbv.xldbFiles = [];
+    }
+
+    switch (operation) {
+        case 'addCategory':
+            if (!xldbv.xldbFiles.includes(data)) {
+                xldbv.xldbFiles.push(data);
+            }
+            break;
+        case 'renameCategory':
+            const index = xldbv.xldbFiles.indexOf(data.oldFileName);
+            if (index !== -1) {
+                xldbv.xldbFiles[index] = data.newFileName;
+            }
+            break;
+        case 'removeCategory':
+            xldbv.xldbFiles = xldbv.xldbFiles.filter(file => file !== data);
+            break;
+    }
+
+    if (!Array.isArray(xldbv.xldbFiles)) {
+        xldbv.xldbFiles = [];
+    }
+
+    js.F.setData('xldbv', xldbv);
+    window.xldbv = xldbv;
+}
+
+// Handles window resize events to reposition modal dialogs
+window.addEventListener('resize', () => {
+    if (document.getElementById('modalOverlay')?.style.display === 'block') {
+        js.F.handleResizeModal();
+    }
+});
+
+// Export dialog functions
+window.dialogFunctions = {
+    categoryAdd,
+    categoryRemove,
+    categoryRename,
+    closeDialog,
+    confirmRowRemove,
+    launchApp,
+    lazyLoadDialog,
+    lazyLoadStylesheet,
+    rowAdd,
+    rowEdit,
+    rowRemove,
+    showDeleteThemeDialog,
+    showDialog,
+    showRowEditDialog,
+    showSaveDialog,
+    updateVariables
+};
