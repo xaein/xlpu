@@ -478,6 +478,7 @@ async function checkForUpdates() {
             }
         } else {
             updateText += '\nNo updates available.';
+            updateText += '\n\nClick <span class="update-link">here</span> for more information about the current version.';
         }
         
         return {

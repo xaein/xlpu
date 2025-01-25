@@ -402,6 +402,14 @@
                 firstVisibleItem.click();
             }
         }
+
+        // Setup update link handler
+        document.getElementById('configDisplay').addEventListener('click', (event) => {
+            const updateLink = event.target.closest('.update-link');
+            if (updateLink) {
+                e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
+            }
+        });
     </script>
 </body>
 </html>

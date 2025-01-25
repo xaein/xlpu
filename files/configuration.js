@@ -393,13 +393,13 @@ async function initializeUpdateConfig() {
         }
     });
 
-    updateInfoPreview.textContent = 'Checking for updates. Please wait...\n\n';
+    updateInfoPreview.innerHTML = 'Checking for updates. Please wait...\n\n';
     try {
         const { text, hasUpdate } = await js.F.checkForUpdates();
-        updateInfoPreview.textContent = text;
+        updateInfoPreview.innerHTML = text;
         if (updateButton) updateButton.disabled = !hasUpdate;
     } catch (error) {
-        updateInfoPreview.textContent = error.message;
+        updateInfoPreview.innerHTML = error.message;
         if (updateButton) updateButton.disabled = true;
     }
 
@@ -411,7 +411,6 @@ async function initializeUpdateConfig() {
             const updateInfo = await js.F.getUpdateInfo();
 
             if (!updateInfo.hasUpdate) {
-                updateInfoPreview.textContent = 'No updates available.';
                 updateButton.disabled = true;
                 return;
             }
@@ -425,8 +424,8 @@ async function initializeUpdateConfig() {
 
             await js.F.updateFiles((file) => {
                 const newText = window.updateState.progressHandler(file);
-                if (newText !== updateInfoPreview.textContent) {
-                    updateInfoPreview.textContent = newText;
+                if (newText !== updateInfoPreview.innerHTML) {
+                    updateInfoPreview.innerHTML = newText;
                     scrollToLine(updateInfoPreview, file);
                 }
             });
@@ -435,23 +434,15 @@ async function initializeUpdateConfig() {
             const restartMessage = '* Application will require a restart to finalize. *';
             
             // Update content with the link
-            const currentContent = updateInfoPreview.textContent;
+            const currentContent = updateInfoPreview.innerHTML;
             updateInfoPreview.innerHTML = currentContent + 
-                `\n\nClick <span class="update-link">here</span> for more information about this update or from previous versions.\n\n${completionMessage}\n${restartMessage}`;
-            
-            // Add click handler for the link
-            const updateLink = updateInfoPreview.querySelector('.update-link');
-            if (updateLink) {
-                updateLink.addEventListener('click', () => {
-                    e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
-                });
-            }
+                `\n\nClick <span class="update-link">here</span> for more information about this update.\n\n${completionMessage}\n${restartMessage}`;
 
             // Scroll to the restart message
             scrollToLine(updateInfoPreview, restartMessage);
 
         } catch (error) {
-            updateInfoPreview.textContent = `Error during update: ${error.message}`;
+            updateInfoPreview.innerHTML = `Error during update: ${error.message}`;
             updateButton.disabled = false;
         } finally {
             js.F.hideUpdateOverlay();
@@ -978,17 +969,6 @@ function setupConfigChangeListener() {
     }
 }
 
-// Export configuration functions
-window.configurationFunctions = {
-    setupConfigList,
-    loadConfigSection,
-    getConfig,
-    setupConfigChangeListener,
-    generateXlaunchCfgContent,
-    getVersionInfo,
-    fetchFile
-};
-
 // Save configuration
 // Saves and processes all configuration changes across different sections
 async function saveConfiguration(skipDialog = false) {
@@ -1055,3 +1035,14 @@ async function saveConfiguration(skipDialog = false) {
     return true;
 }
 
+
+// Export configuration functions
+window.configurationFunctions = {
+    setupConfigList,
+    loadConfigSection,
+    getConfig,
+    setupConfigChangeListener,
+    generateXlaunchCfgContent,
+    getVersionInfo,
+    fetchFile
+};

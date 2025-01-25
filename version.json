@@ -1,12 +1,13 @@
 {
-  "version": "1.0.14",
-  "comment": "Update Changes:\n * Internal Updater changes.\n   ~ Can now remove unused files.\n   ~ Will now update app on relaunch, better for ensuring updates apply correctly.\n   ~ Rebuild themes if any .scss or .thm files change.\n\nThis update sets up the new updating system, that will be fully implemented in the next update.",
+  "version": "1.0.15",
+  "comment": "Update Changes:\n  * Updated the update page of the configuration section to show the link for the version changes even\n    if you are up to date with the version\n\n ## Includes v1.0.14 changes ##\n",
   "patch": 10,
   "files": {
     "common": {
       "files": [
         "launchlist.html",
-        "logging.html"
+        "logging.html",
+        "edit.config.html"
       ],
       "include": {
         "files": [
@@ -50,13 +51,13 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 0,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
-    "node_modules.zip": 1,
-    "help.zip": 1
+    "node_modules.zip": 2,
+    "help.zip": 2
   },
   "rem": [
     "main.scss",
