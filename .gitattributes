@@ -1,3 +1,1 @@
-# No Git LFS needed as files directory is just for current state
-
-*.exe filter=lfs diff=lfs merge=lfs -text
+# Binary files are tracked directly in Git
