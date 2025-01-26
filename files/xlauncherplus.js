@@ -94,19 +94,21 @@ safeIpc('download-file', async (event, url, filePath, isBinary = false) => {
 // Retrieves and processes data from specified remote URL endpoint
 safeIpc('fetch-url', async (event, url, responseType = 'json') => {
     try {
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch(url);
-        let data;
-        if (responseType === 'text') {
-            data = await response.text();
-        } else if (responseType === 'arraybuffer') {
-            data = await response.arrayBuffer();
-        } else {
-            data = await response.json();
-        }
-        return { ok: response.ok, statusText: response.statusText, data };
+        const axios = require('axios');
+        const response = await axios.get(url, {
+            responseType: responseType === 'json' ? 'json' : responseType
+        });
+        
+        return { 
+            ok: response.status === 200, 
+            statusText: response.statusText, 
+            data: response.data 
+        };
     } catch (error) {
-        return { ok: false, statusText: error.message };
+        return { 
+            ok: false, 
+            statusText: error.message 
+        };
     }
 });
 
