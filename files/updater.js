@@ -105,6 +105,7 @@ async function downloadAndApplyFiles(onProgress) {
                     const fileUrl = `${window.xldbv.uurl}/files/${file}`;
                     const targetPath = js.F.joinPath(tmpDir, currentPath, file);
                     const isBinary = file.endsWith('.exe');
+                    console.log(fileUrl, targetPath, isBinary);
                     await e.Api.invoke('ensure-directory', currentPath);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
                     if (onProgress) onProgress(`${currentPath}/${file}`);

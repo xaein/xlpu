@@ -1,19 +1,47 @@
 {
   "version": "1.0.15",
-  "comment": "Update Changes:\n  * Updated the update page of the configuration section to show the link for the version changes even\n    if you are up to date with the version\n\n ## Includes v1.0.14 changes ##\n",
+  "comment": "Update Changes:\n  * Fixing updater issues, node module changes.\n  * This is a full update so if it does not fix things there will be an installer made.\n",
   "patch": 10,
   "files": {
     "common": {
       "files": [
         "launchlist.html",
         "logging.html",
-        "edit.config.html"
+        "edit.config.html",
+        "edit.dbc.html",
+        "edit.themes.html",
+        "initialize.html",
+        "welcome.html"
       ],
       "include": {
         "files": [
           "loader.html",
-          "configcon.u.html"
-        ]
+          "configcon.u.html",
+          "configcon.g.html",
+          "configcon.t.html",
+          "footer.html",
+          "header.html",
+          "pagination.html",
+          "titlebar.html"
+        ],
+        "dialog": {
+          "files": [
+            "applytheme.html",
+            "categoryadd.html",
+            "categoryremove.html",
+            "categoryrename.html",
+            "configconfirm.html",
+            "configsave.html",
+            "databaseconfirm.html",
+            "databasesave.html",
+            "launch.html",
+            "rowadd.html",
+            "rowedit.html",
+            "rowremove.html",
+            "themedelete.html",
+            "themeimport.html"
+          ]
+        }
       },
       "script": {
         "files": [
@@ -21,7 +49,13 @@
           "window.js",
           "common.js",
           "configuration.js",
-          "updater.js"
+          "updater.js",
+          "conversioncheck.js",
+          "loadsave.js",
+          "pagination.js",
+          "systray.js",
+          "tables.js",
+          "themes.js"
         ]
       },
       "themes": {
@@ -35,7 +69,24 @@
             "edit.dbc.scss",
             "edit.themes.m.scss",
             "logging.scss",
-            "tables.scss"
+            "tables.scss",
+            "dialogs.scss",
+            "edit.themes.p.scss",
+            "header.scss",
+            "loadsave.scss",
+            "pagination.scss",
+            "welcome.scss"
+          ]
+        },
+        "selectors": {
+          "files": [
+            "bulge.svg",
+            "indent normal.svg",
+            "indent straight.svg",
+            "pointed.svg",
+            "rectangle.svg",
+            "rounded.svg",
+            "sword.svg"
           ]
         }
       }
@@ -46,32 +97,9 @@
         "xltc.js",
         "xltb.exe",
         "xltb.js",
-        "xlu.exe"
-      ],
-      "updtmp": {
-        "files": [
-          "xlauncherplus.js",
-          "xlauncherpluseapi.js",
-          "xlauncherplusfs.js"
-        ],
-        "common": {
-          "files": [],
-          "script": {
-            "files": [
-              "updater.js"
-            ]
-          }
-        },
-        "utils": {
-          "files": [
-            "xlstitch.js",
-            "xltb.exe",
-            "xltb.js",
-            "xltc.js",
-            "xlu.exe"
-          ]
-        }
-      }
+        "xlu.exe",
+        "xlaunch.exe"
+      ]
     }
   },
   "mainFiles": {
@@ -90,13 +118,12 @@
   ],
   "lastFullUpdate": false,
   "dependencies": {
+    "@vscode/sudo-prompt": "^9.3.1",
     "adm-zip": "^0.5.16",
+    "axios": "^1.6.7",
     "electron-window-state": "^5.0.3",
     "fs-extra": "^11.2.0",
-    "node-fetch": "^3.3.2",
-    "windows-shortcuts": "^0.1.6",
-    "@vscode/sudo-prompt": "^9.3.1",
     "sass": "^1.83.0",
-    "axios": "^1.6.7"
+    "windows-shortcuts": "^0.1.6"
   }
 }

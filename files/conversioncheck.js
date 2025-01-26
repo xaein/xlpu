@@ -136,7 +136,10 @@ function convertXldbv(data) {
             variables.directories = {
                 xldb: "xldb",
                 help: "help",
-                utils: "utils",
+                utils: {
+                    root: "utils",
+                    update: "updtmp"
+                },
                 scripts: "script",
                 includes: {
                     root: "include",
@@ -163,6 +166,18 @@ function convertXldbv(data) {
                     compiled: "compiled"
                 };
             }
+            // Convert utils to new structure if it's a string
+            if (typeof variables.directories.utils === 'string') {
+                variables.directories.utils = {
+                    root: variables.directories.utils,
+                    update: "updtmp"
+                };
+            } else if (!variables.directories.utils || typeof variables.directories.utils !== 'object') {
+                variables.directories.utils = {
+                    root: "utils",
+                    update: "updtmp"
+                };
+            }
         }
 
         if (!variables.rows || typeof variables.rows !== 'object') {
@@ -181,7 +196,6 @@ function convertXldbv(data) {
         const requiredDirs = {
             xldb: "xldb",
             help: "help",
-            utils: "utils",
             scripts: "script"
         };
 
@@ -191,6 +205,12 @@ function convertXldbv(data) {
                 variables.directories[key] = value;
             }
         });
+
+        // Always ensure utils structure
+        variables.directories.utils = {
+            root: variables.directories.utils?.root || "utils",
+            update: variables.directories.utils?.update || "updtmp"
+        };
 
         // Always ensure includes structure
         variables.directories.includes = {
