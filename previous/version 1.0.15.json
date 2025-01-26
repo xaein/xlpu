@@ -47,13 +47,37 @@
         "xltb.exe",
         "xltb.js",
         "xlu.exe"
-      ]
+      ],
+      "updtmp": {
+        "files": [
+          "xlauncherplus.js",
+          "xlauncherpluseapi.js",
+          "xlauncherplusfs.js"
+        ],
+        "common": {
+          "files": [],
+          "script": {
+            "files": [
+              "updater.js"
+            ]
+          }
+        },
+        "utils": {
+          "files": [
+            "xlstitch.js",
+            "xltb.exe",
+            "xltb.js",
+            "xltc.js",
+            "xlu.exe"
+          ]
+        }
+      }
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 1,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
   },
   "directoryZips": {
     "node_modules.zip": 2,
