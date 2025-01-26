@@ -282,49 +282,21 @@ class FileSystemOperations {
     // Downloads a file from a URL and saves it to the specified path
     async downloadFile(url, filePath, isBinary = false) {
         try {
-            const axios = require('axios');
+            const fetch = (await import('node-fetch')).default;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             // Ensure the directory exists
             await fs.ensureDir(path.dirname(filePath));
             
             if (isBinary) {
-                console.log(`[DEBUG] Starting binary download: ${url}`);
-                const response = await axios({
-                    url,
-                    method: 'GET',
-                            responseType: 'stream',
-                            maxContentLength: Infinity,
-                            maxBodyLength: Infinity
-                        });
-
-                console.log(`[DEBUG] Content length: ${response.headers['content-length']}`);
-                        const writer = fs.createWriteStream(filePath);
-
-                response.data.on('data', chunk => {
-                    console.log(`[DEBUG] Received chunk of size: ${chunk.length}`);
-                });
-                
-                response.data.pipe(writer);
-                
-                return new Promise((resolve, reject) => {
-                    writer.on('finish', () => {
-                        console.log(`[DEBUG] Write finished for: ${filePath}`);
-                        resolve(true);
-                    });
-                    writer.on('error', (err) => {
-                        console.error(`[DEBUG] Write error: ${err.message}`);
-                        reject(err);
-                    });
-                    response.data.on('error', (err) => {
-                        console.error(`[DEBUG] Stream error: ${err.message}`);
-                        reject(err);
-                    });
-                });
+                const arrayBuffer = await response.arrayBuffer();
+                await fs.writeFile(filePath, Buffer.from(arrayBuffer));
             } else {
-                const response = await axios.get(url);
-                await fs.writeFile(filePath, response.data, 'utf8');
-                return true;
+                const text = await response.text();
+                await fs.writeFile(filePath, text, 'utf8');
             }
+            return true;
         } catch (error) {
             console.error('Error downloading file:', error);
             throw error;

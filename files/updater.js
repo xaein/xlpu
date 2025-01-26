@@ -162,10 +162,16 @@ async function downloadAndApplyFiles(onProgress) {
         // Write removal list if version info has removals
         if (versionInfo.rem && versionInfo.rem.length > 0) {
             const xldbuPath = js.F.joinPath(appDir, js.F.dirVar('utils'), 'xldbu.json');
-            const updateData = {
-                removedFiles: versionInfo.rem,
-                removedDependencies: []
-            };
+            let updateData = { removedFiles: [], removedDependencies: [] };
+            
+            try {
+                const existingData = await e.Api.invoke('read-file', xldbuPath);
+                updateData = JSON.parse(existingData);
+            } catch (error) {
+                // File doesn't exist or is invalid, use default empty arrays
+            }
+            
+            updateData.removedFiles = versionInfo.rem;
             await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
         }
 
@@ -268,7 +274,16 @@ async function checkDependencyChanges() {
         if (removedDeps.length > 0) {
             const utilsDir = js.F.dirVar('utils');
             const xldbuPath = js.F.joinPath(appDir, utilsDir, 'xldbu.json');
-            const updateData = { removedDependencies: removedDeps };
+            let updateData = { removedFiles: [], removedDependencies: [] };
+            
+            try {
+                const existingData = await e.Api.invoke('read-file', xldbuPath);
+                updateData = JSON.parse(existingData);
+            } catch (error) {
+                // File doesn't exist or is invalid, use default empty arrays
+            }
+            
+            updateData.removedDependencies = removedDeps;
             await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
         }
 
