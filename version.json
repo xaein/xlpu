@@ -1,81 +1,73 @@
 {
-  "version": "1.0.15",
-  "comment": "Update Changes:\n  * Fixing updater issues, node module changes.\n  * This is a full update so if it does not fix things there will be an installer made.\n",
-  "patch": 10,
+  "version": "1.1.0",
+  "patch": 0,
+  "comment": "Update Changes:\n- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code\n   for each section\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB(js module and exe))\n   XLU should remove empty directories on update after this\n   XLTB slight changes for future proofing\n",
   "files": {
-    "common": {
+    "files": {
       "files": [
-        "launchlist.html",
-        "logging.html",
-        "edit.config.html",
-        "edit.dbc.html",
-        "edit.themes.html",
-        "initialize.html",
-        "welcome.html"
+        "xlp.app.html"
       ],
-      "include": {
+      "ico": {
         "files": [
-          "loader.html",
-          "configcon.u.html",
-          "configcon.g.html",
-          "configcon.t.html",
-          "footer.html",
-          "header.html",
-          "pagination.html",
-          "titlebar.html"
-        ],
-        "dialog": {
-          "files": [
-            "applytheme.html",
-            "categoryadd.html",
-            "categoryremove.html",
-            "categoryrename.html",
-            "configconfirm.html",
-            "configsave.html",
-            "databaseconfirm.html",
-            "databasesave.html",
-            "launch.html",
-            "rowadd.html",
-            "rowedit.html",
-            "rowremove.html",
-            "themedelete.html",
-            "themeimport.html"
-          ]
-        }
+          "xlauncherplus.ico",
+          "xlauncherplus.png"
+        ]
       },
-      "script": {
+      "js": {
         "files": [
-          "dialogs.js",
-          "window.js",
-          "common.js",
-          "configuration.js",
-          "updater.js",
-          "conversioncheck.js",
-          "loadsave.js",
-          "pagination.js",
-          "systray.js",
-          "tables.js",
-          "themes.js"
+          "xlp.app.js",
+          "xlp.core.c.js",
+          "xlp.core.d.js",
+          "xlp.core.s.js",
+          "xlp.core.v.js",
+          "xlp.core.w.js",
+          "xlp.m.configuration.js",
+          "xlp.m.configuration.u.js",
+          "xlp.m.databasecontrol.js",
+          "xlp.m.databasecontrol.s.js",
+          "xlp.m.init.js",
+          "xlp.m.launchlist.js",
+          "xlp.m.logging.js",
+          "xlp.m.tables.js",
+          "xlp.m.themes.js"
+        ]
+      },
+      "sections": {
+        "files": [
+          "xlp.d.configchange.html",
+          "xlp.d.configsave.html",
+          "xlp.d.databasecontrolcatadd.html",
+          "xlp.d.databasecontrolcatremove.html",
+          "xlp.d.databasecontrolcatrename.html",
+          "xlp.d.databasecontrolconfirm.html",
+          "xlp.d.databasecontrolrowadd.html",
+          "xlp.d.databasecontrolrowedit.html",
+          "xlp.d.databasecontrolrowremove.html",
+          "xlp.d.databasecontrolsave.html",
+          "xlp.d.launch.html",
+          "xlp.d.themeapply.html",
+          "xlp.d.themedelete.html",
+          "xlp.d.themeimport.html",
+          "xlp.s.configuration.html",
+          "xlp.s.databasecontrol.html",
+          "xlp.s.launchlist.html",
+          "xlp.s.loader.html",
+          "xlp.s.logging.html",
+          "xlp.s.themes.html"
         ]
       },
       "themes": {
         "files": [],
         "base": {
           "files": [
-            "base.universal.scss",
-            "footer.scss",
-            "launchlist.scss",
-            "edit.config.scss",
-            "edit.dbc.scss",
-            "edit.themes.m.scss",
-            "logging.scss",
-            "tables.scss",
-            "dialogs.scss",
-            "edit.themes.p.scss",
-            "header.scss",
-            "loadsave.scss",
-            "pagination.scss",
-            "welcome.scss"
+            "b.theme.scss",
+            "b.xlp.app.scss",
+            "b.xlp.dialogs.scss",
+            "s.configuration.scss",
+            "s.databasecontrol.scss",
+            "s.launchlist.scss",
+            "s.logging.scss",
+            "s.themes.scss"
           ]
         },
         "selectors": {
@@ -93,12 +85,12 @@
     },
     "utils": {
       "files": [
+        "xlaunch.exe",
         "xlstitch.js",
-        "xltc.js",
         "xltb.exe",
         "xltb.js",
-        "xlu.exe",
-        "xlaunch.exe"
+        "xltc.js",
+        "xlu.exe"
       ]
     }
   },
@@ -107,14 +99,62 @@
     "xlauncherpluseapi.js": 0,
     "xlauncherplusfs.js": 0
   },
-  "directoryZips": {
-    "node_modules.zip": 2,
-    "help.zip": 2
-  },
+  "directoryZips": {},
   "rem": [
-    "main.scss",
-    "themebuilder.js",
-    "xltcp.exe"
+    "applytheme.html",
+    "base.universal.scss",
+    "categoryadd.html",
+    "categoryremove.html",
+    "categoryrename.html",
+    "common.js",
+    "configcon.g.html",
+    "configcon.t.html",
+    "configcon.u.html",
+    "configconfirm.html",
+    "configsave.html",
+    "configuration.js",
+    "conversioncheck.js",
+    "databaseconfirm.html",
+    "databasesave.html",
+    "dialogs.js",
+    "dialogs.scss",
+    "edit.config.html",
+    "edit.config.scss",
+    "edit.dbc.html",
+    "edit.dbc.scss",
+    "edit.themes.html",
+    "edit.themes.m.scss",
+    "edit.themes.p.scss",
+    "footer.html",
+    "footer.scss",
+    "header.html",
+    "header.scss",
+    "initialize.html",
+    "launch.html",
+    "launchlist.html",
+    "launchlist.scss",
+    "loader.html",
+    "loadsave.js",
+    "loadsave.scss",
+    "logging.html",
+    "logging.scss",
+    "pagination.html",
+    "pagination.js",
+    "pagination.scss",
+    "rowadd.html",
+    "rowedit.html",
+    "rowremove.html",
+    "systray.js",
+    "tables.js",
+    "tables.scss",
+    "themedelete.html",
+    "themeimport.html",
+    "themes.js",
+    "titlebar.html",
+    "updater.js",
+    "welcome.html",
+    "welcome.scss",
+    "window.js"
   ],
   "lastFullUpdate": false,
   "dependencies": {

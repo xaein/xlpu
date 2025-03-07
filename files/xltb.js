@@ -7,11 +7,12 @@ const sass = require('sass');
 
 // Theme compilation
 // Processes and compiles all SCSS files into CSS themes with progress tracking
-async function compileSassThemes(themeName, progressCallback, baseDir = __dirname, delay = 0) {
-    const themesDir = path.join(baseDir, 'common', 'themes');
+async function compileSassThemes(themeName, progressCallback, appDirs, delay = 0) {
+    const baseTheme = 'b.theme';
+    const themesDir = path.join(appDirs.pagesDir, 'themes');
     const stylesDir = path.join(themesDir, 'base');
     const outputDir = path.join(themesDir, 'compiled');
-    const baseThemeScssPath = path.join(stylesDir, 'base.theme.scss');
+    const baseThemeScssPath = path.join(stylesDir, `${baseTheme}.scss`);
     const themeJsonPath = path.join(themesDir, `${themeName}.thm`);
 
     try {
@@ -19,14 +20,14 @@ async function compileSassThemes(themeName, progressCallback, baseDir = __dirnam
         await convertJsonToScss(themeJsonPath, baseThemeScssPath);
 
         const scssFiles = await fs.readdir(stylesDir);
-        const totalFiles = scssFiles.filter(file => file.endsWith('.scss') && !file.startsWith('base.theme')).length;
+        const totalFiles = scssFiles.filter(file => file.endsWith('.scss') && !file.startsWith(baseTheme)).length;
         
         progressCallback(0, totalFiles);
 
         let processedFiles = 0;
         
         for (const file of scssFiles) {
-            if (file.endsWith('.scss') && !file.startsWith('base.theme')) {
+            if (file.endsWith('.scss') && !file.startsWith(baseTheme)) {
                 const themeName = path.basename(file, '.scss');
                 const themeScssPath = path.join(stylesDir, file);
                 const themeCssPath = path.join(outputDir, `${themeName}.css`);

@@ -116,7 +116,7 @@
     "themebuilder.js",
     "xltcp.exe"
   ],
-  "lastFullUpdate": false,
+  "lastFullUpdate": true,
   "dependencies": {
     "@vscode/sudo-prompt": "^9.3.1",
     "adm-zip": "^0.5.16",

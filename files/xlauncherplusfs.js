@@ -13,8 +13,9 @@ const os = require('os');
 const AdmZip = require('adm-zip');
 
 class FileSystemOperations {
-    constructor(appDir) {
+    constructor(appDir, appDirs) {
         this.appDir = appDir;
+        this.appDirs = appDirs;
     }
 
     // Check TRIGGERcmd file
@@ -37,18 +38,6 @@ class FileSystemOperations {
         }
     }
 
-    // Count SCSS files
-    // Returns the number of SCSS files in the themes styles directory
-    async countScssFiles() {
-        const stylesDir = path.join(this.appDir, 'pages', 'themes', 'styles');
-        try {
-            const files = await this.readDirectory(stylesDir);
-            return files.filter(file => file.endsWith('.scss')).length;
-        } catch (error) {
-            return 0;
-        }
-    }
-
     // Ensure directory exists
     // Creates the directory if it doesn't exist and returns false, otherwise returns true
     ensureDirectoryExists(directory) {
@@ -62,7 +51,7 @@ class FileSystemOperations {
     // Ensure favourites file exists
     // Checks if the favourites file exists in the utils directory, creates it with empty JSON if not
     async ensureFavouritesFileExists(utilsDir) {
-        const favouritesFilePath = path.join(utilsDir, 'xldbf.json');
+        const favouritesFilePath = path.join(this.appDirs.utilsDir, 'xldbf.json');
         try {
             await fs.promises.access(favouritesFilePath);
         } catch (error) {
@@ -120,8 +109,8 @@ class FileSystemOperations {
 
     // Get variables
     // Reads and parses the variables JSON file, returns null if an error occurs
-    getVariables(utilsDir) {
-        const variablesFilePath = path.join(utilsDir, 'xldbv.json');
+    getVariables() {
+        const variablesFilePath = path.join(this.appDirs.utilsDir, 'xldbv.json');
         try {
             const data = fs.readFileSync(variablesFilePath, 'utf8');
             return JSON.parse(data);
@@ -165,7 +154,33 @@ class FileSystemOperations {
     // Read themes directory
     // Returns an array of theme names (JSON files) in the themes directory
     async readThemesDirectory(themesDir) {
-        return this.readFilesWithExtension(themesDir, '.thm');
+        try {
+            const fullPath = path.join(this.appDir, themesDir);
+            const files = await fs.readdir(fullPath);
+            const themeFiles = files.filter(file => file.endsWith('.thm'));
+            
+            const themesWithState = await Promise.all(themeFiles.map(async file => {
+                const filePath = path.join(fullPath, file);
+                try {
+                    const stats = await fs.stat(filePath);
+                    // Check if file is read-only (no write permission)
+                    const isReadOnly = (stats.mode & 0o200) === 0;
+                    return {
+                        name: path.basename(file, '.thm'),
+                        readonly: isReadOnly
+                    };
+                } catch (error) {
+                    return {
+                        name: path.basename(file, '.thm'),
+                        readonly: false
+                    };
+                }
+            }));
+
+            return themesWithState;
+        } catch (error) {
+            return [];
+        }
     }
 
     // Remove directory
@@ -230,7 +245,7 @@ class FileSystemOperations {
     // Update xlaunch config
     // Updates the xlaunch configuration file with new settings
     async updateXlaunchConfig(configData) {
-        const configPath = path.join(this.appDir, 'utils', 'xlaunch.cfg');
+        const configPath = path.join(this.appDirs.utilsDir, 'xlaunch.cfg');
         try {
             let content = '';
             const quoteKeys = ['leftEncapsule', 'rightEncapsule', 'messageSeperator', 'messagePrefix'];

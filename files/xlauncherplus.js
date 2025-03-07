@@ -7,32 +7,35 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Notification, sc
 // Node.js core modules
 const path = require('path');
 const util = require('util');
-const { exec } = require('child_process');
 const fs = require('fs').promises;
+const { exec } = require('child_process');
 
 // Third-party modules
-const windowStateKeeper = require('electron-window-state');
-const windowsShortcuts = require('windows-shortcuts');
 const sudo = require('@vscode/sudo-prompt');
+const windowsShortcuts = require('windows-shortcuts');
+const windowStateKeeper = require('electron-window-state');
 
 // Custom modules
+const xlstitch = require('./utils/xlstitch');
+const TriggerCmdGenerator = require('./utils/xltc');
 const { compileSassThemes } = require('./utils/xltb');
 const FileSystemOperations = require('./xlauncherplusfs');
-const TriggerCmdGenerator = require('./utils/xltc.js');
-const xlstitch = require('./utils/xlstitch');
 
 // Define directories and paths
-const pagesDir = app.isPackaged 
-    ? path.join(process.resourcesPath, 'app', 'common')
-    : path.join(__dirname, 'common');
-const utilsDir = app.isPackaged 
-    ? path.join(process.resourcesPath, 'app', 'utils')
-    : path.join(__dirname, 'utils');
-const fsOps = new FileSystemOperations(__dirname);
+const appDirs = {
+    pagesDir: app.isPackaged 
+        ? path.join(process.resourcesPath, 'app', 'files')
+        : path.join(__dirname, 'files'),
+    utilsDir: app.isPackaged 
+        ? path.join(process.resourcesPath, 'app', 'utils')
+        : path.join(__dirname, 'utils')
+};
+
+const fsOps = new FileSystemOperations(__dirname, appDirs);
 
 // Define icon paths
-const iconPath = path.join(pagesDir, 'icon', process.platform === 'win32' ? 'xlauncherplus.ico' : 'xlauncherplus.png');
-const trayIconPath = path.join(pagesDir, 'icon', 'xlauncherplus.png');
+const iconPath = path.join(appDirs.pagesDir, 'ico', process.platform === 'win32' ? 'xlauncherplus.ico' : 'xlauncherplus.png');
+const trayIconPath = path.join(appDirs.pagesDir, 'ico', 'xlauncherplus.png');
 
 // Global variables
 let tray = null;
@@ -63,8 +66,7 @@ safeIpc('file-exists', (event, filePath) => fsOps.fileExists(filePath));
 safeIpc('get-app-dir', () => __dirname);
 safeIpc('get-file', (event, filePath) => fsOps.getFile(filePath));
 safeIpc('get-file-path', (event, directory, fileName) => fsOps.getFilePath(directory, fileName));
-safeIpc('get-scss-file-count', () => fsOps.countScssFiles());
-safeIpc('get-variables', () => fsOps.getVariables(utilsDir));
+safeIpc('get-variables', () => fsOps.getVariables(appDirs.utilsDir));
 safeIpc('read-directory', (event, dirPath) => fsOps.readDirectory(dirPath));
 safeIpc('read-themes-directory', (event, themesDir) => fsOps.readThemesDirectory(themesDir));
 safeIpc('remove-directory', (event, dirPath) => fsOps.removeDirectory(dirPath));
@@ -131,7 +133,7 @@ safeIpc('compile-theme', async (event, themeName, delay) => {
         const success = await compileSassThemes(themeName, (processedFiles, totalFiles) => {
             const progress = Math.round((processedFiles / totalFiles) * 100);
             event.sender.send('theme-compile-progress', { processedFiles, totalFiles, progress });
-        }, __dirname, delay);
+        }, appDirs, delay);
         return success;
     } catch (error) {
         return false;
@@ -149,7 +151,7 @@ safeIpc('create-tray', () => {
 // Generate TriggerCMD
 // Creates command triggers for voice assistant integration system
 safeIpc('generate-triggercmd', async (event, configOpts) => {
-    const generator = new TriggerCmdGenerator(__dirname, configOpts);
+    const generator = new TriggerCmdGenerator(__dirname, configOpts, appDirs);
     try {
         const result = await generator.generateCommands();
         return result;
@@ -160,7 +162,7 @@ safeIpc('generate-triggercmd', async (event, configOpts) => {
 
 // Get desktop directory
 // Retrieves system desktop path for file operations and shortcuts
-ipcMain.handle('get-desktop-dir', () => {
+safeIpc('get-desktop-dir', () => {
     return path.join(app.getPath('home'), 'Desktop');  // Default to the Desktop
 });
 
@@ -169,7 +171,7 @@ ipcMain.handle('get-desktop-dir', () => {
 safeIpc('import-theme', async (event, sourcePath, themesDir) => {
     try {
         const fileName = path.basename(sourcePath);
-        const destPath = path.join(__dirname, 'pages', themesDir, fileName);
+        const destPath = path.join(appDirs.pagesDir, themesDir, fileName);
         const success = await fsOps.copyFile(sourcePath, destPath);
         if (success) {
             const themeName = path.basename(fileName, '.thm');
@@ -182,16 +184,27 @@ safeIpc('import-theme', async (event, sourcePath, themesDir) => {
     }
 });
 
+// Toggle theme read-only state
+// Sets or removes read-only attribute on theme file
+safeIpc('toggle-theme-readonly', async (event, themePath, readonly) => {
+    try {
+        const mode = readonly ? 0o444 : 0o644; // read-only vs read-write
+        await fs.chmod(themePath, mode);
+        return true;
+    } catch (error) {
+        return false;
+    }
+});
+
 // Launch app
 // Executes specified application with elevated system privileges safely
-safeIpc('launch-app', async (event, exeName, ...args) => {
+safeIpc('launch-app', async (event, appName) => {
+    const xlaunchPath = path.join(appDirs.utilsDir, 'xlaunch.exe');
+    const command = `"${xlaunchPath}" "${appName}"`;
     const options = {
         name: 'xLauncherPlus'
     };
 
-    const exePath = path.join(utilsDir, exeName);
-    const command = args.length > 0 ? `"${exePath}" "${args.join('" "')}"` : `"${exePath}"`;
-    
     return new Promise((resolve, reject) => {
         sudo.exec(command, options, (error, stdout, stderr) => {
             if (error) {
@@ -204,14 +217,10 @@ safeIpc('launch-app', async (event, exeName, ...args) => {
 });
 
 // Open help file
-// Opens files or URLs in the default browser
-safeIpc('open-external', (event, targetPath) => {
-    if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
-        require('electron').shell.openExternal(targetPath);
-    } else {
-        const fullPath = path.join(__dirname, targetPath);
-        require('electron').shell.openExternal(`file://${fullPath}`);
-    }
+// Opens the xlauncher_plus_help.html file in the default browser
+safeIpc('open-external', (event, helpFilePath) => {
+    const fullPath = path.join(__dirname, helpFilePath);
+    require('electron').shell.openExternal(`file://${fullPath}`);
 });
 
 // Open file dialog
@@ -276,7 +285,7 @@ safeIpc('remove-from-path', async () => {
 // Executes xlstitch function to process and update configurations
 safeIpc('run-xlstitch', async (event) => {
     try {
-        const result = await xlstitch(__dirname);
+        const result = await xlstitch(__dirname, appDirs);
         return result;
     } catch (error) {
         return false;
@@ -307,9 +316,9 @@ safeIpc('update-tray-menu', (event, recentApps) => {
 // Manages system tray icon visibility based on configuration
 safeIpc('update-tray-visibility', async (event, show) => {
     try {
-        const xldbv = fsOps.getVariables(utilsDir);
+        const xldbv = fsOps.getVariables(appDirs.utilsDir);
         xldbv.configOpts.system.show = show;
-        await fsOps.updateVars(path.join(utilsDir, 'xldbv.json'), xldbv);
+        await fsOps.updateVars(path.join(appDirs.utilsDir, 'xldbv.json'), xldbv);
         
         if (show) {
             if (!tray) {
@@ -385,10 +394,10 @@ safeIpc('remove-startup-shortcut', async () => {
         }
 
         // Update the configuration
-        const xldbv = fsOps.getVariables(utilsDir);
+        const xldbv = fsOps.getVariables(appDirs.utilsDir);
         if (xldbv && xldbv.configOpts && xldbv.configOpts.system) {
             xldbv.configOpts.system.startWithWindows = false;
-            await fsOps.updateVars(path.join(utilsDir, 'xldbv.json'), xldbv);
+            await fsOps.updateVars(path.join(appDirs.utilsDir, 'xldbv.json'), xldbv);
         }
 
         return true;
@@ -404,7 +413,7 @@ safeIpc('remove-startup-shortcut', async () => {
 // Create tray
 // Creates and configures system tray with menu options
 function createTray() {
-    const xldbv = fsOps.getVariables(utilsDir);
+    const xldbv = fsOps.getVariables(appDirs.utilsDir);
     const showTray = xldbv && xldbv.configOpts && xldbv.configOpts.system && xldbv.configOpts.system.show === true;
 
     if (showTray && !tray) {
@@ -431,11 +440,10 @@ function createTray() {
 // Executes system commands with elevated privileges and permissions
 function runXltcp(action) {
     return new Promise((resolve, reject) => {
-        const options = {
-            name: 'xLauncherPlus'
-        };
+        const xltcpPath = path.join(appDirs.utilsDir, 'xlu.exe');
+        const { execFile } = require('child_process');
         
-        sudo.exec(`"${path.join(utilsDir, 'xlu.exe')}" "${action}"`, options, (error, stdout, stderr) => {
+        execFile(xltcpPath, [action], (error, stdout, stderr) => {
             if (error) {
                 reject(error);
             } else {
@@ -528,7 +536,6 @@ safeIpc('close-window', (event) => {
 // Get window size
 // Retrieves and returns dimensions of the application window
 safeIpc('get-window-size', (event) => BrowserWindow.fromWebContents(event.sender).getContentBounds());
-
 // Maximize window
 // Controls window state between maximized and normal sizes
 safeIpc('maximize-window', (event) => {
@@ -542,6 +549,21 @@ safeIpc('minimize-window', (event) => {
     BrowserWindow.fromWebContents(event.sender).minimize();
 });
 
+// Get window DPI
+// Retrieves the DPI scale factor for the specified window
+safeIpc('get-window-dpi', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (!window) return 1;
+    return window.webContents.getZoomFactor();
+});
+
+// Get screen DPI
+// Retrieves the DPI scale factor for the primary display
+safeIpc('get-screen-dpi', () => {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    return primaryDisplay.scaleFactor;
+});
+
 // Create window
 // Initializes main application window with configured state settings
 function createWindow() {
@@ -550,7 +572,7 @@ function createWindow() {
         defaultHeight: 600,
     });
 
-    const xldbv = fsOps.getVariables(utilsDir);
+    const xldbv = fsOps.getVariables(appDirs.utilsDir);
     const systemConfig = xldbv?.configOpts?.system || {};
     const shouldStartMinimized = systemConfig.startMinimized && systemConfig.show && systemConfig.startWithWindows;
 
@@ -574,7 +596,7 @@ function createWindow() {
 
     mainWindowState.manage(mainWindow);
 
-    mainWindow.loadFile(path.join(pagesDir, 'initialize.html'));
+    mainWindow.loadFile(path.join(appDirs.pagesDir, 'xlp.app.html'));
 
     setupLogging(mainWindow.webContents);
 
@@ -590,7 +612,7 @@ function createWindow() {
 
     mainWindow.on('close', (event) => {
         if (!isExiting) {
-            const xldbv = fsOps.getVariables(utilsDir);
+            const xldbv = fsOps.getVariables(appDirs.utilsDir);
             if (xldbv && xldbv.configOpts && xldbv.configOpts.system && xldbv.configOpts.system.closeTo) {
                 event.preventDefault();
                 mainWindow.hide();
@@ -602,7 +624,7 @@ function createWindow() {
     });
 
     mainWindow.on('minimize', (event) => {
-        const xldbv = fsOps.getVariables(utilsDir);
+        const xldbv = fsOps.getVariables(appDirs.utilsDir);
         if (xldbv && xldbv.configOpts && xldbv.configOpts.system && xldbv.configOpts.system.minimizeTo) {
             event.preventDefault();
             mainWindow.hide();
@@ -628,7 +650,7 @@ if (!gotTheLock) {
     });
 
     app.whenReady().then(async () => {
-        await fsOps.ensureFavouritesFileExists(utilsDir);
+        await fsOps.ensureFavouritesFileExists(appDirs.utilsDir);
         createWindow();
 
         app.on('activate', () => {

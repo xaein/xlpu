@@ -1,0 +1,369 @@
+// Database control section styles
+@use "sass:color";
+@use 'b.theme' as *;
+
+:root {
+    --table-text-size: 1em;
+    --table-text-line-height: 1.4;
+    --table-row-height: 32px;
+    --progress-bar: #{$progress-bar};
+}
+
+.databasecontrol {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+
+    // Tab container styles
+    #tabContainer {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        background-color: $tab-background-color;
+        border-bottom: 1px solid $table-border-color;
+
+        #tabListContainer {
+            flex-grow: 1;
+            padding-right: 0;
+            overflow-x: auto;
+        }
+
+        #tabList {
+            display: flex;
+            align-items: stretch;
+            flex-wrap: nowrap;
+            max-width: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: color.scale($tab-background-color, $lightness: -15%) $tab-background-color;
+            padding-bottom: 2px;
+            border: none;
+            margin-right: 0;
+            overflow-x: scroll;
+
+            &:hover {
+                scrollbar-color: color.scale($tab-background-color, $lightness: -25%) $tab-background-color;
+            }
+
+            &::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: $tab-background-color;
+            }
+
+            .tablinks {
+                background-color: $tab-background-color;
+                border: none;
+                border-right: 1px solid $table-border-color;
+                padding: 6px 12px 8px;
+                cursor: pointer;
+                transition: background-color $transition-duration ease;
+                height: 100%;
+                white-space: nowrap;
+                font-size: 14px;
+                box-sizing: border-box;
+                display: flex;
+                align-items: flex-start;
+                flex-shrink: 0;
+                color: $text-color;
+
+                &:hover {
+                    background-color: color.scale($tab-background-color, $lightness: -10%);
+                }
+
+                &.active {
+                    background-color: $tab-active-background-color;
+                    color: $text-color;
+                }
+            }
+        }
+    }
+
+    // Table container styles
+    #tableContainer {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        will-change: transform;
+        overflow: hidden;
+    }
+
+    // Table scroll container
+    .table-scroll-container {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: $table-border-color $background-color;
+        scroll-behavior: smooth;
+    }
+
+    // Table header overlay
+    .table-header-overlay {
+        position: sticky;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 20;
+        background-color: $tab-background-color;
+        display: flex;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        table-layout: fixed;
+        flex-shrink: 0;
+
+        .header-cell {
+            padding: 2px;
+            color: $table-header-text-color;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-right: 2px solid $table-border-color;
+            align-items: center;
+            display: flex;
+            height: 28px;
+
+            &.app-column {
+                width: 183px;
+                min-width: 183px;
+                max-width: 183px;
+                flex: 0 0 183px;
+                padding-left: 15px;
+                border-right: 2px solid $table-border-color;
+            }
+
+            &.command-column {
+                flex: 1;
+                padding-left: 8px;
+                overflow: hidden;
+            }
+        }
+    }
+
+    // Table styles
+    .app-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        background-color: $background-color;
+        border: 1px solid $table-border-color;
+        margin-top: 0;
+        
+        // Hide the actual table header
+        thead {
+            visibility: hidden;
+            height: 0;
+            display: none;
+        }
+        
+        th, td {
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+            border-bottom: 1px solid $table-border-color;
+        }
+
+        th {
+            background-color: $tab-background-color;
+            color: $table-header-text-color;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid $table-border-color;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            margin: 0;
+            padding: 8px;
+        }
+        
+        th::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: $tab-background-color;
+            z-index: -1;
+        }
+        
+        th:first-child, td:first-child {
+            border-right: 2px solid $table-border-color;
+        }
+        
+        th.app-column, td.app-column, td:first-child {
+            width: 200px !important;
+            min-width: 200px !important;
+            max-width: 200px !important;
+        }
+        
+        th.command-column, td.command-column, td:last-child {
+            width: auto !important;
+        }
+
+        tbody tr {
+            background-color: $background-color;
+            transition: background-color $transition-duration ease;
+            cursor: pointer;
+            height: var(--table-row-height);
+            line-height: var(--table-row-height);
+            
+            &:not(:last-child) td {
+                border-bottom: 1px solid $table-border-color;
+            }
+        }
+
+        tbody tr:not(.empty-row):hover {
+            background-color: $main-table-hover-color;
+        }
+
+        tbody tr.selected {
+            background-color: $main-table-selected-color;
+        }
+
+        .app-column {
+            width: 350px !important;
+            min-width: 350px !important;
+            max-width: 350px !important;
+            padding-left: 15px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-right: 2px solid $table-border-color !important;
+        }
+
+        .command-column {
+            width: auto !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 8px !important;
+        }
+
+        .empty-row {
+            height: var(--table-row-height);
+        }
+
+        td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    // Control panel styles
+    #controlPanel {
+        display: flex;
+        flex-direction: column;
+        padding: 0 8px;
+        margin: 0;
+        background-color: $background-color;
+        border-top: 1px solid $table-border-color;
+        box-sizing: border-box;
+        height: auto;
+        min-height: 30px;
+    }
+
+    .controls-menu {
+        display: flex;
+        align-items: stretch;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    .menu-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        padding: 4px 8px;
+        box-sizing: border-box;
+        position: relative;
+
+        &:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: $table-border-color;
+        }
+
+        &:first-child {
+            padding-left: 0;
+        }
+
+        &:last-child {
+            padding-right: 0;
+            
+            &:after {
+                right: -8px;
+            }
+        }
+
+        .menu-label {
+            font-weight: bold;
+            color: $text-color;
+            margin: 0;
+            padding: 0;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .menu-buttons {
+            display: flex;
+            gap: 2px;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+
+            button {
+                padding: 2px 2px;
+                font-size: 0.9em;
+                cursor: pointer;
+                background-color: $default-button-color;
+                border: 1px solid $table-border-color;
+                border-radius: 2px;
+                height: 20px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: $text-color;
+                transition: background-color $transition-duration ease;
+                margin: 0;
+                box-sizing: border-box;
+                min-width: auto;
+
+                &:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                }
+
+                &.add-button:hover:not(:disabled) {
+                    background-color: color.scale($greenbutton-hover-color, $lightness: 5%);
+                }
+
+                &.edit-button:hover:not(:disabled),
+                &.rename-button:hover:not(:disabled) {
+                    background-color: color.scale($default-button-color, $lightness: -10%);
+                }
+
+                &.remove-button:hover:not(:disabled) {
+                    background-color: color.scale($redbutton-hover-color, $lightness: 5%);
+                }
+            }
+        }
+    }
+    
+    // Override for row highlights to prevent SVG overlay
+    .row-highlight {
+        display: none !important;
+    }
+} 

@@ -10,16 +10,17 @@ const os = require('os');
 class TriggerCmdGenerator {
     // Constructor
     // Initializes the generator with application directory and configuration
-    constructor(appDir, configOpts) {
+    constructor(appDir, configOpts, appDirs) {
         this.appDir = appDir;
         this.configOpts = configOpts;
+        this.appDirs = appDirs;
         this.mainXLFC = 'xlauncher.xlfc';
     }
 
     // Command generation
     // Creates TriggerCmd commands from xLauncher Plus applications
     async generateCommands() {
-        const filePath = path.join(this.appDir, 'utils', this.mainXLFC);
+        const filePath = path.join(this.appDirs.utilsDir, this.mainXLFC);
 
         try {
             const fileContent = await fs.readFile(filePath, 'utf8');
@@ -81,7 +82,7 @@ class TriggerCmdGenerator {
     // Favorite check
     // Verifies if an application is in the favorites list
     async isFavorited(appName) {
-        const xldbfPath = path.join(this.appDir, 'utils', 'xldbf.json');
+        const xldbfPath = path.join(this.appDirs.utilsDir, 'xldbf.json');
         try {
             const xldbfContent = await fs.readFile(xldbfPath, 'utf8');
             const xldbf = JSON.parse(xldbfContent);

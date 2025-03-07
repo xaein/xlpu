@@ -1,0 +1,202 @@
+<div class="configuration">
+    <div class="config-content">
+        <div class="config-nav-container">
+            <div class="config-nav">
+                <ul id="configList">
+                    <div class="tab-group-left">
+                        <li data-config="general" class="config-item">General</li>
+                        <li data-config="triggercmd" class="config-item" style="display: none;">TriggerCMD</li>
+                    </div>
+                    <div class="tab-group-right">
+                        <span id="updateIndicator" class="update-indicator" data-tooltip="Update Available">⥥</span>
+                        <li data-config="update" class="config-item">Update</li>
+                    </div>
+                </ul>
+            </div>
+        </div>
+        <div class="config-details">
+            <!-- General Configuration Section -->
+            <div id="generalConfig" class="config-section">
+                <p>Launch List Configuration:</p>
+                <div class="form-group compact launch-list-group">
+                    <div class="icon-group">
+                        <label for="favouriteIcon">Favourite Icon:</label>
+                        <select id="favouriteIcon" name="favouriteIcon"></select>
+                    </div>
+                    <div class="selector-group">
+                        <label for="rowSelector">Row Selector:</label>
+                        <div class="custom-select">
+                            <div class="selected-value"></div>
+                            <div class="options-container"></div>
+                        </div>
+                        <div class="highlight-width-control">
+                            <label for="highlightWidth">Width:</label>
+                            <input type="range" id="highlightWidth" min="50" max="100" value="100" step="1">
+                            <span class="width-value" id="highlightWidthValue">100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="section-separator">Logging Configuration:</p>
+                <div class="form-group">
+                    <label for="dateFormat">Date Format:</label>
+                    <select id="dateFormat" name="dateFormat">
+                        <option value="dd-MM-yyyy">dd-MM-yyyy</option>
+                        <option value="MM-dd-yyyy">MM-dd-yyyy</option>
+                        <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+                        <option value="dd/MM/yyyy">dd/MM/yyyy</option>
+                        <option value="MM/dd/yyyy">MM/dd/yyyy</option>
+                        <option value="yyyy/MM/dd">yyyy/MM/dd</option>
+                        <option value="dd-MM-yy">dd-MM-yy</option>
+                        <option value="MM-dd-yy">MM-dd-yy</option>
+                        <option value="yy-MM-dd">yy-MM-dd</option>
+                        <option value="dd/MM/yy">dd/MM/yy</option>
+                        <option value="MM/dd/yy">MM/dd/yy</option>
+                        <option value="yy/MM/dd">yy/MM/dd</option>
+                    </select>
+                    <label for="timeFormat">Time Format:</label>
+                    <select id="timeFormat" name="timeFormat">
+                        <option value="HH:mm:ss">HH:mm:ss</option>
+                        <option value="HH:mm">HH:mm</option>
+                        <option value="hh:mm:ss a">hh:mm:ss a</option>
+                        <option value="hh:mm a">hh:mm a</option>
+                        <option value="HH:mm:ss.SSS">HH:mm:ss.SSS</option>
+                    </select>
+                    <label for="construct">Construct:</label>
+                    <select id="construct" name="construct"></select>
+                </div>
+                <div class="form-group compact">
+                    <label for="leftEncapsule">Left Encapsule:</label>
+                    <select id="leftEncapsule" name="leftEncapsule">
+                        <option value="[">[</option>
+                        <option value="(">(</option>
+                        <option value="{">{</option>
+                        <option value="<">&lt;</option>
+                        <option value="|">|</option>
+                        <option value="/">/</option>
+                        <option value="">(None)</option>
+                    </select>
+                    <label for="rightEncapsule">Right Encapsule:</label>
+                    <select id="rightEncapsule" name="rightEncapsule">
+                        <option value="]">]</option>
+                        <option value=")">)</option>
+                        <option value="}">}</option>
+                        <option value=">">&gt;</option>
+                        <option value="|">|</option>
+                        <option value="\">\</option>
+                        <option value="">(None)</option>
+                    </select>
+                    <label for="messageSeperator">Message Separator:</label>
+                    <select id="messageSeperator" name="messageSeperator">
+                        <option value="-">-</option>
+                        <option value="=">=</option>
+                        <option value=">">></option>
+                        <option value="->">-></option>
+                        <option value="=>">=></option>
+                        <option value=">>">>></option>
+                        <option value="|">|</option>
+                        <option value="•">•</option>
+                        <option value=" ">(Space)</option>
+                        <option value="">(None)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxLogEntries">Maximum Log Entries:</label>
+                    <input type="number" id="maxLogEntries" name="maxLogEntries">
+                </div>
+                <div class="form-group">
+                    <label for="messagePrefix">Message Prefix:</label>
+                    <input type="text" id="messagePrefix" name="messagePrefix">
+                </div>
+                <div class="form-group preview-group">
+                    <label for="logFormatPreview">Log Format Preview:</label>
+                    <div id="logFormatPreview" class="log-preview"></div>
+                </div>
+
+                <p class="section-separator">System Settings:</p>
+                <div class="form-group">
+                    <span class="section-label">Tray:</span>
+                    <input type="checkbox" id="showTray" name="showTray">
+                    <label for="showTray">Show Icon</label>
+                    <input type="checkbox" id="minimizeToTray" name="minimizeToTray" disabled>
+                    <label for="minimizeToTray">Minimize to Icon</label>
+                    <input type="checkbox" id="closeToTray" name="closeToTray" disabled>
+                    <label for="closeToTray">Close to Icon</label>
+                </div>
+                <div class="form-group">
+                    <span class="section-label">Startup:</span>
+                    <input type="checkbox" id="startWithWindows" name="startWithWindows">
+                    <label for="startWithWindows">Start with Windows</label>
+                    <input type="checkbox" id="startMinimized" name="startMinimized" disabled>
+                    <label for="startMinimized">Start Minimized</label>
+                </div>
+            </div>
+
+            <!-- TriggerCMD Configuration Section -->
+            <div id="triggercmdConfig" class="config-section hidden">
+                <div class="triggercmd-content">
+                    <div class="form-group">
+                        <label>
+                            <input type="radio" name="triggerCMDUpdateOption" value="overwrite">
+                            Overwrite file
+                        </label>
+                        <label>
+                            <input type="radio" name="triggerCMDUpdateOption" value="keep">
+                            Add/update xLauncherPlus Commands Only
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="radio" name="triggerCMDAppsOption" value="all">
+                            All Apps in Main File
+                        </label>
+                        <label>
+                            <input type="radio" name="triggerCMDAppsOption" value="favourited">
+                            Add Favourited Apps Only
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="autoGenerateTriggerCMD">
+                            <input type="checkbox" id="autoGenerateTriggerCMD" name="autoGenerateTriggerCMD">
+                            Auto Generate TriggerCMD File
+                        </label>
+                        <label for="addToPath">
+                            <input type="checkbox" id="addToPath" name="addToPath">
+                            Add to System Environment
+                        </label>
+                    </div>
+                </div>
+                <div class="triggercmd-button-group">
+                    <span id="triggerCmdUpdateStatus" class="status-message"></span>
+                    <button id="updateTriggerCMDFile" class="btn btn-primary">Update TriggerCMD File</button>
+                </div>
+            </div>
+
+            <!-- Update Configuration Section -->
+            <div id="updateConfig" class="config-section hidden">
+                <div class="form-group preview-group">
+                    <div id="updateInfoPreview" class="update-preview"></div>
+                </div>
+                <div class="form-group update-controls">
+                    <label for="checkUpdate">
+                        <input type="checkbox" id="checkUpdate" name="checkUpdate">
+                        Check For Updates On Launch
+                    </label>
+                    <label for="periodicUpdateCheck">
+                        <input type="checkbox" id="periodicUpdateCheck" name="periodicUpdateCheck">
+                        Enable Periodic Update Checks
+                    </label>
+                    <select id="updateFrequency" name="updateFrequency">
+                        <option value="1">Every hour</option>
+                        <option value="2">Every 2 hours</option>
+                        <option value="4">Every 4 hours</option>
+                        <option value="6">Every 6 hours</option>
+                        <option value="12">Every 12 hours</option>
+                        <option value="24">Every 24 hours</option>
+                    </select>
+                    <button id="updateAppButton" class="btn btn-primary" disabled>Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

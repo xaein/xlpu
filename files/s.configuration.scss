@@ -1,0 +1,516 @@
+// Configuration section styles
+
+@use "sass:color";
+@use 'b.theme' as *;
+
+// Custom dropdown arrow SVG
+$dropdown-arrow-svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M12 6 L8 10 L4 6' stroke='%23ffffff' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
+// Configuration section container
+.configuration {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+// Config content
+.config-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: calc(100% - 2px);
+    gap: 1px;
+    padding: 1px;
+}
+
+// Config navigation container
+.config-nav-container {
+    background-color: $theme-list-background-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+// Config navigation
+.config-nav {
+    background-color: color.scale($theme-list-background-color, $lightness: -5%);
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+// Config list
+#configList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 1px;
+
+    .tab-group-left, .tab-group-right {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+
+        .update-indicator {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: $greenbutton-background-color;
+            opacity: 0;
+            transition: opacity $transition-duration ease;
+            position: relative;
+
+            &.visible {
+                opacity: 1;
+            }
+
+            &[data-tooltip] {
+                &:hover::after {
+                    content: attr(data-tooltip);
+                    position: absolute;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    bottom: -25px;
+                    padding: 5px 10px;
+                    background: $background-color;
+                    color: $text-color;
+                    font-size: 0.55em;
+                    white-space: nowrap;
+                    border-radius: 4px;
+                    border: 1px solid $border-color;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                    z-index: 1000;
+                }
+            }
+        }
+    }
+
+    li {
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: background-color $transition-duration;
+        border-radius: 4px;
+        font-size: 0.9em;
+
+        &:hover {
+            background-color: $main-table-hover-color;
+        }
+
+        &.selected {
+            background-color: $main-table-selected-color;
+            color: $text-color;
+        }
+    }
+}
+
+// Config details
+.config-details {
+    flex: 1;
+    min-height: 0;
+    background-color: $background-color;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    overflow: hidden;
+
+    p {
+        margin-top: 5px;
+        margin-bottom: 8px;
+        font-size: 1.0em;
+        color: $text-color;
+        &.section-separator {
+            margin-top: 8px;
+        }
+    }
+}
+
+// Form elements
+.form-group {
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+
+    .section-label {
+        font-size: 0.85em;
+        color: $text-color;
+        margin-right: 8px;
+        line-height: 22px;
+    }
+
+    label {
+        margin-right: 8px;
+        min-width: 40px;
+        font-size: 0.85em;
+        color: $text-color;
+        display: inline-flex;
+        align-items: center;
+        line-height: 22px;
+        vertical-align: middle;
+        position: relative;
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 10px;
+            margin-left: 5px;
+        }
+    }
+
+    input[type="checkbox"]:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    input[type="checkbox"]:disabled ~ label[for] {
+        opacity: 0.5;
+        cursor: not-allowed;
+        color: color.scale($text-color, $lightness: -20%);
+    }
+
+    select, input[type="text"], input[type="number"] {
+        padding: 2px 3px;
+        border: 1px solid $input-border-color;
+        border-radius: 3px;
+        background-color: $input-background-color;
+        color: $input-text-color;
+        margin-right: 16px;
+        font-size: 0.85em;
+        height: 22px;
+        box-sizing: border-box;
+    }
+
+    #leftEncapsule,
+    #rightEncapsule,
+    #messageSeperator {
+        min-width: 50px;
+        padding: 1px 2px;
+        text-align: center;
+    }
+
+    &.compact {
+        margin-bottom: 6px;
+        
+        label {
+            min-width: 30px;
+            font-size: 0.8em;
+            line-height: 20px;
+        }
+
+        select {
+            min-width: 60px;
+            padding: 1px 2px;
+            height: 20px;
+            text-align: center;
+        }
+    }
+
+    &.preview-group {
+        display: flex;
+        align-items: flex-start;
+        margin-top: 10px;
+
+        label {
+            margin-right: 8px;
+            min-width: 40px;
+            font-size: 0.85em;
+            color: $text-color;
+            line-height: 22px;
+            padding-top: 3px;
+        }
+
+        .log-preview {
+            flex: 1;
+            font-family: monospace;
+            background-color: color.scale($background-color, $lightness: -5%);
+            padding: 5px;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+            color: $text-color;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+        }
+
+        .update-preview {
+            height: calc(100% - 5px);
+            width: 100%;
+            background-color: color.scale($background-color, $lightness: -5%);
+            color: $text-color;
+            border: 1px solid $border-color;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            box-sizing: border-box;
+            padding: 12px;
+            overflow-y: auto;
+            white-space: pre;
+            
+            .update-link {
+                cursor: pointer;
+                color: $progress-bar;
+                text-decoration: underline;
+                
+                &:hover {
+                    color: color.scale($progress-bar, $lightness: 20%);
+                }
+            }
+        }
+    }
+}
+
+// Custom Dropdown Styles
+select {
+    appearance: none;
+    background-color: $input-background-color;
+    padding-right: 25px !important;
+    background-image: url($dropdown-arrow-svg);
+    background-repeat: no-repeat;
+    background-position: right 6px top 2px;
+    background-size: 12px;
+}
+
+// Special Adjustment for Favorite Icon
+#favouriteIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    padding: 0 25px 0 0;
+    line-height: 1;
+}
+
+// Special Adjustment for Row Selector
+#rowSelector {
+    width: 250px !important;
+    min-width: 250px !important;
+}
+
+// Launch List Configuration Group
+.launch-list-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+    .icon-group {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 0;
+
+        label {
+            line-height: 20px;
+        }
+
+        select {
+            min-width: 50px;
+            text-align: center;
+            padding-right: 25px;
+        }
+    }
+
+    .selector-group {
+        display: inline-flex;
+        align-items: center;
+
+        label {
+            line-height: 20px;
+        }
+
+        select {
+            width: 250px !important;
+            min-width: 250px !important;
+        }
+
+        .highlight-width-control {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+            
+            label {
+                margin-right: 8px;
+                font-size: 0.85em;
+                white-space: nowrap;
+            }
+
+            input[type="range"] {
+                width: 100px;
+                height: 4px;
+                background: $input-background-color;
+                border-radius: 2px;
+                appearance: none;
+                margin: 0 8px;
+
+                &::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 12px;
+                    height: 12px;
+                    background: $text-color;
+                    border-radius: 50%;
+                    cursor: pointer;
+                    transition: background-color $transition-duration;
+
+                    &:hover {
+                        background: color.scale($text-color, $lightness: 20%);
+                    }
+                }
+            }
+
+            .width-value {
+                font-size: 0.85em;
+                min-width: 30px;
+                text-align: right;
+                color: $text-color;
+            }
+        }
+    }
+}
+
+// Custom Select Component
+.custom-select {
+    width: 250px;
+    height: 22px;
+    position: relative;
+    border: 1px solid $input-border-color;
+    border-radius: 3px;
+    background-color: $input-background-color;
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+        border-color: color.scale($input-border-color, $lightness: 20%);
+    }
+
+    .selected-value {
+        height: 100%;
+        padding-left: 4px;
+        display: flex;
+        align-items: center;
+        background-image: url($dropdown-arrow-svg);
+        background-repeat: no-repeat;
+        background-position: right 6px top 4px;
+        background-size: 12px;
+        padding-right: 25px;
+
+        svg {
+            height: 12px;
+        }
+    }
+
+    .options-container {
+        display: none;
+        position: absolute;
+        top: calc(100% + 1px);
+        left: -1px;
+        right: -1px;
+        background-color: $input-background-color;
+        border: 1px solid $input-border-color;
+        border-radius: 3px;
+        z-index: 100;
+
+        &.show {
+            display: block;
+        }
+
+        .option {
+            padding: 2px 2px;
+            cursor: pointer;
+            height: 22px;
+            display: flex;
+            align-items: center;
+
+            &:hover {
+                background-color: color.scale($input-background-color, $lightness: -10%);
+            }
+
+            svg {
+                height: 12px;
+            }
+        }
+    }
+}
+
+// TriggerCMD Section
+#triggercmdConfig {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    padding: 10px;
+
+    .triggercmd-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .triggercmd-button-group {
+        margin-top: 20px;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+
+        .status-message {
+            margin-bottom: 10px;
+            font-style: italic;
+            font-size: 0.9em;
+            transition: color $transition-duration;
+
+            &.updating {
+                color: $progress-bar-secondary;
+            }
+
+            &.success {
+                color: $greenbutton-background-color;
+            }
+
+            &.error {
+                color: $redbutton-background-color;
+            }
+        }
+    }
+}
+
+// Update Section
+#updateConfig {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    padding: 10px;
+    overflow: hidden;
+
+    .preview-group {
+        flex: 1;
+        min-height: 0;
+        margin-top: 2px;
+        margin-bottom: 5px;
+        position: relative;
+        z-index: 1;
+
+        .update-preview {
+            height: 100%;
+            overflow-y: auto;
+        }
+    }
+
+    .update-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+    }
+}
+
+// Config Sections
+.config-section {
+    height: 100%;
+    padding: 10px;
+    overflow-y: auto;
+} 

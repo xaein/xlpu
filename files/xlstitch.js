@@ -6,9 +6,9 @@ const FileSystemOperations = require('../xlauncherplusfs');
 
 // Main stitch function
 // Combines all category XLFC files into a single main XLFC file
-async function xlstitch(appDir) {
-    const fsOps = new FileSystemOperations(appDir);
-    const xldbvPath = path.join(appDir, 'utils', 'xldbv.json');
+async function xlstitch(appDir, appDirs) {
+    const fsOps = new FileSystemOperations(appDir, appDirs);
+    const xldbvPath = path.join(appDirs.utilsDir, 'xldbv.json');
 
     try {
         const jsonContent = await fsOps.getFile(xldbvPath);
@@ -18,7 +18,7 @@ async function xlstitch(appDir) {
         let xldbv = JSON.parse(jsonContent.data);
 
         const categoryDirectory = path.join(appDir, xldbv.directories.xldb);
-        const xlfcFilePath = path.join(appDir, 'utils', xldbv.mainXLFC);
+        const xlfcFilePath = path.join(appDirs.utilsDir, xldbv.mainXLFC);
 
         let xldbFiles = xldbv.xldbFiles;
 
