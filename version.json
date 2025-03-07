@@ -60,7 +60,6 @@
         "files": [],
         "base": {
           "files": [
-            "b.theme.scss",
             "b.xlp.app.scss",
             "b.xlp.dialogs.scss",
             "s.configuration.scss",
