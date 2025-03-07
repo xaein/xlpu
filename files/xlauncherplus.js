@@ -22,16 +22,19 @@ const { compileSassThemes } = require('./utils/xltb');
 const FileSystemOperations = require('./xlauncherplusfs');
 
 // Define directories and paths
-const appDirs = {
-    pagesDir: app.isPackaged 
-        ? path.join(process.resourcesPath, 'app', 'files')
-        : path.join(__dirname, 'files'),
-    utilsDir: app.isPackaged 
-        ? path.join(process.resourcesPath, 'app', 'utils')
-        : path.join(__dirname, 'utils')
+const getAppPath = () => {
+    if (app.isPackaged) {
+        return path.join(process.resourcesPath, 'app');
+    }
+    return __dirname;
 };
 
-const fsOps = new FileSystemOperations(__dirname, appDirs);
+const appDirs = {
+    pagesDir: path.join(getAppPath(), 'files'),
+    utilsDir: path.join(getAppPath(), 'utils')
+};
+
+const fsOps = new FileSystemOperations(getAppPath(), appDirs);
 
 // Define icon paths
 const iconPath = path.join(appDirs.pagesDir, 'ico', process.platform === 'win32' ? 'xlauncherplus.ico' : 'xlauncherplus.png');
@@ -536,6 +539,7 @@ safeIpc('close-window', (event) => {
 // Get window size
 // Retrieves and returns dimensions of the application window
 safeIpc('get-window-size', (event) => BrowserWindow.fromWebContents(event.sender).getContentBounds());
+
 // Maximize window
 // Controls window state between maximized and normal sizes
 safeIpc('maximize-window', (event) => {
@@ -555,13 +559,6 @@ safeIpc('get-window-dpi', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     if (!window) return 1;
     return window.webContents.getZoomFactor();
-});
-
-// Get screen DPI
-// Retrieves the DPI scale factor for the primary display
-safeIpc('get-screen-dpi', () => {
-    const primaryDisplay = screen.getPrimaryDisplay();
-    return primaryDisplay.scaleFactor;
 });
 
 // Create window
@@ -586,7 +583,9 @@ function createWindow() {
         minWidth: 800,
         minHeight: 600,
         webPreferences: {
-            preload: path.join(__dirname, 'xlauncherpluseapi.js'),
+            preload: path.join(getAppPath(), 'xlauncherpluseapi.js'),
+            nodeIntegration: false,
+            contextIsolation: true
         },
         resizable: true,
         title: "xLauncher Plus",
@@ -596,7 +595,11 @@ function createWindow() {
 
     mainWindowState.manage(mainWindow);
 
-    mainWindow.loadFile(path.join(appDirs.pagesDir, 'xlp.app.html'));
+    const htmlPath = path.join(appDirs.pagesDir, 'xlp.app.html');
+    mainWindow.loadFile(htmlPath).catch(err => {
+        console.error('Failed to load HTML:', err);
+        console.error('Attempted path:', htmlPath);
+    });
 
     setupLogging(mainWindow.webContents);
 

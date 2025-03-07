@@ -36,9 +36,9 @@ export async function initialize() {
     }
     
     try {
-        window.onerror = xlp.handleError;
-        await xlp.loadScript('core.c');
-        await xlp.loadScript('m.init');
+        window.onerror = handleError;
+        await loadScript('core.c');
+        await loadScript('m.init');
         const appDir = await e.Api.invoke('get-app-dir');
         xlp.updateCurrentFile('Loading Variables');
         const xldbvPath = `${appDir}/utils/xldbv.json`;
@@ -55,21 +55,22 @@ export async function initialize() {
         }
         const coreScripts = window.xldbv?.coreScripts || [];
         await Promise.all(
-            coreScripts.map(script => xlp.loadScript(script))
+            coreScripts.map(script => loadScript(script))
         );
-        xlp.generateHeaderButtons();
-        xlp.setupEventDelegation();
+        generateHeaderButtons();
+        setupEventDelegation();
         if (xlp.setupResizeListeners) {
             xlp.setupResizeListeners();
         }
         if (xlp.initializeSysTray) {
             await xlp.initializeSysTray();
         }
-        xlp.showSection('initialization');
+        showSection('initialization');
         try {
-            const loaderHtml = await xlp.loadSectionHtml('s', 'loader');
+            const loaderHtml = await loadSectionHtml('s', 'loader');
             document.getElementById('loaderContainer').innerHTML = loaderHtml;
         } catch (error) {
+            handleError('Failed to load loader HTML:', error);
         }
         const isFirstRun = await xlp.initializeFiles();
         let flow;
@@ -82,13 +83,13 @@ export async function initialize() {
         }
         const nextSection = flow[1];
         if (nextSection === 'welcome') {
-            await xlp.showSection(nextSection);
+            await showSection(nextSection);
         } else {
-            await xlp.loadSection(nextSection);
+            await loadSection(nextSection);
         }
         state.isInitialized = true;
     } catch (error) {
-        xlp.handleError('Initialization failed', error);
+        handleError('Initialization failed', error);
     }
 }
 
@@ -133,7 +134,6 @@ export function dirVar(...args) {
 // Event System Setup
 // Configures application-wide event listeners and handlers
 export function setupEventDelegation() {
-    // Title bar buttons using delegation
     document.querySelectorAll('.titlebar-button').forEach(button => {
         button.addEventListener('click', (event) => {
             const action = event.target.closest('button').classList[1]?.replace('-button', '');
@@ -141,8 +141,7 @@ export function setupEventDelegation() {
         });
     });
 
-    // Welcome section start button
-    if (window.xldbv?.firstRun === 1) {
+    if (window.xldbv?.firstRun !== 0) {
         const startButton = document.getElementById('start-button');
         if (startButton) {
             startButton.addEventListener('click', () => {
@@ -153,7 +152,6 @@ export function setupEventDelegation() {
         }
     }
 
-    // F1 help key handler
     document.addEventListener('keydown', (event) => {
         if (event.key === 'F1') {
             event.preventDefault();
@@ -161,7 +159,6 @@ export function setupEventDelegation() {
         }
     });
 
-    // Footer buttons
     const footerLeftButton = document.getElementById('footerLeftButton');
     if (footerLeftButton) {
         footerLeftButton.addEventListener('click', handleGreenButtonClick);
@@ -197,7 +194,7 @@ export async function handleTitleBarAction(action) {
 // Green Button Handler
 // Processes actions for the footer left button based on current section
 export function handleGreenButtonClick() {
-    switch (window.state.currentSection) {
+    switch (state.currentSection) {
         case 'launchlist':
             if (window.selectedApp) {
                 xlp.handleLaunch();
@@ -219,7 +216,8 @@ export function handleGreenButtonClick() {
 // Imports and attaches module exports to xlp namespace
 export async function loadScript(name) {
     try {
-        const module = await import(`./xlp.${name}.js`);
+        const appDir = await e.Api.invoke('get-app-dir');
+        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
         Object.assign(xlp, module);
         return true;
     } catch (error) {
@@ -231,7 +229,8 @@ export async function loadScript(name) {
 // Removes module exports from xlp namespace and resources
 export async function unloadScript(name) {
     try {
-        const module = await import(`./xlp.${name}.js`);
+        const appDir = await e.Api.invoke('get-app-dir');
+        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
         Object.keys(module).forEach(key => {
             delete xlp[key];
         });
@@ -245,7 +244,7 @@ export async function unloadScript(name) {
 export async function loadSectionStyles(section) {
     if (section.styles && section.styles.length > 0) {
         const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${xlp.dirVar('themes', 'compiled')}`;
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
         
         const stylePromises = section.styles.map(async style => {
             const stylePath = `${themesDir}/s.${style}.css`;
@@ -332,7 +331,7 @@ export async function loadSection(sectionId) {
         }
 
         if (sectionId === 'initialization' || sectionId === 'welcome') {
-            await xlp.showSection(sectionId);
+            await showSection(sectionId);
             return;
         }
 
@@ -346,7 +345,7 @@ export async function loadSection(sectionId) {
         }
 
         if (state.currentSection === 'databasecontrol') {
-            const preloadedData = xlp.getData('preloadedData') || {};
+            const preloadedData = getData('preloadedData') || {};
             if (window.tempData && JSON.stringify(preloadedData) !== JSON.stringify(window.tempData)) {
                 const shouldSave = await xlp.showDatabaseChangeDialog();
                 if (shouldSave) {
@@ -371,11 +370,12 @@ export async function loadSection(sectionId) {
         }
 
         if (state.currentSection !== sectionId) {
-            await xlp.unloadSection(state.currentSection);
+            await unloadSection(state.currentSection);
         }
 
         try {
-            const html = await xlp.loadSectionHtml('s', sectionId);
+            const appDir = await e.Api.invoke('get-app-dir');
+            const html = await loadSectionHtml('s', sectionId);
             const dynamicContent = document.getElementById('dynamicContent');
             dynamicContent.innerHTML = html;
             dynamicContent.classList.remove('hidden');
@@ -383,7 +383,7 @@ export async function loadSection(sectionId) {
             if (section.templates?.dialogs) {
                 const dialogPromises = section.templates.dialogs.map(async dialogId => {
                     try {
-                        const dialogHtml = await xlp.loadSectionHtml('d', dialogId);
+                        const dialogHtml = await loadSectionHtml('d', dialogId);
                         const dialogContainer = document.getElementById('dialogContainer');
                         if (!dialogContainer) {
                             return;
@@ -398,7 +398,9 @@ export async function loadSection(sectionId) {
                             }
                             dialogContainer.appendChild(dialogElement);
                         }
-                    } catch (error) { }
+                    } catch (error) {
+                        console.error('Failed to load dialog:', error);
+                    }
                 });
                 await Promise.all(dialogPromises);
             }
@@ -414,13 +416,13 @@ export async function loadSection(sectionId) {
        
             state.currentSection = sectionId;
             state.sections.set(sectionId, section);
-            xlp.updateUI(section);
+            updateUI(section);
 
         } catch (error) {
-            xlp.handleError(`Failed to load section ${sectionId}`, error);
+            handleError(`Failed to load section ${sectionId}`, error);
         }
     } catch (error) {
-        xlp.handleError(`Failed to load section ${sectionId}`, error);
+        handleError(`Failed to load section ${sectionId}`, error);
     }
 }
 
@@ -429,7 +431,7 @@ export async function loadSection(sectionId) {
 export async function unloadSectionStyles(section) {
     if (section.styles && section.styles.length > 0) {
         const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${xlp.dirVar('themes', 'compiled')}`;
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
         
         for (const style of section.styles) {
             await xlp.unloadStyle(`${themesDir}/s.${style}.css`);
@@ -498,11 +500,12 @@ export async function unloadSection(sectionId) {
 // Resource Loading
 // Loads all required section resources
 export async function loadSectionResources(section) {
+    const appDir = await e.Api.invoke('get-app-dir');
+    
     if (section.styles && section.styles.length > 0) {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${xlp.dirVar('themes', 'compiled')}`;
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
         for (const style of section.styles) {
-            await xlp.loadStyle(`${themesDir}/s.${style}.css`);
+            await loadStyle(`${themesDir}/s.${style}.css`);
             state.loadedResources.add(`style:${style}`);
         }
     }
@@ -512,7 +515,7 @@ export async function loadSectionResources(section) {
             const scriptKey = `script:${script}`;
             if (!state.loadedResources.has(scriptKey)) {
                 try {
-                    const module = await import(`./xlp.${script}.js`);
+                    const module = await import(`${appDir}/files/js/xlp.${script}.js`);
                     Object.assign(xlp, module);
                     state.loadedResources.add(scriptKey);
                 } catch (error) {
@@ -530,7 +533,7 @@ export async function unloadSectionResources(section) {
     
     if (section.styles && section.styles.length > 0) {
         const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${xlp.dirVar('themes', 'compiled')}`;
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
         for (const style of section.styles) {
             await xlp.unloadStyle(`${themesDir}/s.${style}.css`);
             state.loadedResources.delete(`style:${style}`);
@@ -673,8 +676,9 @@ export function setData(key, data, fileName = null) {
 // Loads section HTML content from file
 export async function loadSectionHtml(type, name) {
     try {
-        const includeDir = xlp.dirVar('include');
-        const url = `${includeDir}/xlp.${type}.${name}.html`;
+        const appDir = await e.Api.invoke('get-app-dir');
+        const includeDir = dirVar('include');
+        const url = `file://${appDir}/files/${includeDir}/xlp.${type}.${name}.html`;
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Failed to load section HTML: ${response.statusText}`);
@@ -694,10 +698,16 @@ export function generateHeaderButtons() {
     
     headerButtons.innerHTML = '';
     
+    // Ensure xldbv is loaded
+    if (!window.xldbv) {
+        window.xldbv = xlp.getData('xldbv');
+    }
+    
     Object.entries(xlp.sections).forEach(([sectionId, section]) => {
         const button = document.createElement('button');
         button.className = `header-button ${sectionId}-button`;
         button.textContent = section.label;
+        button.setAttribute('data-section', sectionId);
         button.addEventListener('click', () => xlp.loadSection(sectionId));
         button.classList.toggle('active', sectionId === state.currentSection);
         
@@ -705,7 +715,7 @@ export function generateHeaderButtons() {
         button.disabled = sectionId === state.currentSection;
         
         // Specifically disable Launch List during setup
-        if (sectionId === 'launchlist' && section.label === 'Launch List' && window.xldbv?.firstRun === 2) {
+        if (sectionId === 'launchlist' && window.xldbv?.firstRun !== 0) {
             button.disabled = true;
             button.style.opacity = '0.5';
             button.style.cursor = 'not-allowed';

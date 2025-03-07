@@ -20,13 +20,13 @@ contextBridge.exposeInMainWorld('e', {
         // Calls main process methods and waits for results
         invoke: (channel, ...args) => {
             let validChannels = [
-                'add-to-path', 'apply-patch', 'check-triggercmd-file', 'close-window', 'compile-theme', 'copy-file', 'create-startup-shortcut',
-                'create-tray', 'download-file', 'ensure-directory', 'extract-zip', 'fetch-url', 'file-exists', 'generate-triggercmd', 'get-app-dir',
-                'get-desktop-dir', 'get-file', 'get-file-path', 'get-variables', 'get-window-dpi', 'get-window-size', 'import-theme', 'launch-app',
-                'maximize-window', 'minimize-window', 'open-external', 'open-file-dialog', 'parse-shortcut', 'read-directory', 'read-themes-directory',
-                'remove-directory', 'remove-file', 'remove-from-path', 'remove-startup-shortcut', 'rename-file', 'run-xlstitch', 'toggle-theme-readonly',
-                'update-directory', 'update-favs', 'update-file', 'update-tray-menu', 'update-tray-visibility', 'update-vars', 'update-xlaunch-config',
-                'write-file'
+                'add-to-path', 'check-triggercmd-file', 'close-window', 'compile-theme', 'copy-file', 'create-startup-shortcut',
+                'create-tray', 'download-file', 'ensure-directory', 'extract-zip', 'fetch-url', 'file-exists', 'generate-triggercmd',
+                'get-app-dir', 'get-desktop-dir', 'get-file', 'get-file-path', 'get-variables', 'get-window-dpi', 'get-window-size',
+                'import-theme', 'launch-app', 'maximize-window', 'minimize-window', 'open-external', 'open-file-dialog', 'parse-shortcut',
+                'read-directory', 'read-themes-directory', 'remove-directory', 'remove-file', 'remove-from-path', 'remove-startup-shortcut', 
+                'rename-file', 'run-xlstitch', 'show-notification', 'show-tray-balloon', 'toggle-theme-readonly', 'update-favs', 'update-tray-menu',
+                'update-tray-visibility', 'update-vars', 'update-xlaunch-config', 'write-file'
             ];
             if (validChannels.includes(channel)) {
                 return ipcRenderer.invoke(channel, ...args);

@@ -27,7 +27,10 @@
     <script>
         async function loadVersions() {
             try {
-                const response = await fetch('https://api.github.com/repos/xaein/xlpu/contents/previous');
+                // Extract repo info from current URL
+                const pathParts = location.pathname.split('/');
+                const repo = pathParts[1]; // 'xlpu'
+                const response = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/previous`);
                 const files = await response.json();
                 
                 const versionFiles = files
