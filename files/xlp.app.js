@@ -38,6 +38,7 @@ export async function initialize() {
     try {
         window.onerror = handleError;
         await loadScript('core.c');
+        await loadScript('core.v');
         await loadScript('m.init');
         const appDir = await e.Api.invoke('get-app-dir');
         xlp.updateCurrentFile('Loading Variables');
@@ -47,8 +48,9 @@ export async function initialize() {
             throw new Error('Failed to load xldbv.json');
         }
         try {
-            const xldbv = JSON.parse(xldbvData);
-            localStorage.setItem('xldbv', xldbvData);
+            const convertedData = await xlp.conversionCheck('xldbv.json', xldbvData);
+            const xldbv = JSON.parse(convertedData);
+            localStorage.setItem('xldbv', convertedData);
             window.xldbv = xldbv;
         } catch (error) {
             throw new Error('Failed to parse xldbv.json');

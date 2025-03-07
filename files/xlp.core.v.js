@@ -3,24 +3,24 @@
 
 // Initialize validation variables
 const requiredDirectories = {
-    xldb: 'string',
-    help: 'string',
+    xldb: "xldb",
+    help: "help",
     utils: {
-        root: 'string',
-        update: 'string'
+        root: "utils",
+        update: "updtmp"
     },
-    include: 'string',
+    include: "sections",
     themes: {
-        root: 'string',
-        base: 'string',
-        compiled: 'string'
+        root: "themes",
+        base: "base",
+        compiled: "compiled"
     }
 };
 
 const defaultCoreScripts = [
-    "window",
-    "systray",
-    "validation"
+    "core.d",
+    "core.s",
+    "core.w"
 ];
 
 const allowedTopLevelKeys = new Set([
@@ -180,14 +180,11 @@ function convertXldbv(data) {
             delete variables.currentTheme;
         }
 
-        if (variables.directories) {
-            if (variables.directories.include === 'include') {
-                variables.directories.include = 'sections';
-            }
-        }
+        // Replace directories with standard structure
+        variables.directories = { ...requiredDirectories };
 
         if (Array.isArray(variables.loadScripts)) {
-            variables.coreScripts = variables.loadScripts.map(script => script.replace('.js', ''));
+            variables.coreScripts = [...defaultCoreScripts];
             delete variables.loadScripts;
         }
         
@@ -257,8 +254,8 @@ export function validateXldbvJson(data) {
             if (typeof data.directories[key] !== 'object') {
                 return false;
             }
-            for (const [subKey, subType] of Object.entries(value)) {
-                if (typeof data.directories[key][subKey] !== subType) {
+            for (const [subKey, subValue] of Object.entries(value)) {
+                if (typeof data.directories[key][subKey] !== 'string') {
                     return false;
                 }
             }

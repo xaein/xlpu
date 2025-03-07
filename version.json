@@ -1,7 +1,7 @@
 {
   "version": "1.1.0",
   "patch": 0,
-  "comment": "Update Changes:\n- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code\n   for each section\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB(js module and exe))\n   XLU should remove empty directories on update after this\n   XLTB slight changes for future proofing\n",
+  "comment": "Update Changes:\n- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code for each section\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB(js module and exe))\n   XLU should remove empty directories on update after this\n   XLTB slight changes for future proofing\n",
   "files": {
     "files": {
       "files": [

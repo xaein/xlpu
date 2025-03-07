@@ -248,7 +248,8 @@ $dropdown-arrow-svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
             box-sizing: border-box;
             padding: 12px;
             overflow-y: auto;
-            white-space: pre;
+            white-space: pre-wrap;
+            word-break: break-word;
             
             .update-link {
                 cursor: pointer;
