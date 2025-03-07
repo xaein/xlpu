@@ -162,6 +162,44 @@ function setupEventListeners() {
         });
     }
 
+    const updateAppButton = document.getElementById('updateAppButton');
+    if (updateAppButton) {
+        updateAppButton.addEventListener('click', async () => {
+            try {
+                const updateInfo = await xlp.getUpdateInfo();
+                if (!updateInfo.hasUpdate) return;
+
+                xlp.showUpdateOverlay();
+                await xlp.handleUpdateProcess(updateInfo);
+                const success = await xlp.updateFiles((file) => {
+                    if (window.updateState.progressHandler) {
+                        const newText = window.updateState.progressHandler(file);
+                        const updateInfoPreview = document.getElementById('updateInfoPreview');
+                        if (updateInfoPreview && newText) {
+                            updateInfoPreview.innerHTML = newText;
+                        }
+                    }
+                });
+
+                if (success) {
+                    const updateInfoPreview = document.getElementById('updateInfoPreview');
+                    if (updateInfoPreview) {
+                        updateInfoPreview.innerHTML += '\n\nUpdate completed successfully.' + 
+                            (updateInfo.requiresRestart ? '\nPlease restart the application for the changes to take effect.' : '');
+                    }
+                    await loadConfigSection('update');
+                }
+            } catch (error) {
+                const updateInfoPreview = document.getElementById('updateInfoPreview');
+                if (updateInfoPreview) {
+                    updateInfoPreview.innerHTML = `Error updating: ${error.message}`;
+                }
+            } finally {
+                xlp.hideUpdateOverlay();
+            }
+        });
+    }
+
     document.querySelectorAll('.config-section').forEach(section => {
         section.addEventListener('change', (e) => {
             const target = e.target;
