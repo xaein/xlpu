@@ -187,7 +187,14 @@ function setupEventListeners() {
                         updateInfoPreview.innerHTML += '\n\nUpdate completed successfully.' + 
                             (updateInfo.requiresRestart ? '\nPlease restart the application for the changes to take effect.' : '');
                     }
+                    xlp.scrollToLine(updateInfoPreview, 'Please restart');
                     await loadConfigSection('update');
+                    
+                    // Hide the update indicator after successful update
+                    const updateIndicator = document.getElementById('updateIndicator');
+                    if (updateIndicator) {
+                        updateIndicator.classList.remove('visible');
+                    }
                 }
             } catch (error) {
                 const updateInfoPreview = document.getElementById('updateInfoPreview');

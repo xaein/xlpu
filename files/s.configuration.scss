@@ -514,4 +514,23 @@ select {
     height: 100%;
     padding: 10px;
     overflow-y: auto;
+}
+
+// Update Modal Overlay
+#updateModalOverlay {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 30px;
+    width: 100%;
+    height: calc(100% - 30px);
+    z-index: 9998;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#updateConfig {
+    .preview-group {
+        position: relative;
+        z-index: 9999;
+    }
 } 

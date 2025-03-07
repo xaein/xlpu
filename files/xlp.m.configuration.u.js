@@ -4,9 +4,7 @@
 // Initialize update delays
 const patchDelay = 600;  
 const fileDelay = 300;   
-
-// Update state management
-export const updateState = {
+window.updateState = {
     progressHandler: null,
     lastFile: '',
     lastState: {}
@@ -22,6 +20,16 @@ export async function updateFiles(onProgress) {
         }
 
         if (updateInfo.updatePath.length > 0) {
+            const updateInfoPreview = document.getElementById('updateInfoPreview');
+            if (updateInfoPreview) {
+                const pathText = updateInfo.updatePath.map(type => type === 'patch' ? 'regular' : type).join(' 🠞 ');
+                const text = updateInfoPreview.textContent;
+                const parts = text.split('Files to be updated:');
+                if (parts.length === 2) {
+                    updateInfoPreview.innerHTML = `${parts[0]}Applying patch: ${pathText}\n\nFiles to be updated:${parts[1]}`;
+                }
+            }
+            
             for (const patchType of updateInfo.updatePath) {
                 await downloadAndApplyUpdate(patchType, onProgress);
                 const displayType = patchType === 'patch' ? 'regular' : patchType;
@@ -44,8 +52,19 @@ export async function updateFiles(onProgress) {
             windowTitle.textContent = `xLauncher Plus v${updateInfo.newVersion}`;
         }
 
+        const baseDir = await e.Api.invoke('get-app-dir');
+        const utilsDir = xlp.dirVar('utils');
+
         xlp.setData('xldbv', window.xldbv);
-        await xlp.updateVariablesOnExit();
+        if (xlp.validateXldbvJson(window.xldbv)) {
+            const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
+            const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
+            if (!xldbvResult) {
+                throw new Error('Failed to save xldbv.json');
+            }
+        } else {
+            throw new Error('Invalid xldbv.json structure');
+        }
         xlp.setData('updateAvailable', false);
 
         return true;
@@ -235,7 +254,9 @@ async function downloadAndApplyUpdate(updateType, onProgress) {
         const zipPath = xlp.joinPath(tmpDir, zipName);
 
         await e.Api.invoke('ensure-directory', tmpDir);
+        if (onProgress) onProgress(zipName);
         await e.Api.invoke('download-file', zipUrl, zipPath, true);
+        if (onProgress) onProgress(zipName);
         await e.Api.invoke('extract-zip', zipPath, tmpDir);
         await e.Api.invoke('remove-file', zipPath);
         
@@ -339,7 +360,23 @@ export async function handleUpdateProcess(updateInfo) {
 
         let newText = currentText;
 
-        if (updateInfo.mainFiles.includes(file)) {
+        // Handle update path files (major.zip, minor.zip, patch.zip)
+        if (file && file.match(/^(major|minor|patch)\.zip$/)) {
+            const type = file.replace('.zip', '');
+            const displayType = type === 'patch' ? 'regular' : type;
+            const pathPattern = new RegExp(`^Update Path:\\s*([^\\n]*)$`, 'm');
+            const match = newText.match(pathPattern);
+            
+            if (match) {
+                let currentPath = match[1].trim();
+                if (!currentPath) {
+                    currentPath = displayType;
+                } else if (!currentPath.includes(displayType)) {
+                    currentPath = `${currentPath} 🠞 ${displayType}`;
+                }
+                newText = newText.replace(pathPattern, `Update Path: ${currentPath}`);
+            }
+        } else if (updateInfo.mainFiles.includes(file)) {
             const baseLine = `  ${file}${getPadding(file, updateInfo)}`;
             const pattern = new RegExp(`^  ${file}\\s+(-|✓|- Updating...)$`, 'm');
             
