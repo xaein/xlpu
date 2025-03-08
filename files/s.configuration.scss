@@ -493,7 +493,7 @@ select {
         margin-top: 2px;
         margin-bottom: 5px;
         position: relative;
-        z-index: 1;
+        z-index: 1000;
 
         .update-preview {
             height: 100%;
