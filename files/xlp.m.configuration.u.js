@@ -113,6 +113,7 @@ async function getUpdatePath(currentVersion, targetVersion) {
 // Processes and downloads all required update files from server
 async function downloadAndApplyFiles(onProgress) {
     try {
+        const binaryExtensions = ['.exe', '.ico', '.png'];
         const versionInfo = await xlp.getVersionInfo();
         const appDir = await e.Api.invoke('get-app-dir');
         const updtmpDir = xlp.dirVar('utils', 'update');
@@ -125,7 +126,7 @@ async function downloadAndApplyFiles(onProgress) {
                 for (const file of dirObj.files) {
                     const fileUrl = `${window.xldbv.uurl}/files/${file}`;
                     const targetPath = xlp.joinPath(tmpDir, currentPath, file);
-                    const isBinary = file.endsWith('.exe') || false;
+                    const isBinary = binaryExtensions.some(ext => file.endsWith(ext)) || false;
                     await e.Api.invoke('ensure-directory', currentPath);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
                     if (onProgress) onProgress(`${currentPath}/${file}`);
