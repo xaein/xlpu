@@ -346,6 +346,20 @@ export async function loadSection(sectionId) {
             throw new Error(`Section ${sectionId} not found`);
         }
 
+        // Setup transition if we have existing content
+        const dynamicContent = document.getElementById('dynamicContent');
+        const sectionOverlay = document.getElementById('sectionOverlay');
+        
+        if (dynamicContent.innerHTML && 
+            state.currentSection !== 'initialization' && 
+            state.currentSection !== 'welcome') {
+            
+            sectionOverlay.innerHTML = dynamicContent.innerHTML;
+            sectionOverlay.classList.remove('hidden');
+            
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+
         if (state.currentSection === 'databasecontrol') {
             const preloadedData = getData('preloadedData') || {};
             if (window.tempData && JSON.stringify(preloadedData) !== JSON.stringify(window.tempData)) {
@@ -378,9 +392,7 @@ export async function loadSection(sectionId) {
         try {
             const appDir = await e.Api.invoke('get-app-dir');
             const html = await loadSectionHtml('s', sectionId);
-            const dynamicContent = document.getElementById('dynamicContent');
             dynamicContent.innerHTML = html;
-            dynamicContent.classList.remove('hidden');
 
             if (section.templates?.dialogs) {
                 const dialogPromises = section.templates.dialogs.map(async dialogId => {
@@ -414,6 +426,39 @@ export async function loadSection(sectionId) {
             const initFunctionName = `initialize${sectionId.charAt(0).toUpperCase()}${sectionId.slice(1)}`;
             if (xlp[initFunctionName]) {
                 await xlp[initFunctionName]();
+            }
+
+            // Start crossfade if we have an overlay and aren't coming from initialization/welcome
+            if (sectionOverlay && !sectionOverlay.classList.contains('hidden') &&
+                state.currentSection !== 'initialization' && state.currentSection !== 'welcome') {
+                
+                // Show new content with 0 opacity
+                dynamicContent.classList.remove('hidden');
+                
+                // Force browser reflow to ensure transition works
+                void dynamicContent.offsetWidth;
+                
+                // Start both transitions
+                dynamicContent.classList.add('visible');
+                sectionOverlay.classList.add('fade-out');
+                
+                // Wait for transitions to complete
+                await new Promise(resolve => {
+                    sectionOverlay.addEventListener('transitionend', () => {
+                        sectionOverlay.classList.add('hidden');
+                        sectionOverlay.classList.remove('fade-out');
+                        sectionOverlay.innerHTML = '';
+                        resolve();
+                    }, { once: true });
+                });
+            } else {
+                // No transition needed, just show content
+                dynamicContent.classList.remove('hidden');
+                dynamicContent.classList.add('visible');
+                
+                if (state.currentSection === 'launchlist') {
+                    xlp.createLaunchlistTable();
+                }
             }
        
             state.currentSection = sectionId;

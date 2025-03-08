@@ -108,8 +108,6 @@ export function updateReloadProgress(progress, category) {
 // Processes and saves all database files with progress tracking
 export async function saveAllData() {
     isSaveProcessActive = true;
-    
-    const tempData = xlp.getData('tempData');
     const xldbv = xlp.getData('xldbv') || window.xldbv;
     
     if (!xldbv) {
@@ -117,7 +115,6 @@ export async function saveAllData() {
         return;
     }
     
-    xlp.setData('tempData', tempData);
     xlp.setData('xldbv', xldbv);
     
     const xldbFiles = xldbv.xldbFiles || [];
@@ -135,7 +132,7 @@ export async function saveAllData() {
         }
         
         updateSaveProgress((processedFiles / totalFiles) * 100, fileName.replace('.xlfc', ''));
-        const content = tempData[fileName];
+        const content = window.tempData[fileName];
         
         if (content) {
             const filePath = xlp.joinPath(appDir, xldbDir, fileName);
@@ -191,7 +188,6 @@ export async function saveAllData() {
         }
 
         Object.assign(window.tempData, newData);
-        xlp.setData('tempData', window.tempData);
 
         if (xldbv.configOpts?.triggercmd?.autoGenerate) {
             updateReloadProgress(98, 'Generating TriggerCMD File');

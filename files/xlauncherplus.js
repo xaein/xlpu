@@ -119,16 +119,6 @@ safeIpc('fetch-url', async (event, url, responseType = 'json') => {
 // Application-specific IPC handlers
 // These functions handle various operations specific to xLauncher Plus
 
-// Add to PATH
-// Adds the application directory to the system PATH
-safeIpc('add-to-path', async () => {
-    try {
-        return await runXltcp('add');
-    } catch (error) {
-        return false;
-    }
-});
-
 // Compile theme
 // Processes theme files and reports compilation status updates
 safeIpc('compile-theme', async (event, themeName, delay) => {
@@ -274,11 +264,25 @@ safeIpc('parse-shortcut', async (event, filePath) => {
     }
 });
 
-// Remove from PATH
-// Removes application directory from system environment path variables
-safeIpc('remove-from-path', async () => {
+// Run xlu
+// Executes xlu.exe with optional action parameter
+safeIpc('run-xlu', async (event, action = null) => {
     try {
-        return await runXltcp('remove');
+        const xluPath = path.join(appDirs.utilsDir, 'xlu.exe');
+        const command = action ? `"${xluPath}" ${action}` : `"${xluPath}"`;
+        const options = {
+            name: 'xLauncherPlus'
+        };
+        
+        return new Promise((resolve, reject) => {
+            sudo.exec(command, options, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
     } catch (error) {
         return false;
     }
@@ -294,6 +298,7 @@ safeIpc('run-xlstitch', async (event) => {
         return false;
     }
 });
+
 
 // Show notification
 // Displays desktop notification with specified title and content
@@ -439,23 +444,6 @@ function createTray() {
     }
 }
 
-// Run xltcp
-// Executes system commands with elevated privileges and permissions
-function runXltcp(action) {
-    return new Promise((resolve, reject) => {
-        const xltcpPath = path.join(appDirs.utilsDir, 'xlu.exe');
-        const { execFile } = require('child_process');
-        
-        execFile(xltcpPath, [action], (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(true);
-            }
-        });
-    });
-}
-
 // Show tray balloon
 // Displays a balloon notification from the system tray icon
 function showTrayBalloon(title, content) {
@@ -551,6 +539,15 @@ safeIpc('maximize-window', (event) => {
 // Reduces window to taskbar based on application settings
 safeIpc('minimize-window', (event) => {
     BrowserWindow.fromWebContents(event.sender).minimize();
+});
+
+// Minimize to tray
+// Hides the window to system tray
+safeIpc('minimize-to-tray', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+        window.hide();
+    }
 });
 
 // Get window DPI

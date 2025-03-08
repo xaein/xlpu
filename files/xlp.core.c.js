@@ -139,7 +139,7 @@ export async function exitApp() {
         const hasUpdates = await e.Api.invoke('file-exists', xldbuPath);
         
         if (hasUpdates) {
-            await e.Api.invoke('launch-app', 'xlu.exe');
+            await runXlu('update');
         }
 
         const keysToKeep = ['updateAvailable'];
@@ -157,24 +157,6 @@ export async function exitApp() {
     }
 }
 
-// Update Check
-// Verifies and launches application update process
-export async function checkForUpdates() {
-    try {
-        const baseDir = await e.Api.invoke('get-app-dir');
-        const updateDir = `${baseDir}/utils/update`;
-        const dirContents = await e.Api.invoke('read-directory', updateDir);
-        
-        if (dirContents && dirContents.includes('xlu.exe')) {
-            await e.Api.invoke('launch-app', 'xlu.exe');
-            e.Api.send('toMain', 'exit');
-            return true;
-        }
-        return false;
-    } catch (error) {
-        return false;
-    }
-}
 
 // File Writing
 // Writes data to file system with error handling

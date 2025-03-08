@@ -137,7 +137,7 @@
 
 // App name cell styles
 .app-name-cell {
-    width: var(--app-column-width);
+    width: var(--app-column-width, 60%);
     text-align: left;
     height: var(--table-row-height);
     line-height: var(--table-row-height);

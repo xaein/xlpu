@@ -70,103 +70,30 @@ export async function initializeConfiguration() {
             }
         });
     } catch (error) { }
-    
-    const configDetails = document.querySelector('.config-details');
-    if (configDetails) {
-        configDetails.addEventListener('change', (e) => {
-            const target = e.target;
-            
-            if (['dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
-                 'rightEncapsule', 'messageSeperator', 'maxLogEntries'].includes(target.id)) {
-                if (['dateFormat', 'timeFormat'].includes(target.id)) {
-                    updateConstructOptions();
-                }
-                updateConfigTemp('general', 'logging');
-                if (target.id !== 'maxLogEntries') {
-                    updateLogFormatPreview();
-                }
-            }
-            else if (target.type === 'checkbox') {
-                if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
-                    updateConfigTemp('general', 'system');
-                } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
-                    updateConfigTemp('update');
-                }
-            }
-            else if (target.tagName === 'SELECT') {
-                if (target.id === 'favouriteIcon') {
-                    updateConfigTemp('general', 'theme');
-                } else if (target.id === 'updateFrequency') {
-                    updateConfigTemp('update');
-                }
-            }
-            else if (target.type === 'range') {
-                if (target.id === 'highlightWidth') {
-                    updateConfigTemp('general', 'theme');
-                }
-            }
-            else if (target.type === 'radio') {
-                if (target.name === 'triggerCMDUpdateOption' || target.name === 'triggerCMDAppsOption') {
-                    updateConfigTemp('triggercmd');
-                }
-            }
-            
-            xlp.updateGreenButtonState();
-        });
 
-        configDetails.addEventListener('input', xlp.debounce((e) => {
-            const target = e.target;
-            if (target.id === 'messagePrefix') {
-                updateConfigTemp('general', 'logging');
-                updateLogFormatPreview();
-                xlp.updateGreenButtonState();
-            }
-        }, 300));
-    }
-    
-    updateConstructOptions();
-    xlp.verifyAndSetSection();
-    setupEventListeners();
-}
+    // Centralized event delegation
+    document.addEventListener('click', (event) => {
+        const target = event.target;
 
-// State Name Generator
-// Generates unique state identifiers for managing multiple configuration panels
-function getStateName(type, section) {
-    if (!section) {
-        return null;
-    }
-    const prefix = type === 'b' ? 'base' : 'temp';
-    const stateName = `${prefix}${section.charAt(0).toUpperCase()}${section.slice(1)}State`;
-    return stateName;
-}
-
-// Setup Event System
-// Configures event delegation and handlers for all configuration interactions
-function setupEventListeners() {
-    const configList = document.getElementById('configList');
-    if (configList) {
-        configList.addEventListener('click', async (e) => {
-            const configItem = e.target.closest('.config-item');
-            if (!configItem) return;
-
+        // Config list item delegation
+        if (target.closest('.config-item')) {
+            const configItem = target.closest('.config-item');
             const newSection = configItem.dataset.config;
             if (newSection === activeConfigPanel) return;
 
             if (hasUnsavedChanges()) {
-                const shouldSave = await xlp.showConfigChangeDialog(activeConfigPanel);
-                if (shouldSave) {
-                    saveCurrentSection();
-                }
+                xlp.showConfigChangeDialog(activeConfigPanel).then(shouldSave => {
+                    if (shouldSave) {
+                        saveCurrentSection();
+                    }
+                });
             }
             loadConfigSection(newSection);
-        });
-    }
+        }
 
-    const updateAppButton = document.getElementById('updateAppButton');
-    if (updateAppButton) {
-        updateAppButton.addEventListener('click', async () => {
-            try {
-                const updateInfo = await xlp.getUpdateInfo();
+        // Update button delegation
+        if (target.matches('#updateAppButton')) {
+            xlp.getUpdateInfo().then(async updateInfo => {
                 if (!updateInfo.hasUpdate) return;
 
                 xlp.showUpdateOverlay();
@@ -190,48 +117,83 @@ function setupEventListeners() {
                     xlp.scrollToLine(updateInfoPreview, 'Please restart');
                     await loadConfigSection('update');
                     
-                    // Hide the update indicator after successful update
                     const updateIndicator = document.getElementById('updateIndicator');
+                    const updateButton = document.getElementById('updateAppButton');
                     if (updateIndicator) {
                         updateIndicator.classList.remove('visible');
                     }
+                    if (updateButton) {
+                        updateButton.disabled = true;
+                    }
                 }
-            } catch (error) {
+            }).catch(error => {
                 const updateInfoPreview = document.getElementById('updateInfoPreview');
                 if (updateInfoPreview) {
                     updateInfoPreview.innerHTML = `Error updating: ${error.message}`;
                 }
-            } finally {
+            }).finally(() => {
                 xlp.hideUpdateOverlay();
-            }
-        });
-    }
+            });
+        }
 
-    document.querySelectorAll('.config-section').forEach(section => {
-        section.addEventListener('change', (e) => {
-            const target = e.target;
-            
-            if (target.type === 'checkbox') {
+        // TriggerCMD button delegation
+        if (target.matches('#updateTriggerCMDFile')) {
+            runXltcScript();
+        }
+    });
+
+    document.addEventListener('change', (event) => {
+        const target = event.target;
+        
+        if (target.closest('.config-details')) {
+            if (['dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
+                 'rightEncapsule', 'messageSeperator', 'maxLogEntries'].includes(target.id)) {
+                if (['dateFormat', 'timeFormat'].includes(target.id)) {
+                    updateConstructOptions();
+                }
+                updateConfigTemp('general', 'logging');
+                if (target.id !== 'maxLogEntries') {
+                    updateLogFormatPreview();
+                }
+            }
+            else if (target.type === 'checkbox') {
                 if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
                     updateConfigTemp('general', 'system');
+
+                    // Handle checkbox dependencies
+                    const minimizeToTray = document.getElementById('minimizeToTray');
+                    const closeToTray = document.getElementById('closeToTray');
+                    const startWithWindows = document.getElementById('startWithWindows');
+                    const startMinimized = document.getElementById('startMinimized');
+                    const showTray = document.getElementById('showTray');
+
+                    if (target.id === 'showTray') {
+                        // Enable/disable tray-dependent checkboxes
+                        if (minimizeToTray) minimizeToTray.disabled = !target.checked;
+                        if (closeToTray) closeToTray.disabled = !target.checked;
+                        // Also update start minimized which depends on both show tray and start with windows
+                        if (startMinimized && startWithWindows) {
+                            startMinimized.disabled = !(target.checked && startWithWindows.checked);
+                        }
+                    } else if (target.id === 'startWithWindows') {
+                        // Update start minimized which depends on both show tray and start with windows
+                        if (startMinimized && showTray) {
+                            startMinimized.disabled = !(target.checked && showTray.checked);
+                        }
+                    }
                 } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
                     updateConfigTemp('update');
                 }
             }
             else if (target.tagName === 'SELECT') {
-                if (target.id.match(/^(dateFormat|timeFormat|construct|leftEncapsule|rightEncapsule|messageSeperator)$/)) {
-                    updateConfigTemp('general', 'logging');
-                    updateLogFormatPreview();
-                } else if (target.id === 'favouriteIcon') {
+                if (target.id === 'favouriteIcon') {
                     updateConfigTemp('general', 'theme');
                 } else if (target.id === 'updateFrequency') {
                     updateConfigTemp('update');
                 }
             }
-            else if (target.type === 'number' || target.type === 'range') {
-                if (target.id === 'maxLogEntries') {
-                    updateConfigTemp('general', 'logging');
-                } else if (target.id === 'highlightWidth') {
+            else if (target.type === 'range') {
+                if (target.id === 'highlightWidth') {
                     updateConfigTemp('general', 'theme');
                 }
             }
@@ -242,22 +204,32 @@ function setupEventListeners() {
             }
             
             xlp.updateGreenButtonState();
-        });
+        }
     });
 
-    const messagePrefix = document.getElementById('messagePrefix');
-    if (messagePrefix) {
-        messagePrefix.addEventListener('input', debounce(() => {
+    document.addEventListener('input', xlp.debounce((event) => {
+        const target = event.target;
+        
+        if (target.id === 'messagePrefix') {
             updateConfigTemp('general', 'logging');
             updateLogFormatPreview();
             xlp.updateGreenButtonState();
-        }, 300));
-    }
+        }
+    }, 300));
+    
+    updateConstructOptions();
+    xlp.verifyAndSetSection();
+}
 
-    const updateTriggerCMDButton = document.getElementById('updateTriggerCMDFile');
-    if (updateTriggerCMDButton) {
-        updateTriggerCMDButton.addEventListener('click', runXltcScript);
+// State Name Generator
+// Generates unique state identifiers for managing multiple configuration panels
+function getStateName(type, section) {
+    if (!section) {
+        return null;
     }
+    const prefix = type === 'b' ? 'base' : 'temp';
+    const stateName = `${prefix}${section.charAt(0).toUpperCase()}${section.slice(1)}State`;
+    return stateName;
 }
 
 // Configure Section List
@@ -293,6 +265,22 @@ function initializeUIForSection(section) {
                                    id === 'startWithWindows' ? 'startWithWindows' : 'startMinimized'];
                 }
             });
+
+            // Initialize checkbox dependencies
+            const showTray = document.getElementById('showTray');
+            const minimizeToTray = document.getElementById('minimizeToTray');
+            const closeToTray = document.getElementById('closeToTray');
+            const startWithWindows = document.getElementById('startWithWindows');
+            const startMinimized = document.getElementById('startMinimized');
+
+            if (showTray && minimizeToTray && closeToTray) {
+                minimizeToTray.disabled = !showTray.checked;
+                closeToTray.disabled = !showTray.checked;
+            }
+            
+            if (startMinimized && showTray && startWithWindows) {
+                startMinimized.disabled = !(showTray.checked && startWithWindows.checked);
+            }
             break;
 
         case 'triggercmd':
@@ -631,13 +619,13 @@ function setupHighlightWidthSlider() {
 // Generate Command File
 // Creates and updates command configuration file with current settings
 async function runXltcScript() {
+    const statusElement = document.getElementById('triggerCmdUpdateStatus');
     try {
         const configOpts = {
             overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
             addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
         };
         const result = await e.Api.invoke('generate-triggercmd', configOpts);
-        const statusElement = document.getElementById('triggerCmdUpdateStatus');
         if (result) {
             statusElement.textContent = 'TriggerCMD file updated successfully!';
             statusElement.classList.add('success');
@@ -645,6 +633,7 @@ async function runXltcScript() {
         } else {
             statusElement.textContent = 'Failed to update TriggerCMD file.';
             statusElement.classList.add('error');
+            statusElement.classList.remove('success');
         }
         setTimeout(() => {
             statusElement.textContent = '';
@@ -653,6 +642,7 @@ async function runXltcScript() {
     } catch (error) {
         statusElement.textContent = 'Failed to update TriggerCMD file.';
         statusElement.classList.add('error');
+        statusElement.classList.remove('success');
         setTimeout(() => {
             statusElement.textContent = '';
             statusElement.classList.remove('success', 'error');
@@ -892,9 +882,9 @@ export async function saveConfiguration(skipDialog = false) {
             if (oldInPath !== newInPath) {
                 try {
                     if (newInPath) {
-                        await e.Api.invoke('add-to-path');
+                        await e.Api.invoke('run-xlu', 'add');
                     } else {
-                        await e.Api.invoke('remove-from-path');
+                        await e.Api.invoke('run-xlu', 'remove');
                     }
                 } catch (error) { }
             }

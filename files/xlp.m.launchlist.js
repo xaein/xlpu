@@ -92,6 +92,8 @@ function setupSearch() {
         const searchTerm = searchInput.value.trim();
         clearButton.style.display = searchTerm ? 'flex' : 'none';
 
+        if (typeof xlp.filterRows !== 'function') return;
+
         const filteredRows = xlp.filterRows(searchTerm);
         const tableBody = document.querySelector('#appTable tbody');
         const allRows = Array.from(tableBody.querySelectorAll('.table-row'));

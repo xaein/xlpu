@@ -297,6 +297,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
 }
 
 .content-section {
@@ -307,6 +308,40 @@ body {
 
     &.hidden {
         display: none;
+    }
+}
+
+.section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    opacity: 1;
+    transition: opacity 750ms;
+    background-color: $background-color;
+    
+    &.hidden {
+        display: none;
+    }
+
+    &.fade-out {
+        opacity: 0;
+    }
+}
+
+#dynamicContent {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 750ms;
+
+    &.visible {
+        opacity: 1;
     }
 }
 
