@@ -107,41 +107,98 @@ export function debounce(func, delay) {
 // Application Exit
 // Saves state and performs cleanup before application shutdown
 export async function exitApp() {
+    console.log('exitApp: Starting application exit process');
     xlp.setData('xldbv', window.xldbv);
     xlp.setData('xldbf', window.xldbf);
 
+    let hasXldbu = false;
+    let hasUpdtmp = false;
+
     try {
+        console.log('exitApp: Getting base directory and utils directory');
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xlp.dirVar('utils');
+        console.log('exitApp: Base directory:', baseDir);
+        console.log('exitApp: Utils directory:', utilsDir);
 
         if (xlp.validateXldbvJson(window.xldbv)) {
+            console.log('exitApp: Saving xldbv.json');
             const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
             const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
             if (!xldbvResult) {
+                console.error('exitApp: Failed to save xldbv.json');
                 throw new Error('Failed to save xldbv.json');
             }
+            console.log('exitApp: Successfully saved xldbv.json');
         } else {
+            console.error('exitApp: Invalid xldbv.json structure');
             throw new Error('Invalid xldbv.json structure');
         }
         
         const cleanedXldbfData = xlp.validateXldbfJson(window.xldbf);
         if (cleanedXldbfData) {
+            console.log('exitApp: Saving xldbf.json');
             const xldbfPath = xlp.joinPath(baseDir, utilsDir, 'xldbf.json');
             const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
             if (!xldbfResult) {
+                console.error('exitApp: Failed to update xldbf.json');
                 throw new Error('Failed to update xldbf.json');
             }
+            console.log('exitApp: Successfully saved xldbf.json');
         } else {
+            console.error('exitApp: Invalid xldbf.json structure');
             throw new Error('Invalid xldbf.json structure');
         }
 
+        // Check for updates
+        console.log('exitApp: Checking for updates');
         const xldbuPath = xlp.joinPath(baseDir, utilsDir, 'xldbu.json');
-        const hasUpdates = await e.Api.invoke('file-exists', xldbuPath);
+        const updtmpPath = xlp.joinPath(baseDir, utilsDir, 'updtmp');
         
-        if (hasUpdates) {
-            await runXlu('update');
+        console.log('exitApp: Constructed paths:', {
+            xldbuPath,
+            updtmpPath
+        });
+        
+        try {
+            hasXldbu = await e.Api.invoke('file-exists', xldbuPath);
+            console.log('exitApp: xldbu.json check result:', hasXldbu);
+        } catch (err) {
+            console.error('exitApp: Error checking xldbu.json:', err);
         }
 
+        try {
+            // Check directory contents - will return [] if directory doesn't exist
+            const updtmpContents = await e.Api.invoke('read-directory', updtmpPath);
+            console.log('exitApp: updtmp directory contents:', updtmpContents);
+            hasUpdtmp = Array.isArray(updtmpContents) && updtmpContents.length > 0;
+            console.log('exitApp: updtmp has contents:', hasUpdtmp);
+        } catch (err) {
+            console.error('exitApp: Error checking updtmp directory:', err);
+        }
+        
+        console.log('exitApp: Final check results:', {
+            xldbuExists: hasXldbu,
+            updtmpExists: hasUpdtmp
+        });
+        
+        if (hasXldbu || hasUpdtmp) {
+            console.log('exitApp: Updates found, checking for new xlu.exe');
+            // Check for new xlu.exe in updtmp/utils
+            const newXluPath = xlp.joinPath(updtmpPath, 'utils', 'xlu.exe');
+            const hasNewXlu = await e.Api.invoke('file-exists', newXluPath);
+            
+            console.log('exitApp: New xlu.exe exists:', hasNewXlu);
+            if (hasNewXlu) {
+                console.log('exitApp: Copying new xlu.exe');
+                // Copy new xlu.exe to utils directory
+                const currentXluPath = xlp.joinPath(baseDir, utilsDir, 'xlu.exe');
+                await e.Api.invoke('copy-file', newXluPath, currentXluPath);
+                console.log('exitApp: Successfully copied new xlu.exe');
+            }
+        }
+
+        console.log('exitApp: Cleaning up localStorage');
         const keysToKeep = ['updateAvailable'];
         for (let i = localStorage.length - 1; i >= 0; i--) {
             const key = localStorage.key(i);
@@ -151,8 +208,17 @@ export async function exitApp() {
         }
         xlp.setData('updateAvailable', false);
     } catch (error) {
+        console.error('exitApp: Error occurred:', error);
         throw error;
     } finally {
+        console.log('exitApp: Sending exit signal to main process');
+        // Run xlu.exe for update as the last operation without awaiting
+        if (hasXldbu || hasUpdtmp) {
+            console.log('exitApp: Running xlu.exe for update');
+            e.Api.invoke('run-xlu', 'update');
+            // Add a small delay to ensure xlu.exe has time to start
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
         e.Api.send('toMain', 'exit');
     }
 }

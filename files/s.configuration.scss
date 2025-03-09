@@ -493,7 +493,7 @@ select {
         margin-top: 2px;
         margin-bottom: 5px;
         position: relative;
-        z-index: 1000;
+        z-index: 9999;
 
         .update-preview {
             height: 100%;
@@ -527,10 +527,3 @@ select {
     z-index: 9998;
     background-color: rgba(0, 0, 0, 0.5);
 }
-
-#updateConfig {
-    .preview-group {
-        position: relative;
-        z-index: 9999;
-    }
-} 
