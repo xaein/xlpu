@@ -210,10 +210,14 @@ safeIpc('launch-app', async (event, appName) => {
 });
 
 // Open help file
-// Opens the xlauncher_plus_help.html file in the default browser
-safeIpc('open-external', (event, helpFilePath) => {
-    const fullPath = path.join(__dirname, helpFilePath);
-    require('electron').shell.openExternal(`file://${fullPath}`);
+// Opens files or URLs in the default browser
+safeIpc('open-external', (event, targetPath) => {
+    if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
+        require('electron').shell.openExternal(targetPath);
+    } else {
+        const fullPath = path.join(__dirname, targetPath);
+        require('electron').shell.openExternal(`file://${fullPath}`);
+    }
 });
 
 // Open file dialog

@@ -139,7 +139,7 @@ export function setupEventDelegation() {
     document.querySelectorAll('.titlebar-button').forEach(button => {
         button.addEventListener('click', (event) => {
             const action = event.target.closest('button').classList[1]?.replace('-button', '');
-            if (action) xlp.handleTitleBarAction(action);
+            if (action) handleTitleBarAction(action);
         });
     });
 
@@ -185,7 +185,11 @@ export async function handleTitleBarAction(action) {
             await e.Api.invoke('maximize-window');
             break;
         case 'close':
-            await xlp.exitApp();
+            if (window.xldbv?.configOpts?.system?.closeTo) {
+                await e.Api.invoke('minimize-to-tray');
+            } else {
+                await xlp.exitApp();
+            }
             break;
         case 'help':
             await xlp.openHelpFile();

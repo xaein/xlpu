@@ -361,7 +361,6 @@ export async function handleUpdateProcess(updateInfo) {
 
         let newText = currentText;
 
-        // Handle update path files (major.zip, minor.zip, patch.zip)
         if (file && file.match(/^(major|minor|patch)\.zip$/)) {
             const type = file.replace('.zip', '');
             const displayType = type === 'patch' ? 'regular' : type;

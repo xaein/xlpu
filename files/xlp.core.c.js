@@ -1,7 +1,7 @@
-// Core App Functions Module
-// Provides core utilities and section definitions for application
+// Core Application Components
+// Manages core utilities and configurations for the application
 
-// Section configuration definitions
+// Core section configuration
 export const sections = {
     launchlist: {
         label: 'Launch List',
@@ -88,14 +88,14 @@ export const sections = {
     }
 };
 
-// Path Combination
-// Joins and normalizes file paths for cross-platform use
+// Path Management System
+// Combines and normalizes paths for consistent cross platform use
 export function joinPath(...parts) {
     return parts.join('/').replace(/\\/g, '/').replace(/\/+/g, '/');
 }
 
-// Function Throttling
-// Prevents rapid function calls by enforcing delay period
+// Function Delay Control
+// Prevents rapid function execution by enforcing time delay period
 export function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
@@ -104,10 +104,9 @@ export function debounce(func, delay) {
     };
 }
 
-// Application Exit
-// Saves state and performs cleanup before application shutdown
+// Application Exit Handler
+// Saves application state and performs cleanup before shutting down
 export async function exitApp() {
-    console.log('exitApp: Starting application exit process');
     xlp.setData('xldbv', window.xldbv);
     xlp.setData('xldbf', window.xldbf);
 
@@ -115,90 +114,52 @@ export async function exitApp() {
     let hasUpdtmp = false;
 
     try {
-        console.log('exitApp: Getting base directory and utils directory');
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xlp.dirVar('utils');
-        console.log('exitApp: Base directory:', baseDir);
-        console.log('exitApp: Utils directory:', utilsDir);
 
         if (xlp.validateXldbvJson(window.xldbv)) {
-            console.log('exitApp: Saving xldbv.json');
             const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
             const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
             if (!xldbvResult) {
-                console.error('exitApp: Failed to save xldbv.json');
                 throw new Error('Failed to save xldbv.json');
             }
-            console.log('exitApp: Successfully saved xldbv.json');
         } else {
-            console.error('exitApp: Invalid xldbv.json structure');
             throw new Error('Invalid xldbv.json structure');
         }
         
         const cleanedXldbfData = xlp.validateXldbfJson(window.xldbf);
         if (cleanedXldbfData) {
-            console.log('exitApp: Saving xldbf.json');
             const xldbfPath = xlp.joinPath(baseDir, utilsDir, 'xldbf.json');
             const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
             if (!xldbfResult) {
-                console.error('exitApp: Failed to update xldbf.json');
                 throw new Error('Failed to update xldbf.json');
             }
-            console.log('exitApp: Successfully saved xldbf.json');
         } else {
-            console.error('exitApp: Invalid xldbf.json structure');
             throw new Error('Invalid xldbf.json structure');
         }
 
-        // Check for updates
-        console.log('exitApp: Checking for updates');
         const xldbuPath = xlp.joinPath(baseDir, utilsDir, 'xldbu.json');
         const updtmpPath = xlp.joinPath(baseDir, utilsDir, 'updtmp');
         
-        console.log('exitApp: Constructed paths:', {
-            xldbuPath,
-            updtmpPath
-        });
-        
         try {
             hasXldbu = await e.Api.invoke('file-exists', xldbuPath);
-            console.log('exitApp: xldbu.json check result:', hasXldbu);
-        } catch (err) {
-            console.error('exitApp: Error checking xldbu.json:', err);
-        }
+        } catch (error) { }
 
         try {
-            // Check directory contents - will return [] if directory doesn't exist
             const updtmpContents = await e.Api.invoke('read-directory', updtmpPath);
-            console.log('exitApp: updtmp directory contents:', updtmpContents);
             hasUpdtmp = Array.isArray(updtmpContents) && updtmpContents.length > 0;
-            console.log('exitApp: updtmp has contents:', hasUpdtmp);
-        } catch (err) {
-            console.error('exitApp: Error checking updtmp directory:', err);
-        }
-        
-        console.log('exitApp: Final check results:', {
-            xldbuExists: hasXldbu,
-            updtmpExists: hasUpdtmp
-        });
+        } catch (error) { }
         
         if (hasXldbu || hasUpdtmp) {
-            console.log('exitApp: Updates found, checking for new xlu.exe');
-            // Check for new xlu.exe in updtmp/utils
             const newXluPath = xlp.joinPath(updtmpPath, 'utils', 'xlu.exe');
             const hasNewXlu = await e.Api.invoke('file-exists', newXluPath);
             
-            console.log('exitApp: New xlu.exe exists:', hasNewXlu);
             if (hasNewXlu) {
-                console.log('exitApp: Copying new xlu.exe');
-                // Copy new xlu.exe to utils directory
                 const currentXluPath = xlp.joinPath(baseDir, utilsDir, 'xlu.exe');
                 await e.Api.invoke('copy-file', newXluPath, currentXluPath);
-                console.log('exitApp: Successfully copied new xlu.exe');
             }
         }
 
-        console.log('exitApp: Cleaning up localStorage');
         const keysToKeep = ['updateAvailable'];
         for (let i = localStorage.length - 1; i >= 0; i--) {
             const key = localStorage.key(i);
@@ -208,24 +169,18 @@ export async function exitApp() {
         }
         xlp.setData('updateAvailable', false);
     } catch (error) {
-        console.error('exitApp: Error occurred:', error);
         throw error;
     } finally {
-        console.log('exitApp: Sending exit signal to main process');
-        // Run xlu.exe for update as the last operation without awaiting
         if (hasXldbu || hasUpdtmp) {
-            console.log('exitApp: Running xlu.exe for update');
             e.Api.invoke('run-xlu', 'update');
-            // Add a small delay to ensure xlu.exe has time to start
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
         e.Api.send('toMain', 'exit');
     }
 }
 
-
-// File Writing
-// Writes data to file system with error handling
+// File System Writer
+// Writes content to file system with comprehensive error handling
 export async function writeFile(filePath, content) {
     try {
         const result = await e.Api.invoke('write-file', filePath, content);
@@ -237,8 +192,8 @@ export async function writeFile(filePath, content) {
     }
 }
 
-// Remote File Access
-// Downloads file content from specified URL with type
+// Remote Content Fetcher
+// Downloads and processes remote content with specified response type
 export async function fetchFile(url, responseType = 'json') {
     try {
         const response = await e.Api.invoke('fetch-url', url, responseType);
@@ -251,23 +206,23 @@ export async function fetchFile(url, responseType = 'json') {
     }
 }
 
-// Version Information
-// Retrieves current version data from update server
+// Version Data Retriever
+// Fetches and returns current version information from update server
 export async function getVersionInfo() {
     const uurl = window.xldbv.uurl;
     return await fetchFile(`${uurl}/version.json`);
 }
 
-// Help Documentation
-// Opens help documentation in system default browser
+// Documentation Display Handler
+// Opens application help documentation in the default system browser
 export function openHelpFile() {
     const helpDir = xlp.dirVar('help');
     const helpFilePath = `${helpDir}/xlauncher_plus_help.html`;
     e.Api.invoke('open-external', helpFilePath);
 }
 
-// Version Comparison
-// Compares semantic versions to determine newer release
+// Version Update Checker
+// Compares version numbers to determine if update is needed
 export function isNewerVersion(version1, version2) {
     const [major1, minor1, patch1] = version1.split('.').map(Number);
     const [major2, minor2, patch2] = version2.split('.').map(Number);
@@ -277,8 +232,8 @@ export function isNewerVersion(version1, version2) {
            (major2 === major1 && minor2 === minor1 && patch2 > patch1);
 }
 
-// SVG Selector Generation
-// Creates and colors SVG selector for row highlighting
+// SVG Generator Handler
+// Creates and processes SVG selectors for row highlighting system
 export async function generateRowSelectorSVG(svgPath, isConfig = false) {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
@@ -295,8 +250,8 @@ export async function generateRowSelectorSVG(svgPath, isConfig = false) {
     }
 }
 
-// Row Highlight Creation
-// Generates highlight element for table row selection
+// Row Highlight Manager
+// Creates and configures highlight elements for table row selection
 export async function createRowHighlight(row) {
     const existingHighlight = row.querySelector('.row-highlight');
     if (existingHighlight) {
@@ -351,8 +306,8 @@ export async function createRowHighlight(row) {
     return highlight;
 }
 
-// Row Selection Update
-// Updates interface elements for row selector changes
+// Selector Update Handler
+// Updates interface elements when row selector choice is changed
 export function selectRowSelector(fileName, svgElement, customSelect, selectedValue, optionsContainer) {
     if (svgElement && customSelect && selectedValue) {
         selectedValue.innerHTML = '';
@@ -370,8 +325,8 @@ export function selectRowSelector(fileName, svgElement, customSelect, selectedVa
     }
 }
 
-// Row Selector Setup
-// Initializes row selector interface with available options
+// Row Selector Initializer
+// Sets up and configures all available row selector options
 export async function loadRowSelectors() {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
@@ -441,8 +396,8 @@ export async function loadRowSelectors() {
     }
 }
 
-// Button State Management
-// Updates footer button state based on section context
+// Button State Controller
+// Updates footer button states based on current section context
 export function updateGreenButtonState() {
     const greenButton = document.getElementById('footerLeftButton');
     if (!greenButton) return;

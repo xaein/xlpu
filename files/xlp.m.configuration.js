@@ -71,11 +71,14 @@ export async function initializeConfiguration() {
         });
     } catch (error) { }
 
-    // Centralized event delegation
     document.addEventListener('click', (event) => {
         const target = event.target;
 
-        // Config list item delegation
+        if (target.closest('.update-link')) {
+            e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
+            return;
+        }
+
         if (target.closest('.config-item')) {
             const configItem = target.closest('.config-item');
             const newSection = configItem.dataset.config;
@@ -91,7 +94,6 @@ export async function initializeConfiguration() {
             loadConfigSection(newSection);
         }
 
-        // Update button delegation
         if (target.matches('#updateAppButton')) {
             xlp.getUpdateInfo().then(async updateInfo => {
                 if (!updateInfo.hasUpdate) return;
@@ -136,7 +138,6 @@ export async function initializeConfiguration() {
             });
         }
 
-        // TriggerCMD button delegation
         if (target.matches('#updateTriggerCMDFile')) {
             runXltcScript();
         }
@@ -160,7 +161,6 @@ export async function initializeConfiguration() {
                 if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
                     updateConfigTemp('general', 'system');
 
-                    // Handle checkbox dependencies
                     const minimizeToTray = document.getElementById('minimizeToTray');
                     const closeToTray = document.getElementById('closeToTray');
                     const startWithWindows = document.getElementById('startWithWindows');
@@ -168,15 +168,12 @@ export async function initializeConfiguration() {
                     const showTray = document.getElementById('showTray');
 
                     if (target.id === 'showTray') {
-                        // Enable/disable tray-dependent checkboxes
                         if (minimizeToTray) minimizeToTray.disabled = !target.checked;
                         if (closeToTray) closeToTray.disabled = !target.checked;
-                        // Also update start minimized which depends on both show tray and start with windows
                         if (startMinimized && startWithWindows) {
                             startMinimized.disabled = !(target.checked && startWithWindows.checked);
                         }
                     } else if (target.id === 'startWithWindows') {
-                        // Update start minimized which depends on both show tray and start with windows
                         if (startMinimized && showTray) {
                             startMinimized.disabled = !(target.checked && showTray.checked);
                         }
@@ -266,7 +263,6 @@ function initializeUIForSection(section) {
                 }
             });
 
-            // Initialize checkbox dependencies
             const showTray = document.getElementById('showTray');
             const minimizeToTray = document.getElementById('minimizeToTray');
             const closeToTray = document.getElementById('closeToTray');
@@ -1048,7 +1044,8 @@ function formatDate(date, format) {
         .replace(/a/g, ampm);
 }
 
-// Update construct options based on current date/time format
+// Update Construct Options
+// Updates select options based on date and time format settings
 function updateConstructOptions() {
     const dateFormatSelect = document.getElementById('dateFormat');
     const timeFormatSelect = document.getElementById('timeFormat');

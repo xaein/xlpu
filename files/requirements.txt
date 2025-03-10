@@ -1,0 +1,2 @@
+pyinstaller
+elevate  # For handling admin privileges 

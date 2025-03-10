@@ -279,4 +279,4 @@ export async function cleanupDatabasecontrol() {
     window.categories = [];
     window.selectedRow = null;
     window.tempData = null;
-} 
+}

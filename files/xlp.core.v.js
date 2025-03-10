@@ -180,7 +180,6 @@ function convertXldbv(data) {
             delete variables.currentTheme;
         }
 
-        // Replace directories with standard structure
         variables.directories = { ...requiredDirectories };
 
         if (Array.isArray(variables.loadScripts)) {

@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.00",
   "patch": 0,
   "comment": "Update Changes:\n- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code for each section\n- Section transition, slight crossfade effect now, so we don't see any messed-up sections before they are properly loaded\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB (js module and exe), XLAUNCH)\n   XLU - should remove empty directories on update after this, converted code to python, smaller file size\n   XLTB - slight changes for future proofing\n   XLAUNCH - converted code to python, smaller file size\n",
   "files": {
@@ -76,6 +76,29 @@
         }
       }
     },
+    "python": {
+      "files": [],
+      "cleanup": {
+        "files": [
+          "build.py",
+          "requirements.txt"
+        ]
+      },
+      "xlaunch": {
+        "files": [
+          "build.py",
+          "requirements.txt",
+          "xlaunch.py"
+        ]
+      },
+      "xlu": {
+        "files": [
+          "build.py",
+          "requirements.txt",
+          "xlu.py"
+        ]
+      }
+    },
     "utils": {
       "files": [
         "xlaunch.exe",
@@ -150,11 +173,9 @@
     "updater.js",
     "welcome.html",
     "welcome.scss",
-    "window.js",
-    "xlauncherplus.ico",
-    "xlauncherplus.png"
+    "window.js"
   ],
-  "lastFullUpdate": false,
+  "lastFullUpdate": true,
   "dependencies": {
     "@vscode/sudo-prompt": "^9.3.1",
     "adm-zip": "^0.5.16",
