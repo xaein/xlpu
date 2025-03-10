@@ -2,8 +2,8 @@
 // Manages application version control and update processes
 
 // Initialize update delays
-const patchDelay = 600;  
-const fileDelay = 300;   
+const patchDelay = 400;  
+const fileDelay = 250;   
 window.updateState = {
     progressHandler: null,
     lastFile: '',
@@ -24,16 +24,13 @@ export async function updateFiles(onProgress) {
             if (updateInfoPreview) {
                 const pathText = updateInfo.updatePath.map(type => type === 'patch' ? 'regular' : type).join(' 🠞 ');
                 const text = updateInfoPreview.textContent;
-                const parts = text.split('Files to be updated:');
-                if (parts.length === 2) {
-                    updateInfoPreview.innerHTML = `${parts[0]}Applying patch: ${pathText}\n\nFiles to be updated:${parts[1]}`;
-                }
+                const pattern = /\.\n\nFiles to be updated:/;
+                updateInfoPreview.innerHTML = text.replace(pattern, `.\n\nApplying patch: ${pathText}\n\nFiles to be updated:`);
             }
             
             for (const patchType of updateInfo.updatePath) {
                 await downloadAndApplyUpdate(patchType, onProgress);
                 const displayType = patchType === 'patch' ? 'regular' : patchType;
-                if (onProgress) onProgress(`${displayType} patch`);
                 await new Promise(resolve => setTimeout(resolve, patchDelay));
             }
         }
@@ -364,8 +361,8 @@ export async function handleUpdateProcess(updateInfo) {
         if (file && file.match(/^(major|minor|patch)\.zip$/)) {
             const type = file.replace('.zip', '');
             const displayType = type === 'patch' ? 'regular' : type;
-            const pathPattern = new RegExp(`^Update Path:\\s*([^\\n]*)$`, 'm');
-            const match = newText.match(pathPattern);
+            const patchPattern = /Applying patch: ([^\n]*)/;
+            const match = newText.match(patchPattern);
             
             if (match) {
                 let currentPath = match[1].trim();
@@ -374,7 +371,7 @@ export async function handleUpdateProcess(updateInfo) {
                 } else if (!currentPath.includes(displayType)) {
                     currentPath = `${currentPath} 🠞 ${displayType}`;
                 }
-                newText = newText.replace(pathPattern, `Update Path: ${currentPath}`);
+                newText = newText.replace(patchPattern, `Applying patch: ${currentPath}`);
             }
         } else if (updateInfo.mainFiles.includes(file)) {
             const baseLine = `  ${file}${getPadding(file, updateInfo)}`;

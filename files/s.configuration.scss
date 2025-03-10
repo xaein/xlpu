@@ -498,6 +498,7 @@ select {
         .update-preview {
             height: 100%;
             overflow-y: auto;
+            z-index: 9999;
         }
     }
 
