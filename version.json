@@ -1,7 +1,7 @@
 {
   "version": "1.1.00",
   "patch": 0,
-  "comment": "Update Changes:\n- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code for each section\n- Section transition, slight crossfade effect now, so we don't see any messed-up sections before they are properly loaded\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB (js module and exe), XLAUNCH)\n   XLU - should remove empty directories on update after this, converted code to python, smaller file size\n   XLTB - slight changes for future proofing\n   XLAUNCH - converted code to python, smaller file size\n",
+  "comment": "- Conversion from multipage application to Single Page Application (SPA)\n- Should increase section loading, as we are not loading the entire page every change, has load/unload code for each section\n- Section transition, slight crossfade effect now, so we don't see any messed-up sections before they are properly loaded\n- Removed Pagination from the application, all tables are now the complete table contents for what they show\n- Updated various helper programs (XLU, XLTB (js module and exe), XLAUNCH)\n   XLU - should remove empty directories on update after this, converted code to python, smaller file size\n   XLTB - slight changes for future proofing\n   XLAUNCH - converted code to python, smaller file size\n",
   "files": {
     "files": {
       "files": [
@@ -30,6 +30,7 @@
         "files": [
           "xlp.d.configchange.html",
           "xlp.d.configsave.html",
+          "xlp.d.configupdatepreview.html",
           "xlp.d.databasecontrolcatadd.html",
           "xlp.d.databasecontrolcatremove.html",
           "xlp.d.databasecontrolcatrename.html",

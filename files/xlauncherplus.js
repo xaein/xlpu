@@ -66,7 +66,7 @@ safeIpc('copy-file', (event, sourcePath, destPath) => fsOps.copyFile(sourcePath,
 safeIpc('ensure-directory', (event, dirPath) => fsOps.ensureDirectoryExists(dirPath));
 safeIpc('extract-zip', (event, zipPath, targetPath) => fsOps.extractZip(zipPath, targetPath));
 safeIpc('file-exists', (event, filePath) => fsOps.fileExists(filePath));
-safeIpc('get-app-dir', () => __dirname);
+safeIpc('get-app-dir', () => getAppPath());
 safeIpc('get-file', (event, filePath) => fsOps.getFile(filePath));
 safeIpc('get-file-path', (event, directory, fileName) => fsOps.getFilePath(directory, fileName));
 safeIpc('get-variables', () => fsOps.getVariables(appDirs.utilsDir));
@@ -190,23 +190,23 @@ safeIpc('toggle-theme-readonly', async (event, themePath, readonly) => {
 });
 
 // Launch app
-// Executes specified application with elevated system privileges safely
+// Executes specified application with appropriate privileges
 safeIpc('launch-app', async (event, appName) => {
-    const xlaunchPath = path.join(appDirs.utilsDir, 'xlaunch.exe');
-    const command = `"${xlaunchPath}" "${appName}"`;
-    const options = {
-        name: 'xLauncherPlus'
-    };
-
-    return new Promise((resolve, reject) => {
-        sudo.exec(command, options, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(stdout);
-            }
+    try {
+        const xlaunchPath = path.join(appDirs.utilsDir, 'xlaunch.exe');
+        const command = `"${xlaunchPath}" "${appName}"`;
+        return new Promise((resolve, reject) => {
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(stdout);
+                }
+            });
         });
-    });
+    } catch (error) {
+        return false;
+    }
 });
 
 // Open help file

@@ -26,6 +26,7 @@ export async function updateFiles(onProgress) {
                 const text = updateInfoPreview.textContent;
                 const pattern = /\.\n\nFiles to be updated:/;
                 updateInfoPreview.innerHTML = text.replace(pattern, `.\n\nApplying patch: ${pathText}\n\nFiles to be updated:`);
+                xlp.scrollToLine(updateInfoPreview, 'Applying patch:');
             }
             
             for (const patchType of updateInfo.updatePath) {
@@ -523,17 +524,25 @@ export async function checkForUpdatesConfig() {
 // Show Update Display
 // Creates and displays update progress overlay interface
 export function showUpdateOverlay() {
-    const modalOverlay = document.createElement('div');
-    modalOverlay.id = 'updateModalOverlay';
-    modalOverlay.style.display = 'block';
-    document.body.appendChild(modalOverlay);
+    const modalOverlay = document.getElementById('modalOverlay');
+    const previewGroup = document.querySelector('#updateConfig .preview-group');
+    if (modalOverlay) {
+        modalOverlay.style.display = 'block';
+    }
+    if (previewGroup) {
+        previewGroup.style.zIndex = '9999';  // Set above modal overlay
+    }
 }
 
 // Hide Update Display
 // Removes update progress overlay from user interface
 export function hideUpdateOverlay() {
-    const modalOverlay = document.getElementById('updateModalOverlay');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const previewGroup = document.querySelector('#updateConfig .preview-group');
     if (modalOverlay) {
-        modalOverlay.remove();
+        modalOverlay.style.display = 'none';
+    }
+    if (previewGroup) {
+        previewGroup.style.zIndex = '';  // Reset to default
     }
 } 

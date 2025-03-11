@@ -76,29 +76,6 @@
         }
       }
     },
-    "python": {
-      "files": [],
-      "cleanup": {
-        "files": [
-          "build.py",
-          "requirements.txt"
-        ]
-      },
-      "xlaunch": {
-        "files": [
-          "build.py",
-          "requirements.txt",
-          "xlaunch.py"
-        ]
-      },
-      "xlu": {
-        "files": [
-          "build.py",
-          "requirements.txt",
-          "xlu.py"
-        ]
-      }
-    },
     "utils": {
       "files": [
         "xlaunch.exe",
@@ -125,7 +102,6 @@
     "categoryadd.html",
     "categoryremove.html",
     "categoryrename.html",
-    "common.js",
     "configcon.g.html",
     "configcon.t.html",
     "configcon.u.html",
