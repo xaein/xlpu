@@ -123,9 +123,10 @@ async function downloadAndApplyFiles(onProgress) {
             if (dirObj.files) {
                 for (const file of dirObj.files) {
                     const fileUrl = `${window.xldbv.uurl}/files/${file}`;
-                    const targetPath = xlp.joinPath(tmpDir, currentPath, file);
+                    const targetDir = xlp.joinPath(tmpDir, currentPath);
+                    const targetPath = xlp.joinPath(targetDir, file);
                     const isBinary = binaryExtensions.some(ext => file.endsWith(ext)) || false;
-                    await e.Api.invoke('ensure-directory', currentPath);
+                    await e.Api.invoke('ensure-directory', targetDir);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
                     if (onProgress) onProgress(`${currentPath}/${file}`);
                     await new Promise(resolve => setTimeout(resolve, fileDelay));

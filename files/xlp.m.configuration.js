@@ -912,6 +912,8 @@ export async function saveConfiguration(skipDialog = false) {
             }
             
             xlp.setData('xlaunchConfig', tempState.xlaunchConfig);
+            promises.push(e.Api.invoke('update-xlaunch-config', tempState.xlaunchConfig));
+            
             window.xldbv.configOpts.theme.favourite = tempState.theme.favourite;
             window.xldbv.configOpts.theme.rowSelector = tempState.theme.rowSelector;
             window.xldbv.configOpts.theme.rowWidth = tempState.theme.rowWidth;

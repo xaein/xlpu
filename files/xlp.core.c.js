@@ -118,7 +118,7 @@ export async function exitApp() {
         const utilsDir = xlp.dirVar('utils');
 
         if (xlp.validateXldbvJson(window.xldbv)) {
-            const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
+            const xldbvPath = joinPath(baseDir, utilsDir, 'xldbv.json');
             const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
             if (!xldbvResult) {
                 throw new Error('Failed to save xldbv.json');
@@ -129,7 +129,7 @@ export async function exitApp() {
         
         const cleanedXldbfData = xlp.validateXldbfJson(window.xldbf);
         if (cleanedXldbfData) {
-            const xldbfPath = xlp.joinPath(baseDir, utilsDir, 'xldbf.json');
+            const xldbfPath = joinPath(baseDir, utilsDir, 'xldbf.json');
             const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
             if (!xldbfResult) {
                 throw new Error('Failed to update xldbf.json');
@@ -138,8 +138,8 @@ export async function exitApp() {
             throw new Error('Invalid xldbf.json structure');
         }
 
-        const xldbuPath = xlp.joinPath(baseDir, utilsDir, 'xldbu.json');
-        const updtmpPath = xlp.joinPath(baseDir, utilsDir, 'updtmp');
+        const xldbuPath = joinPath(baseDir, utilsDir, 'xldbu.json');
+        const updtmpPath = joinPath(baseDir, utilsDir, 'updtmp');
         
         try {
             hasXldbu = await e.Api.invoke('file-exists', xldbuPath);
@@ -151,11 +151,11 @@ export async function exitApp() {
         } catch (error) { }
         
         if (hasXldbu || hasUpdtmp) {
-            const newXluPath = xlp.joinPath(updtmpPath, 'utils', 'xlu.exe');
+            const newXluPath = joinPath(updtmpPath, 'utils', 'xlu.exe');
             const hasNewXlu = await e.Api.invoke('file-exists', newXluPath);
             
             if (hasNewXlu) {
-                const currentXluPath = xlp.joinPath(baseDir, utilsDir, 'xlu.exe');
+                const currentXluPath = joinPath(baseDir, utilsDir, 'xlu.exe');
                 await e.Api.invoke('copy-file', newXluPath, currentXluPath);
             }
         }
@@ -238,7 +238,7 @@ export async function generateRowSelectorSVG(svgPath, isConfig = false) {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
         const themesDir = xlp.dirVar('themes');
-        const fullPath = xlp.joinPath(appDir, 'files', themesDir, 'selectors', svgPath);
+        const fullPath = joinPath(appDir, 'files', themesDir, 'selectors', svgPath);
         const { data: svgContent } = await e.Api.invoke('get-file', fullPath);
         
         if (!svgContent) return null;
@@ -331,7 +331,7 @@ export async function loadRowSelectors() {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
         const themesDir = xlp.dirVar('themes');
-        const selectorsPath = xlp.joinPath(appDir, 'files', themesDir, 'selectors');
+        const selectorsPath = joinPath(appDir, 'files', themesDir, 'selectors');
         const files = await e.Api.invoke('read-directory', selectorsPath);
         
         const svgFiles = files.filter(file => file.endsWith('.svg'));
