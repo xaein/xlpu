@@ -44,6 +44,7 @@ let configDefaults = {
 // Initialize Configuration Process
 // Sets up and loads all configuration interface components and states
 export async function initializeConfiguration() {
+    
     window[getStateName('b', 'general')] = {
         xlaunchConfig: { ...configDefaults.logging, ...xlp.getData('xlaunchConfig') },
         theme: { ...configDefaults.theme, ...window.xldbv.configOpts.theme },
@@ -95,6 +96,7 @@ export async function initializeConfiguration() {
         }
 
         if (target.matches('#updateAppButton')) {
+            
             xlp.getUpdateInfo().then(async updateInfo => {
                 if (!updateInfo.hasUpdate) return;
 
@@ -179,15 +181,7 @@ export async function initializeConfiguration() {
                         }
                     }
                 } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
-                    if (target.id === 'periodicUpdateCheck') {
-                        const updateFrequency = document.getElementById('updateFrequency');
-                        if (updateFrequency) {
-                            updateFrequency.disabled = !target.checked;
-                        }
-                    }
                     updateConfigTemp('update');
-                } else if (target.id.match(/^(autoGenerateTriggerCMD|addToPath)$/)) {
-                    updateConfigTemp('triggercmd');
                 }
             }
             else if (target.tagName === 'SELECT') {
@@ -296,16 +290,10 @@ function initializeUIForSection(section) {
             if (addCommandsElement) addCommandsElement.checked = true;
 
             const autoGenerateCheckbox = document.getElementById('autoGenerateTriggerCMD');
-            if (autoGenerateCheckbox) {
-                autoGenerateCheckbox.checked = triggerConfig.autoGenerate;
-                updateConfigTemp('triggercmd');
-            }
+            if (autoGenerateCheckbox) autoGenerateCheckbox.checked = triggerConfig.autoGenerate;
 
             const addToPathCheckbox = document.getElementById('addToPath');
-            if (addToPathCheckbox) {
-                addToPathCheckbox.checked = triggerConfig.inPath;
-                updateConfigTemp('triggercmd');
-            }
+            if (addToPathCheckbox) addToPathCheckbox.checked = triggerConfig.inPath;
             break;
 
         case 'update':
@@ -320,10 +308,7 @@ function initializeUIForSection(section) {
 
             if (updateElements.checkUpdate) updateElements.checkUpdate.checked = updateConfig.autoCheck;
             if (updateElements.periodicUpdateCheck) updateElements.periodicUpdateCheck.checked = updateConfig.periodic?.enable || false;
-            if (updateElements.updateFrequency) {
-                updateElements.updateFrequency.value = updateConfig.periodic?.interval || 24;
-                updateElements.updateFrequency.disabled = !updateConfig.periodic?.enable;
-            }
+            if (updateElements.updateFrequency) updateElements.updateFrequency.value = updateConfig.periodic?.interval || 24;
 
             if (updateElements.updateInfoPreview) {
                 updateElements.updateInfoPreview.innerHTML = 'Checking for updates. Please wait...\n\n';
@@ -366,36 +351,6 @@ export async function loadConfigSection(section) {
     activeConfigPanel = section;
     updateSelectedConfigItem(section);
     xlp.updateGreenButtonState();
-
-    const configDisplay = document.getElementById('configDisplay');
-    if (!configDisplay) return;
-
-    configDisplay.innerHTML = await loadSectionHtml('s', section);
-    
-    // Initialize section state
-    window[getStateName('t', section)] = null;
-    
-    switch (section) {
-        case 'update': {
-            const baseState = window[getStateName('b', section)];
-            const updateFrequency = document.getElementById('updateFrequency');
-            const periodicCheck = document.getElementById('periodicUpdateCheck');
-            
-            if (updateFrequency && periodicCheck) {
-                updateFrequency.disabled = !baseState.periodic.enable;
-                periodicCheck.checked = baseState.periodic.enable;
-                updateFrequency.value = baseState.periodic.interval;
-            }
-            
-            const checkUpdate = document.getElementById('checkUpdate');
-            if (checkUpdate) {
-                checkUpdate.checked = baseState.autoCheck;
-            }
-            
-            await checkForUpdates();
-            break;
-        }
-    }
 }
 
 // Scroll View Position
@@ -912,8 +867,6 @@ export async function saveConfiguration(skipDialog = false) {
             }
             
             xlp.setData('xlaunchConfig', tempState.xlaunchConfig);
-            promises.push(e.Api.invoke('update-xlaunch-config', tempState.xlaunchConfig));
-            
             window.xldbv.configOpts.theme.favourite = tempState.theme.favourite;
             window.xldbv.configOpts.theme.rowSelector = tempState.theme.rowSelector;
             window.xldbv.configOpts.theme.rowWidth = tempState.theme.rowWidth;
@@ -926,7 +879,11 @@ export async function saveConfiguration(skipDialog = false) {
             
             if (oldInPath !== newInPath) {
                 try {
-                    await e.Api.invoke('run-xlu', newInPath ? 'add' : 'remove');
+                    if (newInPath) {
+                        await e.Api.invoke('run-xlu', 'add');
+                    } else {
+                        await e.Api.invoke('run-xlu', 'remove');
+                    }
                 } catch (error) { }
             }
             
@@ -1035,12 +992,7 @@ function updateConfigTemp(section, subsection) {
                 autoGenerate: document.getElementById('autoGenerateTriggerCMD')?.checked || false,
                 inPath: document.getElementById('addToPath')?.checked || false
             };
-            
-            stateChanged = newTriggerState.overwriteFile !== tempState.overwriteFile ||
-                          newTriggerState.addCommands !== tempState.addCommands ||
-                          newTriggerState.autoGenerate !== tempState.autoGenerate ||
-                          newTriggerState.inPath !== tempState.inPath;
-                          
+            stateChanged = JSON.stringify(newTriggerState) !== JSON.stringify(tempState);
             Object.assign(tempState, newTriggerState);
             break;
         }
@@ -1053,13 +1005,6 @@ function updateConfigTemp(section, subsection) {
                     interval: parseInt(document.getElementById('updateFrequency')?.value || '24')
                 }
             };
-            
-            // Enable/disable update frequency dropdown based on periodic check state
-            const updateFrequency = document.getElementById('updateFrequency');
-            if (updateFrequency) {
-                updateFrequency.disabled = !newUpdateState.periodic.enable;
-            }
-            
             stateChanged = JSON.stringify(newUpdateState) !== JSON.stringify(tempState);
             Object.assign(tempState, newUpdateState);
             break;

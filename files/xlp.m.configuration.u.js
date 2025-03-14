@@ -526,12 +526,40 @@ export async function checkForUpdatesConfig() {
 // Creates and displays update progress overlay interface
 export function showUpdateOverlay() {
     const modalOverlay = document.getElementById('modalOverlay');
-    const previewGroup = document.querySelector('#updateConfig .preview-group');
+    
     if (modalOverlay) {
         modalOverlay.style.display = 'block';
+        
+        // Create cutout for the preview area
+        createOverlayCutout();
     }
-    if (previewGroup) {
-        previewGroup.style.zIndex = '9999';  // Set above modal overlay
+}
+
+// Create Modal Cutout
+// Creates transparent view area in overlay for update preview display
+export function createOverlayCutout() {
+    const updatePreview = document.getElementById('updateInfoPreview');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const titlebar = document.querySelector('.titlebar');
+    
+    if (updatePreview && modalOverlay) {
+        const bounds = updatePreview.getBoundingClientRect();
+        
+        const titlebarHeight = titlebar ? titlebar.offsetHeight : 30;
+        
+        const adjustedTop = bounds.top - titlebarHeight;
+        
+        const clipPath = `polygon(
+            0% 0%, 100% 0%, 100% 100%, 0% 100%,
+            0% ${adjustedTop}px, ${bounds.left}px ${adjustedTop}px, 
+            ${bounds.left}px ${adjustedTop + bounds.height}px, 
+            ${bounds.left + bounds.width}px ${adjustedTop + bounds.height}px,
+            ${bounds.left + bounds.width}px ${adjustedTop}px,
+            ${bounds.left}px ${adjustedTop}px,
+            0% ${adjustedTop}px
+        )`;
+        
+        modalOverlay.style.clipPath = clipPath;
     }
 }
 
@@ -539,11 +567,11 @@ export function showUpdateOverlay() {
 // Removes update progress overlay from user interface
 export function hideUpdateOverlay() {
     const modalOverlay = document.getElementById('modalOverlay');
-    const previewGroup = document.querySelector('#updateConfig .preview-group');
     if (modalOverlay) {
         modalOverlay.style.display = 'none';
-    }
-    if (previewGroup) {
-        previewGroup.style.zIndex = '';  // Reset to default
+        
+        modalOverlay.style.clipPath = 'none';
+        
+        window.removeEventListener('resize', createOverlayCutout);
     }
 } 

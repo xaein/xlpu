@@ -487,6 +487,7 @@ select {
     padding: 10px;
     overflow: hidden;
     position: relative;
+    z-index: 10000;
 
     .preview-group {
         flex: 1;
@@ -494,33 +495,13 @@ select {
         margin-top: 2px;
         margin-bottom: 5px;
         position: relative;
-        z-index: 9999;
+        z-index: 10001;
 
         .update-preview {
-            height: calc(100% - 5px);
-            width: 100%;
-            background-color: color.scale($background-color, $lightness: -5%);
-            color: $text-color;
-            border: 1px solid $border-color;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.9em;
-            box-sizing: border-box;
-            padding: 12px;
+            height: 100%;
             overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
             position: relative;
-            
-            .update-link {
-                cursor: pointer;
-                color: $progress-bar;
-                text-decoration: underline;
-                
-                &:hover {
-                    color: color.scale($progress-bar, $lightness: 20%);
-                }
-            }
+            z-index: 10001;
         }
     }
 
@@ -530,11 +511,7 @@ select {
         align-items: center;
         padding-bottom: 10px;
         position: relative;
-
-        select:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        z-index: 10001;
     }
 }
 
@@ -544,22 +521,4 @@ select {
     padding: 10px;
     overflow-y: auto;
     position: relative;
-}
-
-// Preview Window Dialog
-.preview-window-dialog {
-    background: none;
-    box-shadow: none;
-    border: none;
-    
-    .dialog-content {
-        background: none;
-        padding: 0;
-        border: none;
-    }
-
-    #dialogPreview {
-        background: none;
-        border: none;
-    }
 }

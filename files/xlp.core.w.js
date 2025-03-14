@@ -11,6 +11,7 @@ export function setupResizeListeners() {
 // Resize Handler
 // Processes window resize events and updates all interface elements
 export async function handleResize() {
+    
     if (document.getElementById('modalOverlay')?.style.display === 'block') {
         handleResizeModal();
     }
@@ -28,6 +29,15 @@ export async function handleResize() {
         await handleResizeThemes();
     } else if (window.state?.currentSection === 'databasecontrol') {
         await handleResizeDatabaseControl();
+    } else if (window.state?.currentSection === 'configuration') {
+        
+        const updateConfig = document.getElementById('updateConfig');
+        
+        if (updateConfig && !updateConfig.classList.contains('hidden')) {
+            if (typeof xlp.createOverlayCutout === 'function') {
+                xlp.createOverlayCutout();
+            }
+        }
     }
 }
 
