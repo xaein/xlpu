@@ -333,10 +333,14 @@ body {
 
 #dynamicContent {
     position: relative;
+    top: 0;
+    left: 0;
     z-index: 1;
     flex: 1;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
     opacity: 0;
     transition: opacity 750ms;
 

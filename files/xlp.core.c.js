@@ -60,7 +60,7 @@ export const sections = {
         styles: ['configuration'],
         templates: {
             main: 'configuration',
-            dialogs: ['configsave', 'configchange', 'configupdatepreview']
+            dialogs: ['configsave', 'configchange']
         },
         scripts: ['m.configuration.u', 'm.configuration'],
         footerButtons: {

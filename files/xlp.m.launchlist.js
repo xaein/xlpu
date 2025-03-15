@@ -309,6 +309,8 @@ export async function toggleStar(appName, starElement) {
     }
     xlp.setData('xldbf', xldbf);
     
+    window.xldbf = xldbf;
+    
     const allRows = Array.from(document.querySelectorAll('.table-row'));
     const newPosition = calculateNewPosition(appName, isStarring, allRows);
     

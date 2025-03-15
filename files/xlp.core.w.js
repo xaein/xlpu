@@ -15,9 +15,7 @@ export async function handleResize() {
     if (document.getElementById('modalOverlay')?.style.display === 'block') {
         handleResizeModal();
     }
-
-    await adjustContentHeight();
-    
+  
     const activeDialog = document.querySelector('.dialog[style*="display: flex"]');
     if (activeDialog) {
         const windowHeight = window.innerHeight;
@@ -181,29 +179,6 @@ export function handleResizeModal() {
     });
 }
 
-// Content Height
-// Calculates and adjusts main content area dimensions dynamically
-export async function adjustContentHeight() {
-    const header = document.getElementById('headerContainer');
-    const footer = document.querySelector('.footer');
-    const content = document.getElementById('dynamicContent');
-    
-    if (!content) return;
-
-    const headerHeight = header?.offsetHeight || 0;
-    const footerHeight = footer?.offsetHeight || 0;
-    
-    const dpiScale = await e.Api.invoke('get-window-dpi');
-    
-    if (!header?.classList.contains('hidden')) {
-        content.style.height = `calc(100vh - ${(headerHeight + footerHeight) * dpiScale}px)`;
-        content.style.top = `${headerHeight * dpiScale}px`;
-    } else {
-        content.style.height = '100vh';
-        content.style.top = '0';
-    }
-}
-
 // Scroll Position
 // Retrieves and calculates current scroll position metrics and values
 export function getTableScrollPosition() {
@@ -263,6 +238,4 @@ export function adjustPreviewTableRows(height) {
 
     const rowHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--preview-table-row-height')) || 28;
     const numRows = Math.max(Math.floor(availableHeight / rowHeight) - 2, 0);
-
-    xlp.createPreviewTableRows(numRows);
 }

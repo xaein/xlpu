@@ -12,7 +12,7 @@ function measureRowContent() {
         return appName.length > longest.length ? appName : longest;
     }, '');
     
-    measureDiv.innerHTML = `${star}&nbsp;&nbsp;${longestName}`;
+    measureDiv.innerHTML = `${star}${longestName}`;
     const totalContentWidth = Math.round(measureDiv.getBoundingClientRect().width);
     
     const starColumnPercentage = Math.round((totalContentWidth / 10 - 3));
@@ -62,7 +62,8 @@ export async function createLaunchlistTable(searchResults = null) {
     const sortedRows = [...favoriteRows, ...remainingRows];
     
     const favouriteChar = window.xldbv.configOpts?.theme?.favourite || '★';
-    
+    const defaultPadding = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--table-cell-padding')) || 10;
+
     for (let i = 0; i < sortedRows.length; i++) {
         const row = document.createElement('tr');
         row.className = 'table-row';
@@ -78,7 +79,7 @@ export async function createLaunchlistTable(searchResults = null) {
         starCell.style.lineHeight = `${dimensions.rowHeight}px`;
         const starIcon = document.createElement('span');
         starIcon.className = `star-icon ${isStarred ? 'starred' : ''}`;
-        starIcon.innerHTML = `${favouriteChar}&nbsp;&nbsp;`;
+        starIcon.innerHTML = `${favouriteChar}`;
         starIcon.onclick = (event) => {
             event.stopPropagation();
             xlp.toggleStar(appName, event.currentTarget);
@@ -89,7 +90,7 @@ export async function createLaunchlistTable(searchResults = null) {
         appCell.className = 'app-column app-name-cell';
         appCell.style.height = `${dimensions.rowHeight}px`;
         appCell.style.lineHeight = `${dimensions.rowHeight}px`;
-        appCell.style.paddingLeft = '25px';
+        appCell.style.paddingLeft = `${defaultPadding}px`;
         appCell.textContent = appName;
 
         row.appendChild(starCell);
