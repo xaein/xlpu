@@ -64,9 +64,6 @@ export async function initialize() {
         if (xlp.setupResizeListeners) {
             xlp.setupResizeListeners();
         }
-        if (xlp.initializeSysTray) {
-            await xlp.initializeSysTray();
-        }
         showSection('initialization');
         try {
             const loaderHtml = await loadSectionHtml('s', 'loader');
@@ -75,6 +72,12 @@ export async function initialize() {
             handleError('Failed to load loader HTML:', error);
         }
         const isFirstRun = await xlp.initializeFiles();
+        
+        // Initialize system tray after files are loaded
+        if (xlp.initializeSysTray) {
+            await xlp.initializeSysTray();
+        }
+        
         let flow;
         if (isFirstRun === 1) {
             flow = sectionFlow.firstRun;

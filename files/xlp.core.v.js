@@ -25,7 +25,7 @@ const defaultCoreScripts = [
 
 const allowedTopLevelKeys = new Set([
     'version', 'config', 'logfile', 'mainXLFC', 'uurl',
-    'favourite_symbols', 'firstRun', 'directories',
+    'favourite_symbols', 'updtico', 'firstRun', 'directories',
     'configOpts', 'coreScripts', 'xldbFiles'
 ]);
 
@@ -128,6 +128,11 @@ function convertXldbf(data) {
 function convertXldbv(data) {
     try {
         const variables = JSON.parse(data);
+
+        // Set default for updtico if it doesn't exist
+        if (!variables.updtico) {
+            variables.updtico = "⥥";
+        }
 
         if (!variables.configOpts) {
             variables.configOpts = {};

@@ -10,6 +10,9 @@ export async function initializeSysTray() {
     try {
         await e.Api.invoke('create-tray');
         
+        // Populate tray menu with recent apps on startup
+        await xlp.updateTrayMenu();
+        
         const { updates } = window.xldbv.configOpts;
         if (updates?.periodic?.enable) {
             xlp.startPeriodicUpdateCheck();
@@ -40,7 +43,13 @@ export function startPeriodicUpdateCheck() {
                 xlp.showAlert('Update Available', `Version ${latestVersion.version} is available`);
                 const windowTitle = document.querySelector('.window-title');
                 if (windowTitle) {
-                    windowTitle.textContent = `xLauncher Plus v${currentVersion} (Update Available)`;
+                    windowTitle.textContent = `xLauncher Plus v${currentVersion}`;
+                }
+
+                const updateButton = document.getElementById('titlebarUpdateIndicator');
+                if (updateButton) {
+                    updateButton.textContent = window.xldbv.updtico || "⥥";
+                    updateButton.classList.add('visible');
                 }
             }
         } catch (error) { }

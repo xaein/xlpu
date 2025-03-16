@@ -90,7 +90,7 @@ body {
         padding-bottom: 7px;
     }
     
-    &:hover:not(.help-button) {
+    &:hover:not(.help-button):not(.update-button) {
         background-color: $title-bar-button-hover-color;
     }
     
@@ -110,6 +110,40 @@ body {
         &:hover {
             font-weight: bold;
             color: $greenbutton-background-color;
+        }
+    }
+    
+    &.update-button {
+        width: 20px; 
+        font-size: 1.2em;
+        margin-right: 5px;
+        color: $greenbutton-background-color;
+        opacity: 0;
+        transition: opacity $transition-duration ease;
+        
+        &.visible {
+            opacity: 1;
+        }
+        
+        &[data-tooltip] {
+            position: relative;
+            
+            &:hover::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                bottom: -25px;
+                padding: 5px 10px;
+                background: $background-color;
+                color: $text-color;
+                font-size: 0.7em;
+                white-space: nowrap;
+                border-radius: 4px;
+                border: 1px solid $border-color;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                z-index: 10001;
+            }
         }
     }
 }

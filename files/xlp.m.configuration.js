@@ -67,6 +67,7 @@ export async function initializeConfiguration() {
         const updateIndicator = document.getElementById('updateIndicator');
         xlp.getUpdateInfo().then(({ hasUpdate }) => {
             if (updateIndicator && hasUpdate) {
+                updateIndicator.textContent = window.xldbv.updtico || "⥥";
                 updateIndicator.classList.add('visible');
             }
         });

@@ -212,10 +212,21 @@ export async function checkForUpdatesInit() {
             
             if (xlp.isNewerVersion(currentVersion, latestVersion.version)) {
                 updateAvailable = true;
-                windowTitle.textContent += ' (Update Available)';
+                
+                const updateButton = document.getElementById('titlebarUpdateIndicator');
+                if (updateButton) {
+                    updateButton.textContent = window.xldbv.updtico || "⥥";
+                    updateButton.classList.add('visible');
+                }
+                
                 xlp.setData('updateAvailable', true);
                 return `Update available: ${latestVersion.version}`;
             }
+        }
+        
+        const updateButton = document.getElementById('titlebarUpdateIndicator');
+        if (updateButton) {
+            updateButton.classList.remove('visible');
         }
         
         updateAvailable = false;
