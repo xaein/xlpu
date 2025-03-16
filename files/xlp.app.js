@@ -358,7 +358,48 @@ export async function loadSection(sectionId) {
             state.currentSection !== 'initialization' && 
             state.currentSection !== 'welcome') {
             
-            sectionOverlay.innerHTML = dynamicContent.innerHTML;
+            // Store scroll positions of all scrollable elements
+            const scrollableElements = dynamicContent.querySelectorAll('.table-scroll-container, [id$="Container"], .tab-content');
+            const scrollPositions = Array.from(scrollableElements).map(el => ({
+                selector: getUniqueSelector(el),
+                scrollTop: el.scrollTop,
+                scrollLeft: el.scrollLeft
+            }));
+            
+            // Store active tab information
+            const activeTabs = dynamicContent.querySelectorAll('.tab-button.active, .tab.active, .button.active');
+            const activeTabInfo = Array.from(activeTabs).map(tab => getUniqueSelector(tab));
+            
+            // Clear previous overlay content
+            while (sectionOverlay.firstChild) {
+                sectionOverlay.removeChild(sectionOverlay.firstChild);
+            }
+            
+            // Deep clone the content
+            const clone = dynamicContent.cloneNode(true);
+            while (clone.firstChild) {
+                sectionOverlay.appendChild(clone.firstChild);
+            }
+            
+            // Also copy main scroll position
+            sectionOverlay.scrollTop = dynamicContent.scrollTop;
+            sectionOverlay.scrollLeft = dynamicContent.scrollLeft;
+            
+            // Restore all scroll positions after clone
+            setTimeout(() => {
+                scrollPositions.forEach(pos => {
+                    try {
+                        const el = sectionOverlay.querySelector(pos.selector);
+                        if (el) {
+                            el.scrollTop = pos.scrollTop;
+                            el.scrollLeft = pos.scrollLeft;
+                        }
+                    } catch (e) {
+                        // Ignore selector errors
+                    }
+                });
+            }, 0);
+            
             sectionOverlay.classList.remove('hidden');
             
             await new Promise(resolve => requestAnimationFrame(resolve));
@@ -804,4 +845,31 @@ export function verifyAndSetSection() {
         updateUI(xlp.sections[sectionId]);
         xlp.updateGreenButtonState();
     }
+}
+
+// Helper function to get a reasonably unique CSS selector for an element
+function getUniqueSelector(el) {
+    if (!el) return null;
+    if (el.id) return `#${el.id}`;
+    
+    let selector = el.tagName.toLowerCase();
+    if (el.className) {
+        const classes = el.className.split(' ').filter(c => c.trim().length > 0);
+        if (classes.length > 0) {
+            selector += '.' + classes.join('.');
+        }
+    }
+    
+    // Add parent context if needed to make more specific
+    if (el.parentElement && el.parentElement !== document.body) {
+        const parent = el.parentElement;
+        if (parent.id) {
+            return `#${parent.id} > ${selector}`;
+        } else if (parent.tagName) {
+            const parentTag = parent.tagName.toLowerCase();
+            return `${parentTag} > ${selector}`;
+        }
+    }
+    
+    return selector;
 }

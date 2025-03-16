@@ -2,8 +2,8 @@
 // Manages application version control and update processes
 
 // Initialize update delays
-const patchDelay = 400;  
-const fileDelay = 250;   
+const patchDelay = 250;  
+const fileDelay = 200;   
 window.updateState = {
     progressHandler: null,
     lastFile: '',

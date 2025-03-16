@@ -619,7 +619,7 @@ export async function showUnsavedChangesDialog(pendingSection) {
 // Manages unsaved configuration changes between sections
 export async function showConfigChangeDialog(section) {
     return new Promise((resolve) => {
-        const dialog = document.getElementById('configChangeDialog');
+        const dialog = document.getElementById('configchangeDialog');
         const sectionSpan = dialog.querySelector('#configChangeSection');
         const saveButton = dialog.querySelector('.ok-button');
         const discardButton = dialog.querySelector('.close-button');
@@ -651,7 +651,7 @@ export async function showConfigChangeDialog(section) {
 // Configuration Save Confirmation
 // Shows confirmation after saving configuration changes
 export function showConfigSaveDialog(section) {
-    const dialog = document.getElementById('configSaveDialog');
+    const dialog = document.getElementById('configsaveDialog');
     const sectionSpan = dialog.querySelector('#configSaveSection');
     const okButton = dialog.querySelector('.ok-button');
 

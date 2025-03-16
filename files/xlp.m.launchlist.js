@@ -33,11 +33,11 @@ export async function initializeLaunchlist() {
         }
         
         await xlp.createLaunchlistTable();
-        xlp.verifyAndSetSection();
      
         setupTableEvents();
         setupSearch();
-        
+
+        xlp.verifyAndSetSection();      
     } catch (error) {
     }
 }
@@ -233,7 +233,10 @@ export function handleRowDoubleClick(event) {
 // Updates and maintains selected row state across interface
 export function selectRow(row, appName, skipLaunch = false, shouldLaunch = false) {
     const previousSelected = document.querySelector('.table-row.selected');
-    if (previousSelected) {
+    
+    // Check if we're clicking the same row that's already selected (deselect case)
+    if (previousSelected && previousSelected === row) {
+        // Deselect the row
         previousSelected.classList.remove('selected');
         const prevHighlight = previousSelected.querySelector('.row-highlight');
         if (prevHighlight) {
@@ -243,46 +246,45 @@ export function selectRow(row, appName, skipLaunch = false, shouldLaunch = false
                 prevSvg.innerHTML = prevSvg.innerHTML.replace(/var\(--main-table-selected-color\)/g, 'var(--main-table-hover-color)');
             }
         }
-    }
-    
-    row.classList.add('selected');
-    const highlight = row.querySelector('.row-highlight');
-    if (highlight) {
-        highlight.style.opacity = '1';
-        const svg = highlight.querySelector('svg');
-        if (svg) {
-            svg.innerHTML = svg.innerHTML
-                .replace(/var\(--main-table-hover-color\)/g, 'var(--main-table-selected-color)')
-                .replace(/opacity="[^"]*"/g, 'opacity="0.5"');
+        window.selectedApp = null;
+    } else {
+        // Deselect previous row if there was one
+        if (previousSelected) {
+            previousSelected.classList.remove('selected');
+            const prevHighlight = previousSelected.querySelector('.row-highlight');
+            if (prevHighlight) {
+                prevHighlight.style.opacity = '0';
+                const prevSvg = prevHighlight.querySelector('svg');
+                if (prevSvg) {
+                    prevSvg.innerHTML = prevSvg.innerHTML.replace(/var\(--main-table-selected-color\)/g, 'var(--main-table-hover-color)');
+                }
+            }
+        }
+        
+        // Select the new row
+        row.classList.add('selected');
+        const highlight = row.querySelector('.row-highlight');
+        if (highlight) {
+            highlight.style.opacity = '1';
+            const svg = highlight.querySelector('svg');
+            if (svg) {
+                svg.innerHTML = svg.innerHTML
+                    .replace(/var\(--main-table-hover-color\)/g, 'var(--main-table-selected-color)')
+                    .replace(/opacity="[^"]*"/g, 'opacity="0.5"');
+            }
+        }
+        
+        window.selectedApp = appName;
+        
+        if (shouldLaunch && !skipLaunch) {
+            if (window.selectedApp) {
+                xlp.showDialog('launch');
+                startLaunchCountdown();
+            }
         }
     }
-    
-    window.selectedApp = appName;
-    
-    if (shouldLaunch && !skipLaunch) {
-        handleLaunch();
-    }
-    
-    updateLaunchButtonState();
-}
 
-// Execute Launch Command
-// Processes and initiates complete application launch sequence
-export function handleLaunch() {
-    if (window.selectedApp) {
-        xlp.showDialog('launch');
-        startLaunchCountdown();
-    }
-}
-
-// Update Launch Controls
-// Updates and manages all launch button interface states
-export function updateLaunchButtonState() {
-    const launchButton = document.getElementById('footerLeftButton');
-    if (launchButton) {
-        launchButton.disabled = !window.selectedApp;
-        launchButton.textContent = window.selectedApp ? 'Launch' : '-----';
-    }
+    xlp.updateGreenButtonState();
 }
 
 // Process Favorite Changes
