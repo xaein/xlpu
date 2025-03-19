@@ -8,6 +8,8 @@
     --table-text-line-height: 1.4;
     --table-cell-padding: 10;
     --app-column-width: auto;
+    --star-column-min-width: 25; // %
+    --star-column-max-width: 50; // %
 }
 
 .launchlist {
@@ -123,8 +125,8 @@
 // Star column styles
 .star-column {
     width: auto;
-    min-width: 25%;
-    max-width: 50%;
+    min-width: var(--star-column-min-width, 25%);
+    max-width: var(--star-column-max-width, 50%);
     text-align: right;
     height: var(--table-row-height);
     line-height: var(--table-row-height);

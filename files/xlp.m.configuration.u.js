@@ -3,7 +3,7 @@
 
 // Initialize update delays
 const patchDelay = 250;  
-const fileDelay = 200;   
+const fileDelay = 300;   
 window.updateState = {
     progressHandler: null,
     lastFile: '',

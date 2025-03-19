@@ -4,19 +4,24 @@
 // Calculate Table Dimensions
 // Measures and computes optimal table column width settings
 function measureRowContent() {
+    const starColumnMinPercent = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--star-column-min-width') || '25');
+    const starColumnMaxPercent = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--star-column-max-width') || '50');
     const measureDiv = document.getElementById('measureDiv');
-    const star = window.xldbv.configOpts?.theme?.favourite || '★';
-    
+    const appColumnMinPercent = 100 - starColumnMaxPercent;
+    const appColumnMaxPercent = 100 - starColumnMinPercent;
+
     const longestName = window.rowInfo.reduce((longest, current) => {
         const appName = current.split(',')[0];
         return appName.length > longest.length ? appName : longest;
     }, '');
     
-    measureDiv.innerHTML = `${star}${longestName}`;
-    const totalContentWidth = Math.round(measureDiv.getBoundingClientRect().width);
+    measureDiv.innerHTML = longestName;
+    const nameWidth = measureDiv.getBoundingClientRect().width;   
+    const tableWidth = document.getElementById('appTable').getBoundingClientRect().width;
     
-    const starColumnPercentage = Math.round((totalContentWidth / 10 - 3));
-    const appColumnPercentage = 100 - starColumnPercentage;
+    const basePercentage = Math.round((nameWidth / tableWidth) * 100);
+    let appColumnPercentage = basePercentage > 35 ? basePercentage + 25 : Math.max(basePercentage, 65);
+    appColumnPercentage = Math.min(appColumnMaxPercent, Math.max(appColumnMinPercent, appColumnPercentage));
     
     document.documentElement.style.setProperty('--app-column-width', `${appColumnPercentage}%`);
 }

@@ -4,12 +4,18 @@
   "comment": "- Fixed some crossfade issues\n- Fixed some row deselection issues on the Launch List page\n- There are a few other minor miscellaneous changes and fixes as well",
   "files": {
     "files": {
-      "files": [],
+      "files": [
+        "xlp.app.html"
+      ],
       "js": {
         "files": [
           "xlp.core.d.js",
           "xlp.m.configuration.js",
-          "xlp.m.configuration.u.js"
+          "xlp.m.configuration.u.js",
+          "xlp.app.js",
+          "xlp.core.s.js",
+          "xlp.core.v.js",
+          "xlp.m.init.js"
         ]
       },
       "themes": {
@@ -20,7 +26,8 @@
             "s.databasecontrol.scss",
             "s.launchlist.scss",
             "s.logging.scss",
-            "s.themes.scss"
+            "s.themes.scss",
+            "b.xlp.app.scss"
           ]
         }
       }
