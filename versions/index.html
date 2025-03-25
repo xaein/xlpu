@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xLauncher Plus - Version History</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .version-list .current a {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .version-header .current-tag {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>xLauncher Plus - Version History</h1>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Versions</h2>
+            <ul id="versionList" class="version-list">
+                <li class="loading">Loading versions...</li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div id="versions">
+                <div class="loading">Loading version history...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadVersions() {
+            try {
+                // Extract repo info from current URL
+                const pathParts = location.pathname.split('/');
+                const repo = pathParts[1]; // 'xlpu'
+                
+                // First get the current version.json from parent directory
+                const currentVersionResponse = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/version.json`);
+                const currentVersionFile = await currentVersionResponse.json();
+                
+                // Then get previous versions
+                const response = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/versions`);
+                const files = await response.json();
+                
+                const versionFiles = files
+                    .filter(file => file.name.startsWith('version') && file.name.endsWith('.json'))
+                    .sort((a, b) => {
+                        const vA = a.name.match(/\d+\.\d+\.\d+/)[0].split('.').map(Number);
+                        const vB = b.name.match(/\d+\.\d+\.\d+/)[0].split('.').map(Number);
+                        return (vB[0] - vA[0]) || (vB[1] - vA[1]) || (vB[2] - vA[2]);
+                    });
+
+                const versionsContainer = document.getElementById('versions');
+                const versionList = document.getElementById('versionList');
+                versionsContainer.innerHTML = '';
+                versionList.innerHTML = '';
+
+                let latestVersion = null;
+
+                // First process current version
+                const currentVersionData = JSON.parse(atob(currentVersionFile.content));
+                const currentVersionId = `v${currentVersionData.version.replace(/\./g, '-')}`;
+                
+                // Add current version to sidebar
+                const currentListItem = document.createElement('li');
+                currentListItem.className = 'current';
+                currentListItem.innerHTML = `<a href="#${currentVersionId}">Version ${currentVersionData.version} (Current)</a>`;
+                versionList.appendChild(currentListItem);
+                
+                // Create version element for current version
+                const currentVersionElement = document.createElement('div');
+                currentVersionElement.className = 'version-container';
+                currentVersionElement.id = currentVersionId;
+                currentVersionElement.style.display = 'none';
+                
+                const currentFilesCount = countFiles(currentVersionData.files);
+                const currentRemovedCount = currentVersionData.rem ? currentVersionData.rem.length : 0;
+                
+                currentVersionElement.innerHTML = `
+                    <div class="version-header">
+                        <span class="version-number">Version ${currentVersionData.version}<span class="current-tag">Current</span></span>
+                    </div>
+                    <div class="version-comment">${currentVersionData.comment || 'No comment provided'}</div>
+                    <div class="version-details">
+                        <div class="detail-section statistics">
+                            <h3>Statistics</h3>
+                            <div class="statistics-grid">
+                                <p>Files Updated: ${currentFilesCount}</p>
+                                <p>Files Removed: ${currentRemovedCount}</p>
+                            </div>
+                        </div>
+                        <div class="files-container">
+                            <div class="file-section">
+                                <h3>Updated Files</h3>
+                                <ul class="file-list">
+                                    ${generateFileList(currentVersionData.files)}
+                                </ul>
+                            </div>
+                            <div class="file-section">
+                                <h3>Removed Files</h3>
+                                <ul class="file-list">
+                                    ${currentVersionData.rem && currentVersionData.rem.length > 0 
+                                        ? currentVersionData.rem.map(file => `<li>${file}</li>`).join('')
+                                        : '<li>No files removed</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                versionsContainer.appendChild(currentVersionElement);
+                latestVersion = currentVersionElement;
+
+                // Then process previous versions
+                for (const file of versionFiles) {
+                    const versionResponse = await fetch(file.download_url);
+                    const versionData = await versionResponse.json();
+                    const versionId = `v${versionData.version.replace(/\./g, '-')}`;
+                    
+                    // Add to sidebar
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#${versionId}">Version ${versionData.version}</a>`;
+                    versionList.appendChild(listItem);
+                    
+                    // Create version element
+                    const versionElement = document.createElement('div');
+                    versionElement.className = 'version-container';
+                    versionElement.id = versionId;
+                    versionElement.style.display = 'none';
+                    
+                    const filesCount = countFiles(versionData.files);
+                    const removedCount = versionData.rem ? versionData.rem.length : 0;
+                    
+                    versionElement.innerHTML = `
+                        <div class="version-header">
+                            <span class="version-number">Version ${versionData.version}</span>
+                        </div>
+                        <div class="version-comment">${versionData.comment || 'No comment provided'}</div>
+                        <div class="version-details">
+                            <div class="detail-section statistics">
+                                <h3>Statistics</h3>
+                                <div class="statistics-grid">
+                                    <p>Files Updated: ${filesCount}</p>
+                                    <p>Files Removed: ${removedCount}</p>
+                                </div>
+                            </div>
+                            <div class="files-container">
+                                <div class="file-section">
+                                    <h3>Updated Files</h3>
+                                    <ul class="file-list">
+                                        ${generateFileList(versionData.files)}
+                                    </ul>
+                                </div>
+                                <div class="file-section">
+                                    <h3>Removed Files</h3>
+                                    <ul class="file-list">
+                                        ${versionData.rem && versionData.rem.length > 0 
+                                            ? versionData.rem.map(file => `<li>${file}</li>`).join('')
+                                            : '<li>No files removed</li>'}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    versionsContainer.appendChild(versionElement);
+                }
+
+                // Show latest version by default if no hash
+                if (!location.hash && latestVersion) {
+                    latestVersion.style.display = 'block';
+                }
+
+                // Handle showing/hiding versions on hash change
+                function showVersion() {
+                    // Hide all versions
+                    document.querySelectorAll('.version-container').forEach(el => {
+                        el.style.display = 'none';
+                    });
+
+                    // Show selected version or latest
+                    if (location.hash) {
+                        const selected = document.querySelector(location.hash);
+                        if (selected) {
+                            selected.style.display = 'block';
+                        }
+                    } else if (latestVersion) {
+                        latestVersion.style.display = 'block';
+                    }
+
+                    highlightCurrentVersion();
+                }
+
+                // Initial show
+                showVersion();
+
+                // Listen for hash changes
+                window.addEventListener('hashchange', showVersion);
+
+            } catch (error) {
+                document.getElementById('versions').innerHTML = `
+                    <div style="text-align: center; color: #dc3545; padding: 20px;">
+                        Error loading version history: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function highlightCurrentVersion() {
+            // Remove all active classes
+            document.querySelectorAll('.version-list a').forEach(a => a.classList.remove('active'));
+            
+            // Add active class to current version
+            if (location.hash) {
+                const currentLink = document.querySelector(`.version-list a[href="${location.hash}"]`);
+                if (currentLink) {
+                    currentLink.classList.add('active');
+                }
+            }
+        }
+
+        function countFiles(filesObj) {
+            let count = 0;
+            function traverse(obj) {
+                if (Array.isArray(obj.files)) {
+                    count += obj.files.length;
+                }
+                for (const key in obj) {
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        traverse(obj[key]);
+                    }
+                }
+            }
+            traverse(filesObj);
+            return count;
+        }
+
+        function generateFileList(filesObj) {
+            let fileList = [];
+            function traverse(obj, path = '') {
+                if (Array.isArray(obj.files)) {
+                    obj.files.forEach(file => {
+                        fileList.push(`<li>${path}${file}</li>`);
+                    });
+                }
+                for (const [key, value] of Object.entries(obj)) {
+                    if (typeof value === 'object' && value !== null) {
+                        // Always include the directory in the path
+                        traverse(value, `${path}${key}/`);
+                    }
+                }
+            }
+            traverse(filesObj);
+            return fileList.length > 0 ? fileList.join('') : '<li>No files updated</li>';
+        }
+
+        // Load versions when the page loads
+        document.addEventListener('DOMContentLoaded', loadVersions);
+    </script>
+</body>
+</html> 

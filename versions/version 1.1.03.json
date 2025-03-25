@@ -1,7 +1,7 @@
 {
-  "version": "1.1.04",
+  "version": "1.1.03",
   "patch": 0,
-  "comment": "- Fixed theme previews not functioning correctly",
+  "comment": "- Fixed some multi launch of version information when clicking the link in the updater section\n\nStill includes previous patch changes in this update as well",
   "files": {
     "files": {
       "files": [
@@ -36,11 +36,14 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 3,
-    "xlauncherpluseapi.js": 3,
-    "xlauncherplusfs.js": 3
+    "xlauncherplus.js": 2,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
-  "directoryZips": {},
+  "directoryZips": {
+    "node_modules.zip": 2,
+    "help.zip": 2
+  },
   "rem": [
     "xlp.d.configupdatepreview.html"
   ],
