@@ -3,6 +3,7 @@
 
 // Core configuration state and defaults
 let activeConfigPanel = null;
+let documentClickHandler = null;  // Add tracking for the click handler
 let configDefaults = {
     logging: {
         dateFormat: 'dd-MM-yy',
@@ -44,6 +45,10 @@ let configDefaults = {
 // Initialize Configuration Process
 // Sets up and loads all configuration interface components and states
 export async function initializeConfiguration() {
+    // Add flag to track if listener is already attached
+    if (window.updateLinkListenerAttached) {
+        return;
+    }
     
     window[getStateName('b', 'general')] = {
         xlaunchConfig: { ...configDefaults.logging, ...xlp.getData('xlaunchConfig') },
@@ -73,11 +78,21 @@ export async function initializeConfiguration() {
         });
     } catch (error) { }
 
-    document.addEventListener('click', (event) => {
+    const handleUpdateLinkClick = xlp.debounce(() => {
+        e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
+    }, 300);
+
+    // Remove existing click handler if it exists
+    if (documentClickHandler) {
+        document.removeEventListener('click', documentClickHandler);
+    }
+
+    // Store reference to new click handler
+    documentClickHandler = (event) => {
         const target = event.target;
 
         if (target.closest('.update-link')) {
-            e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
+            handleUpdateLinkClick();
             return;
         }
 
@@ -144,7 +159,9 @@ export async function initializeConfiguration() {
         if (target.matches('#updateTriggerCMDFile')) {
             runXltcScript();
         }
-    });
+    };
+
+    document.addEventListener('click', documentClickHandler);
 
     document.addEventListener('change', (event) => {
         const target = event.target;
@@ -1077,9 +1094,17 @@ export async function cleanupConfiguration() {
         window.configObserver = null;
     }
 
-    const configDetails = document.querySelector('.config-details');
-    if (configDetails) {
-        configDetails.replaceWith(configDetails.cloneNode(true));
+    // Remove document click listener
+    if (documentClickHandler) {
+        document.removeEventListener('click', documentClickHandler);
+        documentClickHandler = null;
+    }
+
+    // Remove existing click listeners
+    const oldConfigDetails = document.querySelector('.config-details');
+    if (oldConfigDetails) {
+        const newConfigDetails = oldConfigDetails.cloneNode(true);
+        oldConfigDetails.parentNode.replaceChild(newConfigDetails, oldConfigDetails);
     }
 
     const elementsToClean = [
@@ -1090,7 +1115,8 @@ export async function cleanupConfiguration() {
 
     elementsToClean.forEach(element => {
         if (element) {
-            element.replaceWith(element.cloneNode(true));
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
         }
     });
 

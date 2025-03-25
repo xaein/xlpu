@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xLauncher Plus - Version History</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .version-list .current a {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .version-header .current-tag {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -30,6 +44,12 @@
                 // Extract repo info from current URL
                 const pathParts = location.pathname.split('/');
                 const repo = pathParts[1]; // 'xlpu'
+                
+                // First get the current version.json from parent directory
+                const currentVersionResponse = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/version.json`);
+                const currentVersionFile = await currentVersionResponse.json();
+                
+                // Then get previous versions
                 const response = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/previous`);
                 const files = await response.json();
                 
@@ -48,6 +68,61 @@
 
                 let latestVersion = null;
 
+                // First process current version
+                const currentVersionData = JSON.parse(atob(currentVersionFile.content));
+                const currentVersionId = `v${currentVersionData.version.replace(/\./g, '-')}`;
+                
+                // Add current version to sidebar
+                const currentListItem = document.createElement('li');
+                currentListItem.className = 'current';
+                currentListItem.innerHTML = `<a href="#${currentVersionId}">Version ${currentVersionData.version} (Current)</a>`;
+                versionList.appendChild(currentListItem);
+                
+                // Create version element for current version
+                const currentVersionElement = document.createElement('div');
+                currentVersionElement.className = 'version-container';
+                currentVersionElement.id = currentVersionId;
+                currentVersionElement.style.display = 'none';
+                
+                const currentFilesCount = countFiles(currentVersionData.files);
+                const currentRemovedCount = currentVersionData.rem ? currentVersionData.rem.length : 0;
+                
+                currentVersionElement.innerHTML = `
+                    <div class="version-header">
+                        <span class="version-number">Version ${currentVersionData.version}<span class="current-tag">Current</span></span>
+                    </div>
+                    <div class="version-comment">${currentVersionData.comment || 'No comment provided'}</div>
+                    <div class="version-details">
+                        <div class="detail-section statistics">
+                            <h3>Statistics</h3>
+                            <div class="statistics-grid">
+                                <p>Files Updated: ${currentFilesCount}</p>
+                                <p>Files Removed: ${currentRemovedCount}</p>
+                            </div>
+                        </div>
+                        <div class="files-container">
+                            <div class="file-section">
+                                <h3>Updated Files</h3>
+                                <ul class="file-list">
+                                    ${generateFileList(currentVersionData.files)}
+                                </ul>
+                            </div>
+                            <div class="file-section">
+                                <h3>Removed Files</h3>
+                                <ul class="file-list">
+                                    ${currentVersionData.rem && currentVersionData.rem.length > 0 
+                                        ? currentVersionData.rem.map(file => `<li>${file}</li>`).join('')
+                                        : '<li>No files removed</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                versionsContainer.appendChild(currentVersionElement);
+                latestVersion = currentVersionElement;
+
+                // Then process previous versions
                 for (const file of versionFiles) {
                     const versionResponse = await fetch(file.download_url);
                     const versionData = await versionResponse.json();
@@ -62,7 +137,7 @@
                     const versionElement = document.createElement('div');
                     versionElement.className = 'version-container';
                     versionElement.id = versionId;
-                    versionElement.style.display = 'none'; // Hide by default
+                    versionElement.style.display = 'none';
                     
                     const filesCount = countFiles(versionData.files);
                     const removedCount = versionData.rem ? versionData.rem.length : 0;
@@ -100,11 +175,6 @@
                     `;
                     
                     versionsContainer.appendChild(versionElement);
-
-                    // Store latest version
-                    if (!latestVersion) {
-                        latestVersion = versionElement;
-                    }
                 }
 
                 // Show latest version by default if no hash
