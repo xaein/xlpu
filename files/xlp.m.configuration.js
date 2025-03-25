@@ -79,7 +79,7 @@ export async function initializeConfiguration() {
     } catch (error) { }
 
     const handleUpdateLinkClick = xlp.debounce(() => {
-        e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/previous/');
+        e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/versions/');
     }, 300);
 
     // Remove existing click handler if it exists

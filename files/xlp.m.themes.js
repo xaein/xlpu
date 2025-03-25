@@ -208,9 +208,10 @@ function selectTheme(themeName) {
 // Load Theme Content
 // Retrieves and processes complete theme data from storage
 async function loadThemeData(themeName) {
-    const themesDir = xlp.dirVar('themes');
-    const themeFile = `files/${themesDir}/${themeName}.thm`;
     try {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const themesDir = xlp.dirVar('themes');
+        const themeFile = xlp.joinPath(appDir, 'files', themesDir, `${themeName}.thm`);
         const { data: themeContent } = await e.Api.invoke('get-file', themeFile);
         if (!themeContent) throw new Error('No content found in theme file');
         
@@ -227,9 +228,7 @@ async function loadThemeData(themeName) {
 // Creates and displays complete theme preview interface elements
 async function previewTheme(themeName) {
     const preview = document.querySelector('.theme-preview');
-    if (!preview) {
-        return;
-    }
+    if (!preview) return;
 
     try {
         const variables = await loadThemeData(themeName);
