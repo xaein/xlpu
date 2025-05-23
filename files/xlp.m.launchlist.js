@@ -372,14 +372,14 @@ export function startLaunchCountdown() {
 
     appNameElement.textContent = window.selectedApp;
     let countdown = 5;
-    countdownElement.textContent = `Closing in ${countdown}s`;
+    countdownElement.textContent = `in ${countdown} seconds`;
 
     xlp.updateRecentApps(window.selectedApp);
     e.Api.invoke('launch-app', window.selectedApp).catch(() => {});
     
     const interval = setInterval(() => {
         countdown -= 1;
-        countdownElement.textContent = `Closing in ${countdown}s`;
+        countdownElement.textContent = `in ${countdown} seconds`;
         if (countdown <= 0) {
             clearInterval(interval);
             xlp.closeDialog('launch');
