@@ -345,17 +345,21 @@ body {
     }
 }
 
-.section-overlay {
+#sectionOverlay {
     position: absolute;
-    top: 0;
+    top: 76px; // titlebar (30px) + header (46px)
     left: 0;
     right: 0;
-    bottom: 0;
-    z-index: 999;
-    opacity: 1;
-    transition: opacity 750ms;
+    bottom: 44px; // footer height
+    z-index: 1000;
     background-color: $background-color;
-    
+    transition: opacity $transition-duration ease-out;
+    opacity: 1;
+    pointer-events: none;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+
     &.hidden {
         display: none;
     }
@@ -367,16 +371,15 @@ body {
 
 #dynamicContent {
     position: relative;
-    top: 0;
-    left: 0;
-    z-index: 1;
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
+    overflow: hidden;
     opacity: 0;
-    transition: opacity 750ms;
+    transition: opacity $transition-duration ease-out;
+    z-index: 1;
+
+    &.hidden {
+        display: none;
+    }
 
     &.visible {
         opacity: 1;

@@ -35,7 +35,8 @@
     font-size: 1em;
     box-sizing: border-box;
     padding: 15px;
-    overflow: auto;
+    overflow-y: hidden;
+    overflow-x: auto;
     white-space: pre-wrap;
     margin: 2px;
     width: auto;
