@@ -311,7 +311,19 @@ export async function toggleStar(appName, starElement) {
     }
     xlp.setData('xldbf', xldbf);
     
-    window.xldbf = xldbf;
+    // Save xldbf to file with proper validation
+    const cleanedXldbfData = xlp.validateXldbfJson(xldbf);
+    if (cleanedXldbfData) {
+        const baseDir = await e.Api.invoke('get-app-dir');
+        const utilsDir = xlp.dirVar('utils');
+        const xldbfPath = joinPath(baseDir, utilsDir, 'xldbf.json');
+        const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
+        if (!xldbfResult) {
+            throw new Error('Failed to update xldbf.json');
+        }
+    } else {
+        throw new Error('Invalid xldbf.json structure');
+    }
     
     const allRows = Array.from(document.querySelectorAll('.table-row'));
     const newPosition = calculateNewPosition(appName, isStarring, allRows);

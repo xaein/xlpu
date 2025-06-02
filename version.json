@@ -1,7 +1,7 @@
 {
-  "version": "1.1.05",
+  "version": "1.1.06",
   "patch": 0,
-  "comment": "Minor update\n- Updated Dialogs\n\nPrevious Version changes included",
+  "comment": "- Fixed the favourites so they are now saved immediately when toggling them.\n\nContains previous updates as well",
   "files": {
     "files": {
       "files": [
@@ -30,19 +30,7 @@
             "s.launchlist.scss",
             "s.logging.scss",
             "s.themes.scss",
-            "b.xlp.app.scss",
-            "b.xlp.dialogs.scss"
-          ]
-        },
-        "selectors": {
-          "files": [
-            "bulge.svg",
-            "indent normal.svg",
-            "indent straight.svg",
-            "pointed.svg",
-            "rectangle.svg",
-            "rounded.svg",
-            "sword.svg"
+            "b.xlp.app.scss"
           ]
         }
       },
@@ -81,12 +69,12 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 0,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
-    "help.zip": 0
+    "help.zip": 1
   },
   "rem": [
     "xlp.d.configupdatepreview.html"
