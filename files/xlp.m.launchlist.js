@@ -316,7 +316,7 @@ export async function toggleStar(appName, starElement) {
     if (cleanedXldbfData) {
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xlp.dirVar('utils');
-        const xldbfPath = joinPath(baseDir, utilsDir, 'xldbf.json');
+        const xldbfPath = xlp.joinPath(baseDir, utilsDir, 'xldbf.json');
         const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
         if (!xldbfResult) {
             throw new Error('Failed to update xldbf.json');
