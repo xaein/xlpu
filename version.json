@@ -1,7 +1,7 @@
 {
   "version": "1.1.07",
   "patch": 0,
-  "comment": "Fix some minor issues with code not having correct function calls",
+  "comment": "Fix some minor issues with code not having correct function calls.\n\nImplemented travel to update section from the update indicator in the title bar\n   Click the indicator (shows to the left of help if there is an update) will swap section to configuration, \n    then change that to the update section of configuration.",
   "files": {
     "files": {
       "files": [
@@ -30,19 +30,7 @@
             "s.launchlist.scss",
             "s.logging.scss",
             "s.themes.scss",
-            "b.xlp.app.scss",
-            "b.xlp.dialogs.scss"
-          ]
-        },
-        "selectors": {
-          "files": [
-            "bulge.svg",
-            "indent normal.svg",
-            "indent straight.svg",
-            "pointed.svg",
-            "rectangle.svg",
-            "rounded.svg",
-            "sword.svg"
+            "b.xlp.app.scss"
           ]
         }
       },
@@ -51,6 +39,7 @@
           "xlp.d.launch.html",
           "xlp.d.configchange.html",
           "xlp.d.configsave.html",
+          "xlp.d.configupdatepreview.html",
           "xlp.d.databasecontrolcatadd.html",
           "xlp.d.databasecontrolcatremove.html",
           "xlp.d.databasecontrolcatrename.html",
@@ -80,9 +69,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 2,
-    "xlauncherpluseapi.js": 2,
-    "xlauncherplusfs.js": 2
+    "xlauncherplus.js": 3,
+    "xlauncherpluseapi.js": 3,
+    "xlauncherplusfs.js": 3
   },
   "directoryZips": {
     "help.zip": 0,

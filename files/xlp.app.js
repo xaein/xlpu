@@ -1,7 +1,7 @@
 // Core Application Module
 // Manages application state, sections, and resource loading
 
-// Application state management
+// Application state management variables
 let state = {
     currentSection: null,
     sections: new Map(),
@@ -28,8 +28,8 @@ const sectionFlow = {
     normal: ['initialization', 'launchlist']
 };
 
-// Application Initialization
-// Initializes core modules and sets up application environment
+// Application initialization
+// Sets up core modules and application environment
 export async function initialize() {
     if (state.isInitialized) {
         return;
@@ -73,7 +73,6 @@ export async function initialize() {
         }
         const isFirstRun = await xlp.initializeFiles();
         
-        // Initialize system tray after files are loaded
         if (xlp.initializeSysTray) {
             await xlp.initializeSysTray();
         }
@@ -98,7 +97,7 @@ export async function initialize() {
     }
 }
 
-// Directory Path Resolution
+// Directory path resolution
 // Resolves directory paths based on configuration and section
 export function dirVar(...args) {
     let result = '';
@@ -136,7 +135,7 @@ export function dirVar(...args) {
     return result;
 }
 
-// Event System Setup
+// Event system setup
 // Configures application-wide event listeners and handlers
 export function setupEventDelegation() {
     document.querySelectorAll('.titlebar-button').forEach(button => {
@@ -175,9 +174,17 @@ export function setupEventDelegation() {
             xlp.exitApp();
         });
     }
+    const updateArrow = document.getElementById('titlebarUpdateIndicator');
+    if (updateArrow) {
+        updateArrow.addEventListener('click', () => {
+            if (state.isInitialized) {
+                goToUpdateSection();
+            }
+        });
+    }
 }
 
-// Title Bar Handler
+// Title bar handler
 // Processes window control actions from the title bar
 export async function handleTitleBarAction(action) {
     switch (action) {
@@ -200,7 +207,7 @@ export async function handleTitleBarAction(action) {
     }
 }
 
-// Green Button Handler
+// Green button handler
 // Processes actions for the footer left button based on current section
 export function handleGreenButtonClick() {
     switch (state.currentSection) {
@@ -221,7 +228,7 @@ export function handleGreenButtonClick() {
     }
 }
 
-// Script Loading
+// Script loading
 // Imports and attaches module exports to xlp namespace
 export async function loadScript(name) {
     try {
@@ -234,7 +241,7 @@ export async function loadScript(name) {
     }
 }
 
-// Script Unloading
+// Script unloading
 // Removes module exports from xlp namespace and resources
 export async function unloadScript(name) {
     try {
@@ -353,7 +360,6 @@ export async function loadSection(sectionId) {
             throw new Error(`Section ${sectionId} not found`);
         }
 
-        // Setup transition if we have existing content
         const dynamicContent = document.getElementById('dynamicContent');
         const sectionOverlay = document.getElementById('sectionOverlay');
         
@@ -361,7 +367,6 @@ export async function loadSection(sectionId) {
             state.currentSection !== 'initialization' && 
             state.currentSection !== 'welcome') {
             
-            // Store scroll positions of all scrollable elements
             const scrollableElements = dynamicContent.querySelectorAll('.table-scroll-container, [id$="Container"], .tab-content');
             const scrollPositions = Array.from(scrollableElements).map(el => ({
                 selector: getUniqueSelector(el),
@@ -369,26 +374,21 @@ export async function loadSection(sectionId) {
                 scrollLeft: el.scrollLeft
             }));
             
-            // Store active tab information
             const activeTabs = dynamicContent.querySelectorAll('.tab-button.active, .tab.active, .button.active');
             const activeTabInfo = Array.from(activeTabs).map(tab => getUniqueSelector(tab));
             
-            // Clear previous overlay content
             while (sectionOverlay.firstChild) {
                 sectionOverlay.removeChild(sectionOverlay.firstChild);
             }
             
-            // Deep clone the content
             const clone = dynamicContent.cloneNode(true);
             while (clone.firstChild) {
                 sectionOverlay.appendChild(clone.firstChild);
             }
             
-            // Also copy main scroll position
             sectionOverlay.scrollTop = dynamicContent.scrollTop;
             sectionOverlay.scrollLeft = dynamicContent.scrollLeft;
             
-            // Restore all scroll positions after clone
             setTimeout(() => {
                 scrollPositions.forEach(pos => {
                     try {
@@ -397,9 +397,7 @@ export async function loadSection(sectionId) {
                             el.scrollTop = pos.scrollTop;
                             el.scrollLeft = pos.scrollLeft;
                         }
-                    } catch (e) {
-                        // Ignore selector errors
-                    }
+                    } catch (e) { }
                 });
             }, 0);
             
@@ -476,21 +474,16 @@ export async function loadSection(sectionId) {
                 await xlp[initFunctionName]();
             }
 
-            // Start crossfade if we have an overlay and aren't coming from initialization/welcome
             if (sectionOverlay && !sectionOverlay.classList.contains('hidden') &&
                 state.currentSection !== 'initialization' && state.currentSection !== 'welcome') {
                 
-                // Show new content with 0 opacity
                 dynamicContent.classList.remove('hidden');
                 
-                // Force browser reflow to ensure transition works
                 void dynamicContent.offsetWidth;
                 
-                // Start both transitions
                 dynamicContent.classList.add('visible');
                 sectionOverlay.classList.add('fade-out');
                 
-                // Wait for transitions to complete
                 await new Promise(resolve => {
                     sectionOverlay.addEventListener('transitionend', () => {
                         sectionOverlay.classList.add('hidden');
@@ -500,7 +493,6 @@ export async function loadSection(sectionId) {
                     }, { once: true });
                 });
             } else {
-                // No transition needed, just show content
                 dynamicContent.classList.remove('hidden');
                 dynamicContent.classList.add('visible');
                 
@@ -692,7 +684,6 @@ export function updateUI(section) {
             }
         }
 
-        // Update header buttons state
         document.querySelectorAll('.header-buttons button').forEach(button => {
             const buttonSection = Object.entries(xlp.sections).find(([_, s]) => s.label === button.textContent)?.[0];
             if (buttonSection) {
@@ -793,7 +784,6 @@ export function generateHeaderButtons() {
     
     headerButtons.innerHTML = '';
     
-    // Ensure xldbv is loaded
     if (!window.xldbv) {
         window.xldbv = xlp.getData('xldbv');
     }
@@ -806,16 +796,13 @@ export function generateHeaderButtons() {
         button.addEventListener('click', () => xlp.loadSection(sectionId));
         button.classList.toggle('active', sectionId === state.currentSection);
         
-        // Disable button if it's the current section
         button.disabled = sectionId === state.currentSection;
         
-        // Specifically disable Launch List during setup
         if (sectionId === 'launchlist' && window.xldbv?.firstRun !== 0) {
             button.disabled = true;
             button.style.opacity = '0.5';
             button.style.cursor = 'not-allowed';
         }
-        
         headerButtons.appendChild(button);
     });
 }
@@ -863,7 +850,6 @@ function getUniqueSelector(el) {
         }
     }
     
-    // Add parent context if needed to make more specific
     if (el.parentElement && el.parentElement !== document.body) {
         const parent = el.parentElement;
         if (parent.id) {
@@ -875,4 +861,15 @@ function getUniqueSelector(el) {
     }
     
     return selector;
+}
+
+// Navigation Helper: Go to Update Section
+// Navigates to the Configuration section and loads the Update sub-section
+export async function goToUpdateSection() {
+    if (state.currentSection !== 'configuration') {
+        await xlp.loadSection('configuration');
+    }
+    if (typeof xlp.loadConfigSection === 'function') {
+        xlp.loadConfigSection('update');
+    }
 }

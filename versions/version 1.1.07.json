@@ -51,7 +51,6 @@
           "xlp.d.launch.html",
           "xlp.d.configchange.html",
           "xlp.d.configsave.html",
-          "xlp.d.configupdatepreview.html",
           "xlp.d.databasecontrolcatadd.html",
           "xlp.d.databasecontrolcatremove.html",
           "xlp.d.databasecontrolcatrename.html",
