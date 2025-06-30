@@ -1,7 +1,7 @@
 {
-  "version": "1.1.07",
+  "version": "1.1.08",
   "patch": 0,
-  "comment": "Fix some minor issues with code not having correct function calls.\n\nImplemented travel to update section from the update indicator in the title bar\n   Click the indicator (shows to the left of help if there is an update) will swap section to configuration, \n    then change that to the update section of configuration.",
+  "comment": "Improved the crossfade for section changing\n\nAll previous updates are included still.",
   "files": {
     "files": {
       "files": [
@@ -69,9 +69,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 3,
-    "xlauncherpluseapi.js": 3,
-    "xlauncherplusfs.js": 3
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 4
   },
   "directoryZips": {
     "help.zip": 0,

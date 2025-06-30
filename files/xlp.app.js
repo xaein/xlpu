@@ -363,47 +363,21 @@ export async function loadSection(sectionId) {
         const dynamicContent = document.getElementById('dynamicContent');
         const sectionOverlay = document.getElementById('sectionOverlay');
         
-        if (dynamicContent.innerHTML && 
-            state.currentSection !== 'initialization' && 
-            state.currentSection !== 'welcome') {
-            
-            const scrollableElements = dynamicContent.querySelectorAll('.table-scroll-container, [id$="Container"], .tab-content');
-            const scrollPositions = Array.from(scrollableElements).map(el => ({
-                selector: getUniqueSelector(el),
-                scrollTop: el.scrollTop,
-                scrollLeft: el.scrollLeft
-            }));
-            
-            const activeTabs = dynamicContent.querySelectorAll('.tab-button.active, .tab.active, .button.active');
-            const activeTabInfo = Array.from(activeTabs).map(tab => getUniqueSelector(tab));
-            
-            while (sectionOverlay.firstChild) {
-                sectionOverlay.removeChild(sectionOverlay.firstChild);
+        if (state.currentSection !== 'initialization' && state.currentSection !== 'welcome') {
+            const rect = dynamicContent.getBoundingClientRect();
+            const bounds = {
+                x: Math.round(rect.x),
+                y: Math.round(rect.y),
+                width: Math.round(rect.width),
+                height: Math.round(rect.height)
+            };
+            const dataUrl = await e.Api.invoke('capture-screen', bounds);
+            if (dataUrl) {
+                sectionOverlay.style.backgroundImage = `url('${dataUrl}')`;
+                sectionOverlay.style.backgroundSize = 'cover';
+                sectionOverlay.style.backgroundPosition = 'center';
+                sectionOverlay.classList.remove('hidden');
             }
-            
-            const clone = dynamicContent.cloneNode(true);
-            while (clone.firstChild) {
-                sectionOverlay.appendChild(clone.firstChild);
-            }
-            
-            sectionOverlay.scrollTop = dynamicContent.scrollTop;
-            sectionOverlay.scrollLeft = dynamicContent.scrollLeft;
-            
-            setTimeout(() => {
-                scrollPositions.forEach(pos => {
-                    try {
-                        const el = sectionOverlay.querySelector(pos.selector);
-                        if (el) {
-                            el.scrollTop = pos.scrollTop;
-                            el.scrollLeft = pos.scrollLeft;
-                        }
-                    } catch (e) { }
-                });
-            }, 0);
-            
-            sectionOverlay.classList.remove('hidden');
-            
-            await new Promise(resolve => requestAnimationFrame(resolve));
         }
 
         if (state.currentSection === 'databasecontrol') {
@@ -476,19 +450,15 @@ export async function loadSection(sectionId) {
 
             if (sectionOverlay && !sectionOverlay.classList.contains('hidden') &&
                 state.currentSection !== 'initialization' && state.currentSection !== 'welcome') {
-                
                 dynamicContent.classList.remove('hidden');
-                
                 void dynamicContent.offsetWidth;
-                
                 dynamicContent.classList.add('visible');
                 sectionOverlay.classList.add('fade-out');
-                
                 await new Promise(resolve => {
                     sectionOverlay.addEventListener('transitionend', () => {
                         sectionOverlay.classList.add('hidden');
                         sectionOverlay.classList.remove('fade-out');
-                        sectionOverlay.innerHTML = '';
+                        sectionOverlay.style.backgroundImage = '';
                         resolve();
                     }, { once: true });
                 });
@@ -835,32 +805,6 @@ export function verifyAndSetSection() {
         updateUI(xlp.sections[sectionId]);
         xlp.updateGreenButtonState();
     }
-}
-
-// Helper function to get a reasonably unique CSS selector for an element
-function getUniqueSelector(el) {
-    if (!el) return null;
-    if (el.id) return `#${el.id}`;
-    
-    let selector = el.tagName.toLowerCase();
-    if (el.className) {
-        const classes = el.className.split(' ').filter(c => c.trim().length > 0);
-        if (classes.length > 0) {
-            selector += '.' + classes.join('.');
-        }
-    }
-    
-    if (el.parentElement && el.parentElement !== document.body) {
-        const parent = el.parentElement;
-        if (parent.id) {
-            return `#${parent.id} > ${selector}`;
-        } else if (parent.tagName) {
-            const parentTag = parent.tagName.toLowerCase();
-            return `${parentTag} > ${selector}`;
-        }
-    }
-    
-    return selector;
 }
 
 // Navigation Helper: Go to Update Section

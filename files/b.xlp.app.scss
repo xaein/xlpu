@@ -347,10 +347,8 @@ body {
 
 #sectionOverlay {
     position: absolute;
-    top: 76px; // titlebar (30px) + header (46px)
-    left: 0;
-    right: 0;
-    bottom: 44px; // footer height
+    height: 100%;
+    width: 100%;
     z-index: 1000;
     background-color: $background-color;
     transition: opacity $transition-duration ease-out;

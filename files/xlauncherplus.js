@@ -418,6 +418,23 @@ safeIpc('remove-startup-shortcut', async () => {
     }
 });
 
+// Screen Capture IPC Handler
+// Captures a region of the window and returns a PNG data URL
+safeIpc('capture-screen', async (event, bounds) => {
+    const win = BrowserWindow.getFocusedWindow();
+    if (!win) {
+        return null;
+    }
+    try {
+        const image = await win.webContents.capturePage(bounds);
+        if (!image || image.isEmpty()) {
+            return null;
+        }
+        return image.toDataURL();
+    } catch (err) {
+        return null;
+    }
+});
 
 // Functions
 // Core utility functions that support main application features
