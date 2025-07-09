@@ -1,5 +1,5 @@
 {
-  "version": "1.1.08",
+  "version": "1.1.09",
   "patch": 0,
   "comment": "Bug Fix: Fixed launch button not launching due to missing function\nOptimization: Optimized DOM element caching.\n\nAll previous changes included.",
   "files": {
@@ -21,8 +21,7 @@
           "xlp.m.launchlist.js",
           "xlp.core.c.js",
           "xlp.m.databasecontrol.js",
-          "xlp.m.logging.js",
-          "xlp.m.databasecontrol.s.js"
+          "xlp.m.logging.js"
         ]
       },
       "themes": {
@@ -34,8 +33,7 @@
             "s.launchlist.scss",
             "s.logging.scss",
             "s.themes.scss",
-            "b.xlp.app.scss",
-            "b.xlp.dialogs.scss"
+            "b.xlp.app.scss"
           ]
         }
       },
