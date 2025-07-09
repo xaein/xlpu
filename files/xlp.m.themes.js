@@ -12,6 +12,9 @@ window.themes = [];
 // Sets up and configures complete theme management interface
 export async function initializeThemes() {
     try {
+        // Initialize DOM cache for themes section
+        initializeThemesDomCache();
+        
         const themesDir = `files/${xlp.dirVar('themes')}`;
         const themesData = await e.Api.invoke('read-themes-directory', themesDir);
         
@@ -19,7 +22,7 @@ export async function initializeThemes() {
             return;
         }
 
-        const themeList = document.getElementById('themeList');
+        const themeList = window[window.domCacheName]?.themeList || document.getElementById('themeList');
         if (!themeList) {
             return;
         }
@@ -75,12 +78,33 @@ export async function initializeThemes() {
     }
 }
 
+// Initialize DOM Cache
+// Creates cached DOM element references for themes section
+function initializeThemesDomCache() {
+    const section = xlp.sections.themes;
+    if (!section?.domElements) {
+        return;
+    }
+    
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    window.domCacheName = domCacheName;
+    
+    section.domElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
+        }
+    });
+}
+
 // Configure Theme Controls
 // Sets up and manages all theme interface buttons
 function setupThemeControls() {
-    const importButton = document.getElementById('importThemeButton');
-    const removeButton = document.getElementById('removeThemeButton');
-    const themeList = document.getElementById('themeList');
+    const importButton = window[window.domCacheName]?.importThemeButton || document.getElementById('importThemeButton');
+    const removeButton = window[window.domCacheName]?.removeThemeButton || document.getElementById('removeThemeButton');
+    const themeList = window[window.domCacheName]?.themeList || document.getElementById('themeList');
 
     if (themeList) {
         const checkboxes = themeList.querySelectorAll('input[type="checkbox"]');
@@ -103,9 +127,9 @@ function setupThemeControls() {
         importButton.onclick = () => {
             xlp.showDialog('themeImport');
             
-            const selectFileButton = document.getElementById('selectThemeFile');
+            const selectFileButton = window[window.domCacheName]?.selectThemeFile || document.getElementById('selectThemeFile');
             const importOkButton = document.querySelector('#themeImportDialog .ok-button');
-            const importPathInput = document.getElementById('themeImportPath');
+            const importPathInput = window[window.domCacheName]?.themeImportPath || document.getElementById('themeImportPath');
             let fullPath = '';
 
             if (importPathInput) {
@@ -157,7 +181,7 @@ function setupThemeControls() {
         removeButton.onclick = () => {
             const selectedThemeData = window.themes.find(theme => theme.name === window.selectedTheme);
             if (window.selectedTheme && selectedThemeData && !selectedThemeData.readonly) {
-                const themeSpan = document.getElementById('themeToDelete');
+                const themeSpan = window[window.domCacheName]?.themeToDelete || document.getElementById('themeToDelete');
                 if (themeSpan) {
                     themeSpan.textContent = window.selectedTheme;
                 }
@@ -189,7 +213,7 @@ function setupThemeControls() {
 // Process Theme Selection
 // Updates interface and preview with newly selected theme
 function selectTheme(themeName) {
-    const themeList = document.getElementById('themeList');
+    const themeList = window[window.domCacheName]?.themeList || document.getElementById('themeList');
     if (!themeList) return;
 
     const items = themeList.getElementsByTagName('li');
@@ -227,7 +251,7 @@ async function loadThemeData(themeName) {
 // Generate Theme Preview
 // Creates and displays complete theme preview interface elements
 async function previewTheme(themeName) {
-    const preview = document.querySelector('.theme-preview');
+    const preview = window[window.domCacheName]?.themePreview || document.querySelector('.theme-preview');
     if (!preview) return;
 
     try {
@@ -255,9 +279,9 @@ export async function applySelectedTheme() {
 
     try {
         xlp.showDialog('themeapply');
-        const progressBar = document.getElementById('applyThemeProgressBar');
-        const progressText = document.getElementById('applyThemeProgressText');
-        const headerText = document.getElementById('applyThemeHeaderMain');
+        const progressBar = window[window.domCacheName]?.applyThemeProgressBar || document.getElementById('applyThemeProgressBar');
+        const progressText = window[window.domCacheName]?.applyThemeProgressText || document.getElementById('applyThemeProgressText');
+        const headerText = window[window.domCacheName]?.applyThemeHeaderMain || document.getElementById('applyThemeHeaderMain');
 
         if (progressBar) progressBar.style.width = '0%';
         if (progressText) progressText.textContent = '0%';
@@ -280,7 +304,7 @@ export async function applySelectedTheme() {
             window.currentTheme = window.selectedTheme;
             xlp.setData('xldbv', window.xldbv);
 
-            const themeList = document.getElementById('themeList');
+            const themeList = window[window.domCacheName]?.themeList || document.getElementById('themeList');
             if (themeList) {
                 const items = themeList.getElementsByTagName('li');
                 for (const item of items) {
@@ -328,7 +352,7 @@ export async function applySelectedTheme() {
 // Update Preview Display
 // Calculates and updates theme preview table row layout
 export function adjustPreviewTableRows(height) {
-    const preview = document.querySelector('.theme-preview');
+    const preview = window[window.domCacheName]?.themePreview || document.querySelector('.theme-preview');
     if (!preview) return;
 
     const tableBody = preview.querySelector('.preview-table-body');
@@ -380,8 +404,8 @@ export function adjustPreviewTableRows(height) {
 // Cleanup Theme System
 // Performs complete cleanup of theme management functionality
 export function cleanupThemes() {
-    const importButton = document.getElementById('importThemeButton');
-    const removeButton = document.getElementById('removeThemeButton');
+    const importButton = window[window.domCacheName]?.importThemeButton || document.getElementById('importThemeButton');
+    const removeButton = window[window.domCacheName]?.removeThemeButton || document.getElementById('removeThemeButton');
     
     if (importButton) {
         importButton.onclick = null;
@@ -391,7 +415,7 @@ export function cleanupThemes() {
         removeButton.onclick = null;
     }
 
-    const themeList = document.getElementById('themeList');
+    const themeList = window[window.domCacheName]?.themeList || document.getElementById('themeList');
     if (themeList) {
         const items = themeList.getElementsByTagName('li');
         for (const item of items) {
@@ -399,6 +423,12 @@ export function cleanupThemes() {
         }
         themeList.innerHTML = '';
     }
+
+    // Clean up DOM cache
+    if (window.domCacheName && window[window.domCacheName]) {
+        delete window[window.domCacheName];
+    }
+    delete window.domCacheName;
 
     window.selectedTheme = null;
 } 

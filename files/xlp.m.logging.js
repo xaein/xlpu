@@ -7,9 +7,33 @@ let logRefreshInterval;
 // Initialize Log System
 // Sets up and manages complete logging display functionality
 export async function initializeLogging() {
+    // Initialize DOM cache for logging section
+    initializeLoggingDomCache();
+    
     loadLogContent();
     xlp.verifyAndSetSection();
     logRefreshInterval = setInterval(loadLogContent, 5000);
+}
+
+// Initialize DOM Cache
+// Creates cached DOM element references for logging section
+function initializeLoggingDomCache() {
+    const section = xlp.sections.logging;
+    if (!section?.domElements) {
+        return;
+    }
+    
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    window.domCacheName = domCacheName;
+    
+    section.domElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
+        }
+    });
 }
 
 // Process Log Content
@@ -25,7 +49,7 @@ async function loadLogContent() {
             return;
         }
         
-        const logPre = document.getElementById('logContent');
+        const logPre = window[window.domCacheName]?.logContent || document.getElementById('logContent');
         if (logPre) {
             logPre.innerHTML = colorizeLogContent(logContent);
             logPre.scrollTop = logPre.scrollHeight;
@@ -56,4 +80,10 @@ export function cleanupLogging() {
         clearInterval(logRefreshInterval);
         logRefreshInterval = null;
     }
+    
+    // Clean up DOM cache
+    if (window.domCacheName && window[window.domCacheName]) {
+        delete window[window.domCacheName];
+    }
+    delete window.domCacheName;
 } 

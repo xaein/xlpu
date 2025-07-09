@@ -9,6 +9,9 @@ let searchHandlers = null;
 // Sets up and configures complete launch list functionality
 export async function initializeLaunchlist() {
     try {
+        // Initialize DOM cache for launchlist section
+        initializeLaunchlistDomCache();
+        
         const xldbv = xlp.getData('xldbv');
         const xldbf = xlp.getData('xldbf') || {};
         const preloadedData = xlp.getData('preloadedData');
@@ -42,14 +45,35 @@ export async function initializeLaunchlist() {
     }
 }
 
+// Initialize DOM Cache
+// Creates cached DOM element references for launchlist section
+function initializeLaunchlistDomCache() {
+    const section = xlp.sections.launchlist;
+    if (!section?.domElements) {
+        return;
+    }
+    
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    window.domCacheName = domCacheName;
+    
+    section.domElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
+        }
+    });
+}
+
 // Configure Search System
 // Implements and manages complete search functionality with filters
 function setupSearch() {
-    const searchContainer = document.querySelector('.search-container');
-    const searchWrapper = document.querySelector('.search-wrapper');
-    const searchInput = document.getElementById('searchInput');
-    const iconCircle = document.querySelector('.icon-circle');
-    const clearButton = document.querySelector('.clear-button');
+    const searchContainer = window[window.domCacheName]?.searchContainer || document.querySelector('.search-container');
+    const searchWrapper = window[window.domCacheName]?.searchWrapper || document.querySelector('.search-wrapper');
+    const searchInput = window[window.domCacheName]?.searchInput || document.getElementById('searchInput');
+    const iconCircle = window[window.domCacheName]?.iconCircle || document.querySelector('.icon-circle');
+    const clearButton = window[window.domCacheName]?.clearButton || document.querySelector('.clear-button');
     let isExpanded = false;
     let shrinkTimeout;
 
@@ -184,7 +208,7 @@ function setupSearch() {
 // Configures and manages all table interaction event handlers
 function setupTableEvents() {
     const table = document.querySelector('#appTable');
-    const tabContent = document.getElementById('tabContent');
+    const tabContent = window[window.domCacheName]?.tabContent || document.getElementById('tabContent');
     
     if (table) {
         table.addEventListener('dblclick', handleRowDoubleClick);
@@ -287,6 +311,15 @@ export function selectRow(row, appName, skipLaunch = false, shouldLaunch = false
     xlp.updateGreenButtonState();
 }
 
+// Handle Launch Process
+// Triggers launch dialog and countdown for selected application
+export function handleLaunch() {
+    if (window.selectedApp) {
+        xlp.showDialog('launch');
+        startLaunchCountdown();
+    }
+}
+
 // Process Favorite Changes
 // Handles and synchronizes all favorite status modifications
 export async function toggleStar(appName, starElement) {
@@ -370,7 +403,7 @@ function calculateNewPosition(appName, isStarring, allRows) {
 // Initialize Launch Timer
 // Sets up and executes complete launch countdown sequence
 export function startLaunchCountdown() {
-    const dialog = document.getElementById('launchDialog');
+    const dialog = window[window.domCacheName]?.launchDialog || document.getElementById('launchDialog');
     const countdownElement = dialog?.querySelector('#countdown');
     const appNameElement = dialog?.querySelector('#appName');
     
@@ -434,9 +467,9 @@ export async function cleanupLaunchlist() {
     }
 
     if (searchHandlers) {
-        const searchInput = document.getElementById('searchInput');
-        const clearButton = document.querySelector('.clear-button');
-        const iconCircle = document.querySelector('.icon-circle');
+        const searchInput = window[window.domCacheName]?.searchInput || document.getElementById('searchInput');
+        const clearButton = window[window.domCacheName]?.clearButton || document.querySelector('.clear-button');
+        const iconCircle = window[window.domCacheName]?.iconCircle || document.querySelector('.icon-circle');
         
         if (searchInput) {
             searchInput.value = '';
@@ -464,4 +497,10 @@ export async function cleanupLaunchlist() {
     
     window.selectedApp = null;
     window.rowInfo = [];
+    
+    // Clean up DOM cache
+    if (window[window.domCacheName]) {
+        delete window[window.domCacheName];
+    }
+    delete window.domCacheName;
 }

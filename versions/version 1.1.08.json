@@ -1,7 +1,7 @@
 {
-  "version": "1.1.09",
+  "version": "1.1.08",
   "patch": 0,
-  "comment": "Bug Fix: Fixed launch button not launching due to missing function\nOptimization: Optimized DOM element caching.\n\nAll previous changes included.",
+  "comment": "Improved the crossfade for section changing\n\nAll previous updates are included still.",
   "files": {
     "files": {
       "files": [
@@ -18,10 +18,7 @@
           "xlp.m.init.js",
           "xlp.m.tables.js",
           "xlp.m.themes.js",
-          "xlp.m.launchlist.js",
-          "xlp.core.c.js",
-          "xlp.m.databasecontrol.js",
-          "xlp.m.logging.js"
+          "xlp.m.launchlist.js"
         ]
       },
       "themes": {
@@ -72,11 +69,12 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 1
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 4
   },
   "directoryZips": {
-    "help.zip": 1,
+    "help.zip": 0,
     "node_modules.zip": 0
   },
   "rem": [

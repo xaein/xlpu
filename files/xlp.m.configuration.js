@@ -45,6 +45,8 @@ let configDefaults = {
 // Initialize Configuration Process
 // Sets up and loads all configuration interface components and states
 export async function initializeConfiguration() {
+    // Initialize DOM cache for configuration section
+    initializeConfigurationDomCache();
     // Add flag to track if listener is already attached
     if (window.updateLinkListenerAttached) {
         return;
@@ -69,7 +71,7 @@ export async function initializeConfiguration() {
     await loadConfigSection('general');
     
     try {
-        const updateIndicator = document.getElementById('updateIndicator');
+        const updateIndicator = window[window.domCacheName]?.updateIndicator || document.getElementById('updateIndicator');
         xlp.getUpdateInfo().then(({ hasUpdate }) => {
             if (updateIndicator && hasUpdate) {
                 updateIndicator.textContent = window.xldbv.updtico || "⥥";
@@ -121,7 +123,7 @@ export async function initializeConfiguration() {
                 const success = await xlp.updateFiles((file) => {
                     if (window.updateState.progressHandler) {
                         const newText = window.updateState.progressHandler(file);
-                        const updateInfoPreview = document.getElementById('updateInfoPreview');
+                        const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
                         if (updateInfoPreview && newText) {
                             updateInfoPreview.innerHTML = newText;
                         }
@@ -129,7 +131,7 @@ export async function initializeConfiguration() {
                 });
 
                 if (success) {
-                    const updateInfoPreview = document.getElementById('updateInfoPreview');
+                    const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
                     if (updateInfoPreview) {
                         updateInfoPreview.innerHTML += '\n\nUpdate completed successfully.' + 
                             (updateInfo.requiresRestart ? '\nPlease restart the application for the changes to take effect.' : '');
@@ -137,8 +139,8 @@ export async function initializeConfiguration() {
                     xlp.scrollToLine(updateInfoPreview, 'Please restart');
                     await loadConfigSection('update');
                     
-                    const updateIndicator = document.getElementById('updateIndicator');
-                    const updateButton = document.getElementById('updateAppButton');
+                    const updateIndicator = window[window.domCacheName]?.updateIndicator || document.getElementById('updateIndicator');
+                    const updateButton = window[window.domCacheName]?.updateAppButton || document.getElementById('updateAppButton');
                     if (updateIndicator) {
                         updateIndicator.classList.remove('visible');
                     }
@@ -147,7 +149,7 @@ export async function initializeConfiguration() {
                     }
                 }
             }).catch(error => {
-                const updateInfoPreview = document.getElementById('updateInfoPreview');
+                const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
                 if (updateInfoPreview) {
                     updateInfoPreview.innerHTML = `Error updating: ${error.message}`;
                 }
@@ -181,11 +183,11 @@ export async function initializeConfiguration() {
                 if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
                     updateConfigTemp('general', 'system');
 
-                    const minimizeToTray = document.getElementById('minimizeToTray');
-                    const closeToTray = document.getElementById('closeToTray');
-                    const startWithWindows = document.getElementById('startWithWindows');
-                    const startMinimized = document.getElementById('startMinimized');
-                    const showTray = document.getElementById('showTray');
+                    const minimizeToTray = window[window.domCacheName]?.minimizeToTray || document.getElementById('minimizeToTray');
+                    const closeToTray = window[window.domCacheName]?.closeToTray || document.getElementById('closeToTray');
+                    const startWithWindows = window[window.domCacheName]?.startWithWindows || document.getElementById('startWithWindows');
+                    const startMinimized = window[window.domCacheName]?.startMinimized || document.getElementById('startMinimized');
+                    const showTray = window[window.domCacheName]?.showTray || document.getElementById('showTray');
 
                     if (target.id === 'showTray') {
                         if (minimizeToTray) minimizeToTray.disabled = !target.checked;
@@ -441,13 +443,13 @@ function setAndLogValue(id, value) {
 // Update Format Preview
 // Generates and displays preview using current logging format settings
 function updateLogFormatPreview() {
-    const dateFormat = document.getElementById('dateFormat')?.value;
-    const timeFormat = document.getElementById('timeFormat')?.value;
-    const construct = document.getElementById('construct')?.value;
-    const leftEncapsule = document.getElementById('leftEncapsule')?.value;
-    const rightEncapsule = document.getElementById('rightEncapsule')?.value;
-    const messageSeperator = document.getElementById('messageSeperator')?.value;
-    const messagePrefix = document.getElementById('messagePrefix')?.value;
+    const dateFormat = (window[window.domCacheName]?.dateFormat || document.getElementById('dateFormat'))?.value;
+    const timeFormat = (window[window.domCacheName]?.timeFormat || document.getElementById('timeFormat'))?.value;
+    const construct = (window[window.domCacheName]?.construct || document.getElementById('construct'))?.value;
+    const leftEncapsule = (window[window.domCacheName]?.leftEncapsule || document.getElementById('leftEncapsule'))?.value;
+    const rightEncapsule = (window[window.domCacheName]?.rightEncapsule || document.getElementById('rightEncapsule'))?.value;
+    const messageSeperator = (window[window.domCacheName]?.messageSeperator || document.getElementById('messageSeperator'))?.value;
+    const messagePrefix = (window[window.domCacheName]?.messagePrefix || document.getElementById('messagePrefix'))?.value;
 
     if (!dateFormat || !timeFormat || !construct || !leftEncapsule || !rightEncapsule || !messageSeperator || !messagePrefix) {
         return;
@@ -466,7 +468,7 @@ function updateLogFormatPreview() {
     preview += rightEncapsule;
     preview += ` ${messageSeperator} ${messagePrefix} Sample Message`;
 
-    const previewElement = document.getElementById('logFormatPreview');
+    const previewElement = window[window.domCacheName]?.logFormatPreview || document.getElementById('logFormatPreview');
     if (previewElement) {
         previewElement.textContent = preview;
     }
@@ -475,7 +477,7 @@ function updateLogFormatPreview() {
 // Load Icon Options
 // Populates icon selector dropdown with all available system options
 async function populateFavouriteIcons() {
-    const favouriteIconSelect = document.getElementById('favouriteIcon');
+    const favouriteIconSelect = window[window.domCacheName]?.favouriteIcon || document.getElementById('favouriteIcon');
     
     const xldbv = xlp.getData('xldbv') || {};
     
@@ -595,8 +597,8 @@ function selectRowSelector(fileName, svgElement, customSelect, selectedValue, op
 // Setup Width Controls
 // Initializes and configures width adjustment slider with event handling
 function setupHighlightWidthSlider() {
-    const highlightWidth = document.getElementById('highlightWidth');
-    const highlightWidthValue = document.getElementById('highlightWidthValue');
+    const highlightWidth = window[window.domCacheName]?.highlightWidth || document.getElementById('highlightWidth');
+    const highlightWidthValue = window[window.domCacheName]?.highlightWidthValue || document.getElementById('highlightWidthValue');
     
     if (highlightWidth && highlightWidthValue) {
         const savedWidth = window.xldbv?.configOpts?.theme?.rowWidth || 100;
@@ -635,7 +637,7 @@ function setupHighlightWidthSlider() {
 // Generate Command File
 // Creates and updates command configuration file with current settings
 async function runXltcScript() {
-    const statusElement = document.getElementById('triggerCmdUpdateStatus');
+    const statusElement = window[window.domCacheName]?.triggerCmdUpdateStatus || document.getElementById('triggerCmdUpdateStatus');
     try {
         const configOpts = {
             overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
@@ -1125,4 +1127,29 @@ export async function cleanupConfiguration() {
     activeConfigPanel = null;
 
     document.querySelectorAll('.config-section').forEach(s => s.classList.add('hidden'));
+
+    // Clean up DOM cache
+    if (window.domCacheName && window[window.domCacheName]) {
+        delete window[window.domCacheName];
+    }
+    delete window.domCacheName;
+}
+
+// Initialize DOM Cache
+// Creates cached DOM element references for configuration section
+function initializeConfigurationDomCache() {
+    const section = xlp.sections.configuration;
+    if (!section?.domElements) {
+        return;
+    }
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    window.domCacheName = domCacheName;
+    section.domElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
+        }
+    });
 }

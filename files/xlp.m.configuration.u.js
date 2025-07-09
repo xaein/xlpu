@@ -20,7 +20,7 @@ export async function updateFiles(onProgress) {
         }
 
         if (updateInfo.updatePath.length > 0) {
-            const updateInfoPreview = document.getElementById('updateInfoPreview');
+            const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
             if (updateInfoPreview) {
                 const pathText = updateInfo.updatePath.map(type => type === 'patch' ? 'regular' : type).join(' 🠞 ');
                 const text = updateInfoPreview.textContent;
@@ -349,10 +349,10 @@ function getRootDirectories(files) {
 // Manages complete update installation with progress tracking system
 export async function handleUpdateProcess(updateInfo) {
     const onProgress = (file) => {
-        if (!document.getElementById('updateInfoPreview')) {
+        if (!(window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview'))) {
             return;
         }
-        const currentText = document.getElementById('updateInfoPreview').textContent;
+        const currentText = (window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview')).textContent;
         
         if (file !== window.updateState.lastFile) {
             window.updateState.lastFile = file;
@@ -415,7 +415,7 @@ export async function handleUpdateProcess(updateInfo) {
                 const countPattern = new RegExp(`^  ${rootDir} \\((\\d+) files?\\)$`, 'm');
                 const updatingPattern = new RegExp(`^    Updating: .*\\n?`, 'gm');
                 
-                const updatePreview = document.getElementById('updateInfoPreview');
+                const updatePreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
                 if (updatePreview) {
                     xlp.scrollToLine(updatePreview, 'Standard Files:');
                 }
@@ -538,7 +538,7 @@ export function showUpdateOverlay() {
 // Create Modal Cutout
 // Creates transparent view area in overlay for update preview display
 export function createOverlayCutout() {
-    const updatePreview = document.getElementById('updateInfoPreview');
+    const updatePreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
     const modalOverlay = document.getElementById('modalOverlay');
     const titlebar = document.querySelector('.titlebar');
     

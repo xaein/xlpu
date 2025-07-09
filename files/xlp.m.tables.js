@@ -6,7 +6,7 @@
 function measureRowContent() {
     const starColumnMinPercent = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--star-column-min-width') || '25');
     const starColumnMaxPercent = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--star-column-max-width') || '50');
-    const measureDiv = document.getElementById('measureDiv');
+    const measureDiv = window[window.domCacheName]?.measureDiv || document.getElementById('measureDiv');
     const appColumnMinPercent = 100 - starColumnMaxPercent;
     const appColumnMaxPercent = 100 - starColumnMinPercent;
 
@@ -17,7 +17,7 @@ function measureRowContent() {
     
     measureDiv.innerHTML = longestName;
     const nameWidth = measureDiv.getBoundingClientRect().width;   
-    const tableWidth = document.getElementById('appTable').getBoundingClientRect().width;
+    const tableWidth = (window[window.domCacheName]?.appTable || document.getElementById('appTable')).getBoundingClientRect().width;
     
     const basePercentage = Math.round((nameWidth / tableWidth) * 100);
     let appColumnPercentage = basePercentage > 35 ? basePercentage + 25 : Math.max(basePercentage, 65);
@@ -136,7 +136,7 @@ export function filterRows(searchTerm) {
 // Create Database Control Table
 // Generates and populates table for database control section
 export async function createDatabaseTable() {
-    const tableContainer = document.getElementById('tableContainer');
+    const tableContainer = window[window.domCacheName]?.tableContainer || document.getElementById('tableContainer');
     const tableBody = document.querySelector('#appTable tbody');
     if (!tableBody || !tableContainer) {
         return;

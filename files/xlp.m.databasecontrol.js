@@ -11,6 +11,9 @@ window.tempData = {};
 // Sets up all database interface components and event handlers
 export async function initializeDatabasecontrol() {
     try {
+        // Initialize DOM cache for databasecontrol section
+        initializeDatabasecontrolDomCache();
+        
         window.xldbv = xlp.getData('xldbv') || {};
         window.xldbf = xlp.getData('xldbf') || {};
         const preloadedData = xlp.getData('preloadedData') || {};
@@ -104,13 +107,34 @@ export async function initializeDatabasecontrol() {
     } catch (error) { }
 }
 
+// Initialize DOM Cache
+// Creates cached DOM element references for databasecontrol section
+function initializeDatabasecontrolDomCache() {
+    const section = xlp.sections.databasecontrol;
+    if (!section?.domElements) {
+        return;
+    }
+    
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    window.domCacheName = domCacheName;
+    
+    section.domElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
+        }
+    });
+}
+
 // Create Tab Buttons
 // Generates and configures category tab buttons in navigation panel
 function loadTabButtons(newCategoryName = null) {
-    const tabList = document.getElementById('tabList');
-    const addRowButton = document.getElementById('addRowButton');
-    const renameCategoryButton = document.getElementById('renameCategoryButton');
-    const removeCategoryButton = document.getElementById('removeCategoryButton');
+    const tabList = window[window.domCacheName]?.tabList || document.getElementById('tabList');
+    const addRowButton = window[window.domCacheName]?.addRowButton || document.getElementById('addRowButton');
+    const renameCategoryButton = window[window.domCacheName]?.renameCategoryButton || document.getElementById('renameCategoryButton');
+    const removeCategoryButton = window[window.domCacheName]?.removeCategoryButton || document.getElementById('removeCategoryButton');
 
     if (!window.xldbv || !window.xldbv.xldbFiles || !Array.isArray(window.xldbv.xldbFiles)) {
         return;
@@ -184,8 +208,8 @@ function loadFileData(fileName) {
 // Update Button States
 // Enables or disables edit buttons based on row selection
 export function updateEditButtonState() {
-    const editButton = document.getElementById('editRowButton');
-    const removeButton = document.getElementById('removeRowButton');
+    const editButton = window[window.domCacheName]?.editRowButton || document.getElementById('editRowButton');
+    const removeButton = window[window.domCacheName]?.removeRowButton || document.getElementById('removeRowButton');
     
     if (!editButton || !removeButton) return;
     
@@ -244,10 +268,10 @@ function setupTableScrollSnapping() {
 // Removes all event listeners and resets module state
 export async function cleanupDatabasecontrol() {
     const containers = [
-        document.querySelector('.category-buttons-container') || document.getElementById('tabContainer'),
-        document.querySelector('.row-buttons-container') || document.getElementById('tableControls'),
-        document.getElementById('tabList'),
-        document.getElementById('appTable')
+        document.querySelector('.category-buttons-container') || window[window.domCacheName]?.tabContainer || document.getElementById('tabContainer'),
+        document.querySelector('.row-buttons-container') || window[window.domCacheName]?.tableControls || document.getElementById('tableControls'),
+        window[window.domCacheName]?.tabList || document.getElementById('tabList'),
+        window[window.domCacheName]?.appTable || document.getElementById('appTable')
     ];
     
     containers.forEach(container => {
@@ -257,7 +281,7 @@ export async function cleanupDatabasecontrol() {
         }
     });
     
-    const tableContainer = document.getElementById('tableContainer');
+    const tableContainer = window[window.domCacheName]?.tableContainer || document.getElementById('tableContainer');
     if (tableContainer && tableContainer.scrollHandler) {
         tableContainer.removeEventListener('scroll', tableContainer.scrollHandler);
         tableContainer.scrollHandler = null;
@@ -265,7 +289,7 @@ export async function cleanupDatabasecontrol() {
     
     window.removeEventListener('resize', () => xlp.handleResize());
     
-    const tabList = document.getElementById('tabList');
+    const tabList = window[window.domCacheName]?.tabList || document.getElementById('tabList');
     if (tabList) {
         tabList.innerHTML = '';
     }
@@ -279,4 +303,10 @@ export async function cleanupDatabasecontrol() {
     window.categories = [];
     window.selectedRow = null;
     window.tempData = null;
+    
+    // Clean up DOM cache
+    if (window[window.domCacheName]) {
+        delete window[window.domCacheName];
+    }
+    delete window.domCacheName;
 }

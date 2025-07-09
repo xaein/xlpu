@@ -11,6 +11,10 @@ export const sections = {
             dialogs: ['launch']
         },
         scripts: ['m.tables', 'm.launchlist'],
+        domElements: [
+            'tabContent', 'appTable', 'measureDiv', 'tableContainer', 'searchInput',
+            'clearButton', 'iconCircle', 'searchContainer', 'searchWrapper', 'launchDialog'
+        ],
         footerButtons: {
             left: {
                 text: 'Launch',
@@ -31,6 +35,12 @@ export const sections = {
             ]
         },
         scripts: ['m.tables', 'm.databasecontrol.s', 'm.databasecontrol'],
+        domElements: [
+            'tabContainer', 'tabListContainer', 'tabList', 'tableControls', 'tableContainer',
+            'appTable', 'controlPanel', 'addCategoryButton', 'renameCategoryButton',
+            'removeCategoryButton', 'addRowButton', 'editRowButton', 'removeRowButton',
+            'databasecontrolsaveDialog', 'saveCurrentCategory', 'saveHeaderMain', 'saveCategoryLabel'
+        ],
         footerButtons: {
             left: {
                 text: 'Save',
@@ -47,6 +57,11 @@ export const sections = {
             dialogs: ['themeimport', 'themedelete', 'themeapply']
         },
         scripts: ['m.themes'],
+        domElements: [
+            'themeList', 'importThemeButton', 'removeThemeButton', 'themePreview',
+            'previewTableBody', 'themeToDelete', 'applyThemeProgressBar',
+            'applyThemeProgressText', 'applyThemeHeaderMain'
+        ],
         footerButtons: {
             left: {
                 text: 'Apply',
@@ -63,6 +78,14 @@ export const sections = {
             dialogs: ['configsave', 'configchange']
         },
         scripts: ['m.configuration.u', 'm.configuration'],
+        domElements: [
+            'configList', 'updateIndicator', 'favouriteIcon', 'highlightWidth', 'highlightWidthValue',
+            'dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 'rightEncapsule',
+            'messageSeperator', 'messagePrefix', 'maxLogEntries', 'logFormatPreview',
+            'showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized',
+            'autoGenerateTriggerCMD', 'addToPath', 'triggerCmdUpdateStatus', 'updateTriggerCMDFile',
+            'updateInfoPreview', 'checkUpdate', 'periodicUpdateCheck', 'updateFrequency', 'updateAppButton'
+        ],
         footerButtons: {
             left: {
                 text: 'Save',
@@ -78,6 +101,9 @@ export const sections = {
             main: 'logging'
         },
         scripts: ['m.logging'],
+        domElements: [
+            'logContent'
+        ],
         footerButtons: {
             left: {
                 text: '',
