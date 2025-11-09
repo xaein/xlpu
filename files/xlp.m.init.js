@@ -1,7 +1,12 @@
 // Initialization Module
-// Handles core file loading and system startup for application launch
+//   Handles core file loading and system startup for application launch
+//   Loads and parses xldbv.json, xldbf.json, and xlaunch.cfg configuration files
+//   Initializes application state, themes, and default configurations
+//   Prepares application environment for user interaction
 
-// Initialize module state variables
+// Module state variables
+//   Tracks file loading progress, animation speed, and initialization state
+//   Manages transition duration, file counters, preloaded data, and loading speed milestones
 const transitionDuration = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--transition-duration')) * 1000 || 300;
 const delay = transitionDuration * 2;
 let totalFiles = 1;
@@ -11,6 +16,9 @@ let previousFile = '';
 let isFirstRun = false;
 let updateAvailable = false;
 
+// Loading animation speed control
+//   Manages dynamic loading animation speed based on progress milestones
+//   Controls animation speed transitions for early, mid, late, and final loading stages
 let loadingSpeed = {
     current: 7,
     target: 7,
@@ -36,7 +44,9 @@ let loadingSpeed = {
 };
 
 // System File Initialization
-// Sets up and validates all core application files
+//   Sets up and validates all core application files
+//   Loads xldbv.json, xldbf.json, xlaunch.cfg, and all xldb files with progress tracking
+//   Handles first run detection and update file cleanup
 export async function initializeFiles() {
     try {
         updateProgress(0);
@@ -105,7 +115,8 @@ export async function initializeFiles() {
 }
 
 // Process File Loading
-// Loads and processes files with detailed visual feedback
+//   Loads and processes files with detailed visual feedback
+//   Loads file from specified directory, validates format, stores data, and updates progress
 export async function loadFileWithDelay(appDir, directory, fileName) {
     if (!fileName) {
         updateStatusMessage(`Error: Attempted to load undefined file`);
@@ -135,7 +146,8 @@ export async function loadFileWithDelay(appDir, directory, fileName) {
 }
 
 // Handle Data Processing
-// Stores and validates all loaded file data securely
+//   Stores and validates all loaded file data securely
+//   Parses and stores file data in preloadedData with file name key
 export function processAndStoreData(fileName, data) {
     if (fileName === 'xldbv.json') {
         const variables = JSON.parse(data);
@@ -172,14 +184,19 @@ export function processAndStoreData(fileName, data) {
         xlp.setData('xldbf', xldbfData);
     } else if (fileName === 'xlaunch.cfg') {
         const configData = xlp.parseConfigFile(data);
+        window.xlaunchConfig = configData;
         xlp.setData('xlaunchConfig', configData);
+        if (xlp.setState) {
+            xlp.setState('config.xlaunchConfig', configData);
+        }
     } else if (fileName === window.xldbv.mainXLFC || (window.xldbv.xldbFiles && window.xldbv.xldbFiles.includes(fileName))) {
         xlp.setData('preloadedData', data, fileName);
     }
 }
 
 // Parse Config Settings
-// Converts configuration file content into structured object format
+//   Converts configuration file content into structured object format
+//   Parses key-value pairs from config file and removes quotes from values
 export function parseConfigFile(configData) {
     const config = {};
     const lines = configData.split('\n');
@@ -195,7 +212,8 @@ export function parseConfigFile(configData) {
 }
 
 // System Update Checker
-// Verifies current version against remote version and updates
+//   Verifies current version against remote version and updates
+//   Checks for updates and displays update indicator if newer version is available
 export async function checkForUpdatesInit() {
     try {
         const uurl = xldbv.uurl;
@@ -206,14 +224,14 @@ export async function checkForUpdatesInit() {
         const latestVersion = response.data;
         const currentVersion = xldbv.version;
         
-        const windowTitle = document.querySelector('.window-title');
+        const windowTitle = xlp.getElement('dqs', '.window-title');
         if (windowTitle) {
             windowTitle.textContent = `xLauncher Plus v${currentVersion}`;
             
             if (xlp.isNewerVersion(currentVersion, latestVersion.version)) {
                 updateAvailable = true;
                 
-                const updateButton = document.getElementById('titlebarUpdateIndicator');
+                const updateButton = xlp.getElement('titlebarUpdateIndicator');
                 if (updateButton) {
                     updateButton.textContent = window.xldbv.updtico || "⥥";
                     updateButton.classList.add('visible');
@@ -224,7 +242,7 @@ export async function checkForUpdatesInit() {
             }
         }
         
-        const updateButton = document.getElementById('titlebarUpdateIndicator');
+        const updateButton = xlp.getElement('titlebarUpdateIndicator');
         if (updateButton) {
             updateButton.classList.remove('visible');
         }
@@ -240,7 +258,8 @@ export async function checkForUpdatesInit() {
 }
 
 // Update File Interface
-// Updates interface elements with current file loading status
+//   Updates interface elements with current file loading status
+//   Updates current file display with appropriate label based on file type
 export function updateUIForFile(fileName) {
     if (!fileName) {
         updateCurrentFile('Loading unknown file', false);
@@ -265,10 +284,11 @@ export function updateUIForFile(fileName) {
 }
 
 // Manage File Display
-// Updates and maintains all current file display elements
+//   Updates and maintains all current file display elements
+//   Updates current file or category file display based on isCategory parameter
 export function updateCurrentFile(fileName, isCategory = false) {
-    const currentFileElement = document.getElementById('currentFile');
-    const categoryFileElement = document.getElementById('categoryFile');
+    const currentFileElement = xlp.getElement('currentFile');
+    const categoryFileElement = xlp.getElement('categoryFile');
 
     if (isCategory) {
         currentFileElement.textContent = 'Loading Category:';
@@ -283,18 +303,20 @@ export function updateCurrentFile(fileName, isCategory = false) {
 }
 
 // Handle Status Messages
-// Updates and manages all system status message displays
+//   Updates and manages all system status message displays
+//   Updates status message element with specified message text
 export function updateStatusMessage(message) {
-    const statusElement = document.getElementById('statusMessage');
+    const statusElement = xlp.getElement('statusMessage');
     if (statusElement) {
         statusElement.textContent = message;
     }
 }
 
 // Manage Progress Updates
-// Updates loading progress and manages animation speed control
+//   Updates loading progress and manages animation speed control
+//   Updates loading speed based on progress milestones and starts animation
 export function updateProgress(progress) {
-    const loader = document.querySelector('.container');
+    const loader = xlp.getElement('dqs', '.container');
     if (!loader) return;
 
     if (progress >= loadingSpeed.milestones.final.range[0] && 
@@ -315,14 +337,15 @@ export function updateProgress(progress) {
 }
 
 // Process Animation Control
-// Manages and synchronizes all loading animation speed transitions
+//   Manages and synchronizes all loading animation speed transitions
+//   Animates loading speed transition to target speed using requestAnimationFrame
 export function startSpeedAnimation() {
     if (loadingSpeed.isAnimating) return;
     loadingSpeed.isAnimating = true;
     let frameCount = 0;
     
     const animate = () => {
-        const loader = document.querySelector('.container');
+        const loader = xlp.getElement('dqs', '.container');
         if (!loader) {
             loadingSpeed.isAnimating = false;
             return;
@@ -348,9 +371,10 @@ export function startSpeedAnimation() {
 }
 
 // Update File Listing
-// Adds and manages loaded files in display listing
+//   Adds and manages loaded files in display listing
+//   Adds loaded file name to loaded files list element
 export function addLoadedFile(fileName) {
-    const loadedFilesElement = document.getElementById('loadedFiles');
+    const loadedFilesElement = xlp.getElement('loadedFiles');
     const fileElement = document.createElement('div');
     fileElement.textContent = fileName;
     fileElement.classList.add('loaded-file');

@@ -21,7 +21,8 @@
           "xlp.m.launchlist.js",
           "xlp.core.c.js",
           "xlp.m.databasecontrol.js",
-          "xlp.m.logging.js"
+          "xlp.m.logging.js",
+          "xlp.m.databasecontrol.s.js"
         ]
       },
       "themes": {
@@ -33,7 +34,8 @@
             "s.launchlist.scss",
             "s.logging.scss",
             "s.themes.scss",
-            "b.xlp.app.scss"
+            "b.xlp.app.scss",
+            "b.xlp.dialogs.scss"
           ]
         }
       },

@@ -1,195 +1,164 @@
 // Dialog Management Module
-// Handles dialog display, state, and interactions
+//   Handles dialog display, state, and interactions
+//   Manages all application dialogs including database control, configuration, and theme dialogs
+//   Provides dialog setup, button configuration, and input focus management
+//   Centralizes dialog behavior and user interaction patterns
 
 // Dialog state tracking
 let activeDialog = null;
 
-// Dialog Display
-// Shows and configures dialog with overlay
-export async function showDialog(dialogName) {
-    const dialog = document.getElementById(`${dialogName}Dialog`);
-    const modalOverlay = document.getElementById('modalOverlay');
+// Add Category
+//   Creates a new category and associated file
+//   Creates new category file, updates variables, and adds tab button to interface
+export async function categoryAdd() {
+    const dialog = xlp.getElement('id', 'databasecontrolcataddDialog');
+    if (!dialog) return;
     
-    if (!dialog) {
-        return;
+    const categoryNameInput = xlp.getElement('rqs', 'input', dialog);
+    const categoryName = categoryNameInput.value.trim();
+
+    if (categoryName) {
+        const fileName = `${categoryName}.xlfc`;
+        
+        const initialData = { " ": " " };
+        const tempData = window.tempData ?? {};
+        tempData[fileName] = JSON.stringify(initialData);
+
+        try {
+            const appDir = await e.Api.invoke('get-app-dir');
+            const xldbDir = xlp.dirVar('xldb');
+            const filePath = xlp.joinPath(appDir, xldbDir, fileName);
+            await e.Api.invoke('write-file', filePath, JSON.stringify(initialData));
+
+            xlp.updateVariables('addCategory', fileName);
+
+            closeDialog('databasecontrolcatadd');
+
+            const tabList = xlp.getElement('tabList');
+            if (tabList) {
+                const newTab = document.createElement('button');
+                newTab.className = 'tablinks';
+                newTab.textContent = categoryName;
+                newTab.onclick = (event) => xlp.selectTab(categoryName, event);
+                tabList.appendChild(newTab);
+                
+                const event = { currentTarget: newTab };
+                xlp.selectTab(categoryName, event);
+            }
+        } catch (error) {
+        }
     }
-
-    if (modalOverlay) {
-        modalOverlay.style.display = 'block';
-    }
-
-    if (activeDialog) {
-        closeDialog(activeDialog);
-    }
-
-    if (dialogName.startsWith('databasecontrol')) {
-        setupDatabaseControlDialog(dialogName);
-    }
-
-    dialog.classList.remove('dialog-hidden');
-    dialog.style.display = 'flex';
-    dialog.style.visibility = 'visible';
-    dialog.style.opacity = '1';
-    activeDialog = dialogName;
-
-    dialogCloseListener();
 }
 
-// Database Control Dialog Setup
-// Initializes and populates database control dialogs
-function setupDatabaseControlDialog(dialogName) {
-    const dialogInputs = document.querySelectorAll(`#${dialogName}Dialog input`);
-    dialogInputs.forEach(input => {
-        input.value = '';
-        input.oninput = () => updateDialogOkButton(dialogName);
-    });
-
-    const dialogButtons = document.querySelectorAll(`#${dialogName}Dialog button`);
-    dialogButtons.forEach(button => {
-        button.onclick = null;
-    });
-
-    switch (dialogName) {
-        case 'databasecontrolcatadd':
-            setTimeout(() => {
-                document.querySelector(`#${dialogName}Dialog input`)?.focus();
-            }, 100);
-            
-            const addCatOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (addCatOkButton) {
-                addCatOkButton.onclick = () => categoryAdd();
-            }
-            break;
-            
-        case 'databasecontrolcatrename':
-            const activeTab = document.querySelector('.tablinks.active');
-            if (activeTab) {
-                const categoryName = activeTab.textContent;
-                const nameElement = document.querySelector(`#${dialogName}Dialog #currentCategoryName`);
-                if (nameElement) {
-                    nameElement.textContent = categoryName;
-                }
-                setTimeout(() => {
-                    document.querySelector(`#${dialogName}Dialog input`)?.focus();
-                }, 100);
-            }
-            
-            const renameCatOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (renameCatOkButton) {
-                renameCatOkButton.onclick = () => categoryRename();
-            }
-            break;
-            
-        case 'databasecontrolcatremove':
-            const activeTab2 = document.querySelector('.tablinks.active');
-            if (activeTab2) {
-                const categoryName = activeTab2.textContent;
-                const nameElement = document.querySelector(`#${dialogName}Dialog #categoryToRemove`);
-                if (nameElement) {
-                    nameElement.textContent = categoryName;
-                }
-            }
-            
-            const removeCatOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (removeCatOkButton) {
-                removeCatOkButton.onclick = () => categoryRemove();
-            }
-            break;
-            
-        case 'databasecontrolrowadd':
-            setTimeout(() => {
-                document.querySelector(`#${dialogName}Dialog input`)?.focus();
-            }, 100);
-            
-            const addRowSelectFileBtn = document.querySelector(`#${dialogName}Dialog .select-file-button`);
-            if (addRowSelectFileBtn) {
-                addRowSelectFileBtn.onclick = () => selectApplicationFile();
-            }
-            
-            const addRowOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (addRowOkButton) {
-                addRowOkButton.onclick = () => rowAdd();
-            }
-            break;
-            
-        case 'databasecontrolrowedit':
-            if (window.selectedRow) {
-                const [appName, command] = window.selectedRow.split(',');
-                const nameInput = document.querySelector(`#${dialogName}Dialog #appNameInput`);
-                const cmdInput = document.querySelector(`#${dialogName}Dialog #appCmdInput`);
-                
-                if (nameInput) nameInput.value = appName;
-                if (cmdInput) cmdInput.value = command;
-                
-                setTimeout(() => {
-                    document.querySelector(`#${dialogName}Dialog #appCmdInput`)?.focus();
-                }, 100);
-            }
-            
-            const editRowSelectFileBtn = document.querySelector(`#${dialogName}Dialog .select-file-button`);
-            if (editRowSelectFileBtn) {
-                editRowSelectFileBtn.onclick = () => selectApplicationFile();
-            }
-            
-            const editRowOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (editRowOkButton) {
-                editRowOkButton.onclick = () => rowEdit();
-            }
-            break;
-            
-        case 'databasecontrolrowremove':
-            if (window.selectedRow) {
-                const [appName] = window.selectedRow.split(',');
-                const nameElement = document.querySelector(`#${dialogName}Dialog #appToRemove`);
-                if (nameElement) {
-                    nameElement.textContent = appName;
-                }
-            }
-            
-            const removeRowOkButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-            if (removeRowOkButton) {
-                removeRowOkButton.onclick = () => rowRemove();
-            }
-            break;
-    }
+// Remove Category
+//   Deletes a category and its associated file
+//   Removes category file, updates variables, and removes tab button from interface
+export async function categoryRemove() {
+    const dialog = xlp.getElement('id', 'databasecontrolcatremoveDialog');
+    if (!dialog) return;
     
-    const cancelButton = document.querySelector(`#${dialogName}Dialog .close-button`);
-    if (cancelButton) {
-        cancelButton.onclick = () => closeDialog(dialogName);
-    }
+    const categoryElement = xlp.getElement('rqs', '#categoryToRemove', dialog);
+    const categoryName = categoryElement?.textContent;
     
-    updateDialogOkButton(dialogName);
+    if (categoryName) {
+        const tabList = xlp.getElement('tabList');
+        const button = Array.from(tabList.children).find(btn => btn.textContent === categoryName);
+        if (button) {
+            tabList.removeChild(button);
+        }
+
+        const fileName = `${categoryName}.xlfc`;
+        
+        xlp.deleteTempData(fileName);
+
+        try {
+            const appDir = await e.Api.invoke('get-app-dir');
+            const xldbDir = xlp.dirVar('xldb');
+            const filePath = xlp.joinPath(appDir, xldbDir, fileName);
+            await e.Api.invoke('remove-file', filePath);
+
+            xlp.updateVariables('removeCategory', fileName);
+
+            closeDialog('databasecontrolcatremove');
+
+            const firstTab = xlp.getElement('rqs', '.tablinks', tabList);
+            if (firstTab) {
+                const firstCategoryName = firstTab.textContent;
+                xlp.selectTab(firstCategoryName, { currentTarget: firstTab });
+            } else {
+                const tableBody = xlp.getElement('dqs', '#appTable tbody');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                }
+                xlp.setState('database.currentCategory', null);
+            }
+            
+            xlp.updateEditButtonState();
+            xlp.updateGreenButtonState();
+        } catch (error) {
+        }
+    }
 }
 
-// Dialog Button State
-// Updates dialog button states based on input validation
-function updateDialogOkButton(dialogName) {
-    const okButton = document.querySelector(`#${dialogName}Dialog .ok-button`);
-    if (!okButton) return;
+// Rename Category
+//   Updates category name and file
+//   Renames category file, updates temp data, and updates tab button text
+export async function categoryRename() {
+    const dialog = xlp.getElement('id', 'databasecontrolcatrenameDialog');
+    if (!dialog) return;
     
-    switch (dialogName) {
-        case 'databasecontrolcatadd':
-        case 'databasecontrolcatrename':
-        case 'databasecontrolrowadd':
-        case 'databasecontrolrowedit':
-            const hasValue = document.querySelector(`#${dialogName}Dialog input`)?.value.trim() !== '';
-            okButton.disabled = !hasValue;
-            okButton.style.opacity = hasValue ? '1' : '0.5';
-            okButton.style.cursor = hasValue ? 'pointer' : 'default';
-            break;
+    const currentNameElement = xlp.getElement('rqs', '#currentCategoryName', dialog);
+    const newNameInput = xlp.getElement('rqs', '#newCategoryNameInput', dialog);
+    
+    const oldCategoryName = currentNameElement?.textContent;
+    const newCategoryName = newNameInput?.value.trim();
+
+    if (oldCategoryName && newCategoryName && oldCategoryName !== newCategoryName) {
+        const oldFileName = `${oldCategoryName}.xlfc`;
+        const newFileName = `${newCategoryName}.xlfc`;
+
+        try {
+            const tempData = window.tempData ?? {};
+            const fileData = tempData[oldFileName];
+            if (fileData) {
+                tempData[newFileName] = fileData;
+                delete tempData[oldFileName];
+                xlp.setState('database.tempData', tempData);
+            }
+
+            const appDir = await e.Api.invoke('get-app-dir');
+            const xldbDir = xlp.dirVar('xldb');
             
-        default:
-            okButton.disabled = false;
-            okButton.style.opacity = '1';
-            okButton.style.cursor = 'pointer';
+            const oldFilePath = xlp.joinPath(appDir, xldbDir, oldFileName);
+            const newFilePath = xlp.joinPath(appDir, xldbDir, newFileName);
+            
+            if (fileData) {
+                await e.Api.invoke('write-file', newFilePath, fileData);
+                await e.Api.invoke('remove-file', oldFilePath);
+            }
+
+            xlp.updateVariables('renameCategory', { oldFileName, newFileName });
+
+            const tabList = xlp.getElement('tabList');
+            const oldTab = Array.from(tabList.children).find(btn => btn.textContent === oldCategoryName);
+            if (oldTab) {
+                oldTab.textContent = newCategoryName;
+                oldTab.onclick = (event) => xlp.selectTab(newCategoryName, event);
+                oldTab.classList.add('active');
+            }
+
+            closeDialog('databasecontrolcatrename');
+        } catch (error) {
+        }
     }
 }
 
 // Dialog Closure
-// Hides dialog and cleans up state
+//   Hides dialog and cleans up state
+//   Removes dialog display, hides modal overlay, and resets active dialog state
 export function closeDialog(dialogName) {
-    const dialog = document.getElementById(`${dialogName}Dialog`);
-    const modalOverlay = document.getElementById('modalOverlay');
+    const dialog = xlp.getElement('id', `${dialogName}Dialog`);
+    const modalOverlay = xlp.getElement('id', 'modalOverlay');
     
     if (dialog) {
         dialogCloseListener('r');
@@ -210,157 +179,45 @@ export function closeDialog(dialogName) {
     activeDialog = null;
 }
 
-// Add Category
-// Creates a new category and associated file
-export async function categoryAdd() {
-    const dialog = document.getElementById('databasecontrolcataddDialog');
-    if (!dialog) return;
-    
-    const categoryNameInput = dialog.querySelector('input');
-    const categoryName = categoryNameInput.value.trim();
-
-    if (categoryName) {
-        const fileName = `${categoryName}.xlfc`;
-        
-        if (!window.tempData) {
-            window.tempData = {};
-        }
-        const initialData = { " ": " " };
-        window.tempData[fileName] = JSON.stringify(initialData);
-
-        try {
-            const appDir = await e.Api.invoke('get-app-dir');
-            const xldbDir = xlp.dirVar('xldb');
-            const filePath = xlp.joinPath(appDir, xldbDir, fileName);
-            await e.Api.invoke('write-file', filePath, JSON.stringify(initialData));
-
-            xlp.updateVariables('addCategory', fileName);
-
-            closeDialog('databasecontrolcatadd');
-
-            const tabList = document.getElementById('tabList');
-            if (tabList) {
-                const newTab = document.createElement('button');
-                newTab.className = 'tablinks';
-                newTab.textContent = categoryName;
-                newTab.onclick = (event) => xlp.selectTab(categoryName, event);
-                tabList.appendChild(newTab);
-                
-                const event = { currentTarget: newTab };
-                xlp.selectTab(categoryName, event);
-            }
-        } catch (error) {
-        }
+// Confirm Row Removal
+//   Shows confirmation dialog before deletion
+//   Displays confirmation dialog with selected row information
+export async function confirmRowRemove() {
+    const selectedRow = window.selectedRow;
+    if (!selectedRow) {
+        return;
     }
+    
+    const [appName] = selectedRow.split(',');
+    await showDialog('databasecontrolrowremove');
 }
 
-// Remove Category
-// Deletes a category and its associated file
-export async function categoryRemove() {
-    const dialog = document.getElementById('databasecontrolcatremoveDialog');
-    if (!dialog) return;
-    
-    const categoryElement = dialog.querySelector('#categoryToRemove');
-    const categoryName = categoryElement?.textContent;
-    
-    if (categoryName) {
-        const tabList = document.getElementById('tabList');
-        const button = Array.from(tabList.children).find(btn => btn.textContent === categoryName);
-        if (button) {
-            tabList.removeChild(button);
-        }
-
-        const fileName = `${categoryName}.xlfc`;
-        
-        delete window.tempData[fileName];
-
-        try {
-            const appDir = await e.Api.invoke('get-app-dir');
-            const xldbDir = xlp.dirVar('xldb');
-            const filePath = xlp.joinPath(appDir, xldbDir, fileName);
-            await e.Api.invoke('remove-file', filePath);
-
-            xlp.updateVariables('removeCategory', fileName);
-
-            closeDialog('databasecontrolcatremove');
-
-            const firstTab = tabList.querySelector('.tablinks');
-            if (firstTab) {
-                const firstCategoryName = firstTab.textContent;
-                xlp.selectTab(firstCategoryName, { currentTarget: firstTab });
+// Dialog Event Management
+//   Manages event listeners for dialog close buttons and handles cleanup
+//   Adds or removes close button event listeners based on parameter
+function dialogCloseListener(r) {
+    const dialog = xlp.getElement('dqs', '.dialog:not(.dialog-hidden)');
+    if (dialog) {
+        const closeButton = xlp.getElement('rqs', '.close-button', dialog);
+        if (closeButton) {
+            if (r) {
+                closeButton.removeEventListener('click', () => closeDialog(dialog.id.replace('Dialog', '')));
             } else {
-                const tableBody = document.querySelector('#appTable tbody');
-                if (tableBody) {
-                    tableBody.innerHTML = '';
-                }
-                window.currentCategory = null;
+                closeButton.addEventListener('click', () => closeDialog(dialog.id.replace('Dialog', '')));
             }
-            
-            xlp.updateEditButtonState();
-            xlp.updateGreenButtonState();
-        } catch (error) {
-        }
-    }
-}
-
-// Rename Category
-// Updates category name and file
-export async function categoryRename() {
-    const dialog = document.getElementById('databasecontrolcatrenameDialog');
-    if (!dialog) return;
-    
-    const currentNameElement = dialog.querySelector('#currentCategoryName');
-    const newNameInput = dialog.querySelector('#newCategoryNameInput');
-    
-    const oldCategoryName = currentNameElement?.textContent;
-    const newCategoryName = newNameInput?.value.trim();
-
-    if (oldCategoryName && newCategoryName && oldCategoryName !== newCategoryName) {
-        const oldFileName = `${oldCategoryName}.xlfc`;
-        const newFileName = `${newCategoryName}.xlfc`;
-
-        try {
-            const fileData = window.tempData[oldFileName];
-            if (fileData) {
-                window.tempData[newFileName] = fileData;
-                delete window.tempData[oldFileName];
-            }
-
-            const appDir = await e.Api.invoke('get-app-dir');
-            const xldbDir = xlp.dirVar('xldb');
-            
-            const oldFilePath = xlp.joinPath(appDir, xldbDir, oldFileName);
-            const newFilePath = xlp.joinPath(appDir, xldbDir, newFileName);
-            
-            if (fileData) {
-                await e.Api.invoke('write-file', newFilePath, fileData);
-                await e.Api.invoke('remove-file', oldFilePath);
-            }
-
-            xlp.updateVariables('renameCategory', { oldFileName, newFileName });
-
-            const tabList = document.getElementById('tabList');
-            const oldTab = Array.from(tabList.children).find(btn => btn.textContent === oldCategoryName);
-            if (oldTab) {
-                oldTab.textContent = newCategoryName;
-                oldTab.onclick = (event) => xlp.selectTab(newCategoryName, event);
-                oldTab.classList.add('active');
-            }
-
-            closeDialog('databasecontrolcatrename');
-        } catch (error) {
         }
     }
 }
 
 // Add Row
-// Adds a new entry to the current category
+//   Adds a new entry to the current category
+//   Creates new row entry, updates temp data, and inserts row into table in sorted order
 export async function rowAdd() {
-    const dialog = document.getElementById('databasecontrolrowaddDialog');
+    const dialog = xlp.getElement('id', 'databasecontrolrowaddDialog');
     if (!dialog) return;
     
-    const appNameInput = dialog.querySelector('#appNameInput');
-    const appCmdInput = dialog.querySelector('#appCmdInput');
+    const appNameInput = xlp.getElement('rqs', '#appNameInput', dialog);
+    const appCmdInput = xlp.getElement('rqs', '#appCmdInput', dialog);
     
     const appName = appNameInput?.value.trim();
     const appCmd = appCmdInput?.value.trim();
@@ -380,19 +237,22 @@ export async function rowAdd() {
     const categoryName = activeTab.textContent;
     const fileName = `${categoryName}.xlfc`;
 
-    if (!window.tempData[fileName]) {
-        window.tempData[fileName] = JSON.stringify({});
+    const tempData = window.tempData ?? {};
+    if (!tempData[fileName]) {
+        tempData[fileName] = JSON.stringify({});
+        xlp.setState('database.tempData', tempData);
     }
-    let fileData = JSON.parse(window.tempData[fileName]);
+    let fileData = JSON.parse(tempData[fileName]);
 
     if (fileData[" "] === " ") {
         delete fileData[" "];
     }
 
     fileData[appName] = appCmd;
-    window.tempData[fileName] = JSON.stringify(fileData);
+    tempData[fileName] = JSON.stringify(fileData);
+    xlp.setState('database.tempData', tempData);
 
-    const tableBody = document.querySelector('#appTable tbody');
+    const tableBody = xlp.getElement('dqs', '#appTable tbody');
     if (tableBody) {
         const newRow = document.createElement('tr');
         newRow.className = 'table-row';
@@ -401,9 +261,9 @@ export async function rowAdd() {
             <td class="command-column">${appCmd}</td>
         `;
 
-        const rows = Array.from(tableBody.querySelectorAll('.table-row'));
+        const rows = Array.from(xlp.getElement('rqa', '.table-row', tableBody));
         let insertIndex = rows.findIndex(row => {
-            const existingAppName = row.querySelector('.app-column').textContent;
+            const existingAppName = xlp.getElement('rqs', '.app-column', row)?.textContent;
             return appName.localeCompare(existingAppName) < 0;
         });
 
@@ -414,10 +274,10 @@ export async function rowAdd() {
         }
 
         newRow.addEventListener('click', (event) => {
-            const selectedRows = document.querySelectorAll('.table-row.selected');
+            const selectedRows = xlp.getElement('dqa', '.table-row.selected');
             selectedRows.forEach(row => row.classList.remove('selected'));
             newRow.classList.add('selected');
-            window.selectedRow = `${appName},${appCmd}`;
+            xlp.setState('database.selectedRow', `${appName},${appCmd}`);
             xlp.updateEditButtonState();
             xlp.updateGreenButtonState();
         });
@@ -427,13 +287,14 @@ export async function rowAdd() {
 }
 
 // Edit Row
-// Updates an existing entry in the current category
+//   Updates an existing entry in the current category
+//   Modifies row entry, updates temp data, and refreshes table row display
 export async function rowEdit() {
-    const dialog = document.getElementById('databasecontrolroweditDialog');
+    const dialog = xlp.getElement('id', 'databasecontrolroweditDialog');
     if (!dialog) return;
     
-    const appNameInput = dialog.querySelector('#appNameInput');
-    const appCmdInput = dialog.querySelector('#appCmdInput');
+    const appNameInput = xlp.getElement('rqs', '#appNameInput', dialog);
+    const appCmdInput = xlp.getElement('rqs', '#appCmdInput', dialog);
     
     if (!appNameInput || !appCmdInput) {
         return;
@@ -446,14 +307,14 @@ export async function rowEdit() {
         return;
     }
 
-    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    const selectedRow = xlp.getElement('dqs', '#appTable .table-row.selected');
     if (!selectedRow) {
         return;
     }
 
-    const oldAppName = selectedRow.querySelector('.app-column').textContent;
+    const oldAppName = xlp.getElement('rqs', '.app-column', selectedRow)?.textContent;
 
-    const activeTab = document.querySelector('.tablinks.active');
+    const activeTab = xlp.getElement('dqs', '.tablinks.active');
     if (!activeTab) {
         return;
     }
@@ -461,11 +322,12 @@ export async function rowEdit() {
     const categoryName = activeTab.textContent;
     const fileName = `${categoryName}.xlfc`;
 
-    if (!window.tempData[fileName]) {
+    const tempData = window.tempData ?? {};
+    if (!tempData[fileName]) {
         return;
     }
 
-    let fileData = JSON.parse(window.tempData[fileName]);
+    let fileData = JSON.parse(tempData[fileName]);
 
     if (oldAppName === newAppName) {
         fileData[newAppName] = newAppCmd;
@@ -474,17 +336,18 @@ export async function rowEdit() {
         fileData[newAppName] = newAppCmd;
     }
 
-    window.tempData[fileName] = JSON.stringify(fileData);
+    tempData[fileName] = JSON.stringify(fileData);
+    xlp.setState('database.tempData', tempData);
 
     closeDialog('databasecontrolrowedit');
     
-    const appCell = selectedRow.querySelector('.app-column');
-    const commandCell = selectedRow.querySelector('.command-column');
+    const appCell = xlp.getElement('rqs', '.app-column', selectedRow);
+    const commandCell = xlp.getElement('rqs', '.command-column', selectedRow);
     
     if (appCell && commandCell) {
         appCell.textContent = newAppName;
         commandCell.textContent = newAppCmd;
-        window.selectedRow = `${newAppName},${newAppCmd}`;
+        xlp.setState('database.selectedRow', `${newAppName},${newAppCmd}`);
     }
     
     xlp.updateEditButtonState();
@@ -492,16 +355,17 @@ export async function rowEdit() {
 }
 
 // Remove Row
-// Deletes an entry from the current category
+//   Deletes an entry from the current category
+//   Removes row entry, updates temp data, and removes row from table or resets to empty state
 export async function rowRemove() {
-    const selectedRow = document.querySelector('#appTable .table-row.selected');
+    const selectedRow = xlp.getElement('dqs', '#appTable .table-row.selected');
     if (!selectedRow) {
         return;
     }
 
-    const appName = selectedRow.querySelector('.app-column').textContent;
+    const appName = xlp.getElement('rqs', '.app-column', selectedRow)?.textContent;
 
-    const activeTab = document.querySelector('.tablinks.active');
+    const activeTab = xlp.getElement('dqs', '.tablinks.active');
     if (!activeTab) {
         return;
     }
@@ -509,16 +373,17 @@ export async function rowRemove() {
     const categoryName = activeTab.textContent;
     const fileName = `${categoryName}.xlfc`;
 
-    if (!window.tempData[fileName]) {
+    const tempData = window.tempData ?? {};
+    if (!tempData[fileName]) {
         return;
     }
 
-    let fileData = JSON.parse(window.tempData[fileName]);
+    let fileData = JSON.parse(tempData[fileName]);
     delete fileData[appName];
 
     if (Object.keys(fileData).length === 0) {
         fileData[" "] = " ";
-        const tableBody = document.querySelector('#appTable tbody');
+        const tableBody = xlp.getElement('dqs', '#appTable tbody');
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr class="table-row">
@@ -531,27 +396,18 @@ export async function rowRemove() {
         selectedRow.remove();
     }
 
-    window.tempData[fileName] = JSON.stringify(fileData);
+    tempData[fileName] = JSON.stringify(fileData);
+    xlp.setState('database.tempData', tempData);
 
     closeDialog('databasecontrolrowremove');
 
-    window.selectedRow = null;
+    xlp.setState('database.selectedRow', null);
     xlp.updateEditButtonState();
 }
 
-// Confirm Row Removal
-// Shows confirmation dialog before deletion
-export async function confirmRowRemove() {
-    if (!window.selectedRow) {
-        return;
-    }
-    
-    const [appName] = window.selectedRow.split(',');
-    await showDialog('databasecontrolrowremove');
-}
-
 // Application File Selection
-// Opens file selection dialog for application path
+//   Opens file selection dialog for application path
+//   Opens file dialog, parses shortcut information, and populates dialog input fields
 export async function selectApplicationFile() {
     try {
         const defaultDir = await e.Api.invoke('get-desktop-dir');
@@ -569,17 +425,17 @@ export async function selectApplicationFile() {
             const filePath = result.filePaths[0];
             const shortcutInfo = await e.Api.invoke('parse-shortcut', filePath);
             
-            const dialog = document.querySelector('.dialog:not(.dialog-hidden)');
+            const dialog = xlp.getElement('dqs', '.dialog:not(.dialog-hidden)');
             if (!dialog) return;
             
-            const appNameInput = dialog.querySelector('#appNameInput');
-            const appCmdInput = dialog.querySelector('#appCmdInput');
+            const appNameInput = xlp.getElement('rqs', '#appNameInput', dialog);
+            const appCmdInput = xlp.getElement('rqs', '#appCmdInput', dialog);
             
             if (appNameInput && appCmdInput) {
-                appNameInput.value = shortcutInfo?.name || '';
+                appNameInput.value = shortcutInfo?.name ?? '';
                 appCmdInput.value = shortcutInfo?.target || filePath;
                 
-                const okButton = dialog.querySelector('.ok-button');
+                const okButton = xlp.getElement('rqs', '.ok-button', dialog);
                 if (okButton) {
                     if (appNameInput.value.trim() && appCmdInput.value.trim()) {
                         okButton.disabled = false;
@@ -593,36 +449,80 @@ export async function selectApplicationFile() {
     }
 }
 
-// Dialog Event Management
-// Manages event listeners for dialog close buttons and handles cleanup
-function dialogCloseListener(r) {
-    const dialog = document.querySelector('.dialog:not(.dialog-hidden)');
-    if (dialog) {
-        const closeButton = dialog.querySelector('.close-button');
-        if (closeButton) {
-            if (r) {
-                closeButton.removeEventListener('click', () => closeDialog(dialog.id.replace('Dialog', '')));
-            } else {
-                closeButton.addEventListener('click', () => closeDialog(dialog.id.replace('Dialog', '')));
-            }
-        }
-    }
-}
+// Database Control Dialog Setup
+//   Initializes and populates database control dialogs
+//   Clears inputs and buttons, sets up handlers from configuration, and configures button states
+function setupDatabaseControlDialog(dialogName) {
+    const dialog = xlp.getElement('id', `${dialogName}Dialog`);
+    if (!dialog) return;
+    
+    const dialogInputs = xlp.getElement('rqa', 'input', dialog);
+    dialogInputs.forEach(input => {
+        input.value = '';
+        input.oninput = () => updateDialogOkButton(dialogName);
+    });
 
-// Unsaved Changes Handler
-// Manages section navigation with pending changes
-export async function showUnsavedChangesDialog(pendingSection) {
-    await xlp.loadSection(pendingSection);
+    const dialogButtons = xlp.getElement('rqa', 'button', dialog);
+    dialogButtons.forEach(button => {
+        button.onclick = null;
+    });
+
+    const config = xlp.dialogConfig?.[dialogName];
+    if (!config) return;
+
+    const handlerMap = {
+        categoryAdd,
+        categoryRemove,
+        categoryRename,
+        rowAdd,
+        rowEdit,
+        rowRemove,
+        selectApplicationFile
+    };
+
+    switch (dialogName) {
+        case 'databasecontrolcatadd':
+        case 'databasecontrolcatrename':
+        case 'databasecontrolcatremove':
+        case 'databasecontrolrowadd':
+        case 'databasecontrolrowedit':
+        case 'databasecontrolrowremove':
+            if (config.preSetup) {
+                config.preSetup(dialog, xlp);
+            }
+            if (config.focusSelector) {
+                xlp.focusInputAfterDelay(config.focusSelector);
+            }
+            const handlerFunc = handlerMap[config.handler];
+            if (handlerFunc) {
+                xlp.setupDialogButton(dialogName, () => handlerFunc(), config.buttonClass);
+            }
+            if (config.additionalButtons) {
+                config.additionalButtons.forEach(btn => {
+                    const btnHandlerFunc = handlerMap[btn.handler];
+                    if (btnHandlerFunc) {
+                        xlp.setupDialogButton(dialogName, () => btnHandlerFunc(), btn.buttonClass);
+                    }
+                });
+            }
+            break;
+    }
+    
+    xlp.setupDialogButton(dialogName, () => closeDialog(dialogName), '.close-button');
+    
+    updateDialogOkButton(dialogName);
 }
 
 // Configuration Change Handler
-// Manages unsaved configuration changes between sections
+//   Manages unsaved configuration changes between sections
+//   Shows dialog prompting user to save or discard configuration changes
 export async function showConfigChangeDialog(section) {
     return new Promise((resolve) => {
-        const dialog = document.getElementById('configchangeDialog');
-        const sectionSpan = dialog.querySelector('#configChangeSection');
-        const saveButton = dialog.querySelector('.ok-button');
-        const discardButton = dialog.querySelector('.close-button');
+        const dialog = xlp.getElement('id', 'configchangeDialog');
+        if (!dialog) return;
+        const sectionSpan = xlp.getElement('rqs', '#configChangeSection', dialog);
+        const saveButton = xlp.getElement('rqs', '.ok-button', dialog);
+        const discardButton = xlp.getElement('rqs', '.close-button', dialog);
 
         sectionSpan.textContent = section;
         dialog.classList.remove('dialog-hidden');
@@ -649,11 +549,13 @@ export async function showConfigChangeDialog(section) {
 }
 
 // Configuration Save Confirmation
-// Shows confirmation after saving configuration changes
+//   Shows confirmation after saving configuration changes
+//   Displays confirmation dialog indicating configuration section was saved
 export function showConfigSaveDialog(section) {
-    const dialog = document.getElementById('configsaveDialog');
-    const sectionSpan = dialog.querySelector('#configSaveSection');
-    const okButton = dialog.querySelector('.ok-button');
+    const dialog = xlp.getElement('id', 'configsaveDialog');
+    if (!dialog) return;
+    const sectionSpan = xlp.getElement('rqs', '#configSaveSection', dialog);
+    const okButton = xlp.getElement('rqs', '.ok-button', dialog);
 
     sectionSpan.textContent = section;
     dialog.classList.remove('dialog-hidden');
@@ -667,12 +569,14 @@ export function showConfigSaveDialog(section) {
 }
 
 // Database Change Handler
-// Manages unsaved database changes and handles dialog interactions
+//   Manages unsaved database changes and handles dialog interactions
+//   Shows dialog prompting user to save or discard database changes
 export async function showDatabaseChangeDialog() {
     return new Promise((resolve) => {
         xlp.showDialog('databasecontrolconfirm');
-        const okButton = document.querySelector('#databasecontrolconfirmDialog .ok-button');
-        const cancelButton = document.querySelector('#databasecontrolconfirmDialog .close-button');
+        const confirmDialog = xlp.getElement('id', 'databasecontrolconfirmDialog');
+        const okButton = confirmDialog ? xlp.getElement('rqs', '.ok-button', confirmDialog) : null;
+        const cancelButton = confirmDialog ? xlp.getElement('rqs', '.close-button', confirmDialog) : null;
 
         const handleSave = () => {
             cleanup();
@@ -694,4 +598,80 @@ export async function showDatabaseChangeDialog() {
         if (okButton) okButton.addEventListener('click', handleSave);
         if (cancelButton) cancelButton.addEventListener('click', handleDiscard);
     });
+}
+
+// Dialog Display
+//   Shows and configures dialog with overlay
+//   Displays modal overlay, sets up dialog configuration, and manages active dialog state
+export async function showDialog(dialogName) {
+    const dialog = xlp.getElement('id', `${dialogName}Dialog`);
+    const modalOverlay = xlp.getElement('id', 'modalOverlay');
+    
+    if (!dialog) {
+        return;
+    }
+
+    if (modalOverlay) {
+        modalOverlay.style.display = 'block';
+    }
+
+    if (activeDialog) {
+        closeDialog(activeDialog);
+    }
+
+    if (xlp.dialogConfig?.[dialogName]) {
+        setupDatabaseControlDialog(dialogName);
+    }
+
+    dialog.classList.remove('dialog-hidden');
+    dialog.style.display = 'flex';
+    dialog.style.visibility = 'visible';
+    dialog.style.opacity = '1';
+    activeDialog = dialogName;
+
+    dialogCloseListener();
+}
+
+// Unsaved Changes Handler
+//   Manages section navigation with pending changes
+//   Loads section without showing unsaved changes dialog
+export async function showUnsavedChangesDialog(pendingSection) {
+    await xlp.loadSection(pendingSection);
+}
+
+// Dialog Button State
+//   Updates dialog button states based on input validation
+//   Validates input values and updates button enabled state, opacity, and cursor style
+function updateDialogOkButton(dialogName) {
+    const dialog = xlp.getElement('id', `${dialogName}Dialog`);
+    if (!dialog) return;
+    
+    const okButton = xlp.getElement('rqs', '.ok-button', dialog);
+    if (!okButton) return;
+    
+    const config = xlp.dialogConfig?.[dialogName];
+    
+    switch (dialogName) {
+        case 'databasecontrolcatadd':
+        case 'databasecontrolcatrename':
+        case 'databasecontrolrowadd':
+        case 'databasecontrolrowedit':
+            if (config?.requiresValidation) {
+                const input = xlp.getElement('rqs', 'input', dialog);
+                const hasValue = input?.value.trim() !== '';
+                okButton.disabled = !hasValue;
+                okButton.style.opacity = hasValue ? '1' : '0.5';
+                okButton.style.cursor = hasValue ? 'pointer' : 'default';
+            } else {
+                okButton.disabled = false;
+                okButton.style.opacity = '1';
+                okButton.style.cursor = 'pointer';
+            }
+            break;
+            
+        default:
+            okButton.disabled = false;
+            okButton.style.opacity = '1';
+            okButton.style.cursor = 'pointer';
+    }
 }

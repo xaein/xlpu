@@ -1,7 +1,12 @@
 // Core Application Module
-// Manages application state, sections, and resource loading
+//   Manages application state, sections, and resource loading
+//   Handles section navigation, script loading, and application initialization
+//   Manages window controls, title bar actions, and application lifecycle
+//   Coordinates module loading order and section-specific functionality
 
-// Application state management variables
+// Application state management
+//   Tracks current section, loaded sections, resources, and initialization status
+//   Maintains state object with currentSection, sections Map, loadedResources Set, and isInitialized flag
 let state = {
     currentSection: null,
     sections: new Map(),
@@ -11,17 +16,20 @@ let state = {
 window.state = state;
 
 // Core application sections
+//   Defines all available application sections for navigation and validation
+//   Array of section identifiers used for section loading and validation checks
 const coreSections = [
     'initialization',
     'welcome',
     'launchlist',
     'databasecontrol',
-    'themes',
     'configuration',
     'logging'
 ];
 
 // Section navigation flows
+//   Defines section loading sequences for first run, second run, and normal operation
+//   Maps flow types to arrays of section IDs that determine application startup sequence
 const sectionFlow = {
     firstRun: ['initialization', 'welcome', 'databasecontrol'],
     secondRun: ['initialization', 'databasecontrol'],
@@ -29,7 +37,9 @@ const sectionFlow = {
 };
 
 // Application initialization
-// Sets up core modules and application environment
+//   Sets up core modules and application environment
+//   Loads core scripts, initializes configuration, loads xldbv.json, sets up event handlers
+//   Handles first run flow and initializes system tray
 export async function initialize() {
     if (state.isInitialized) {
         return;
@@ -37,6 +47,10 @@ export async function initialize() {
     
     try {
         window.onerror = handleError;
+        await loadScript('core.g');
+        if (xlp.initializeConfigModules) {
+            await xlp.initializeConfigModules();
+        }
         await loadScript('core.c');
         await loadScript('core.v');
         await loadScript('m.init');
@@ -55,7 +69,10 @@ export async function initialize() {
         } catch (error) {
             throw new Error('Failed to parse xldbv.json');
         }
-        const coreScripts = window.xldbv?.coreScripts || [];
+        if (xlp.initializeGlobalState) {
+            xlp.initializeGlobalState();
+        }
+        const coreScripts = window.xldbv?.coreScripts ?? [];
         await Promise.all(
             coreScripts.map(script => loadScript(script))
         );
@@ -67,7 +84,10 @@ export async function initialize() {
         showSection('initialization');
         try {
             const loaderHtml = await loadSectionHtml('s', 'loader');
-            document.getElementById('loaderContainer').innerHTML = loaderHtml;
+            const loaderContainer = xlp.getElement('loaderContainer');
+            if (loaderContainer) {
+                loaderContainer.innerHTML = loaderHtml;
+            }
         } catch (error) {
             handleError('Failed to load loader HTML:', error);
         }
@@ -98,7 +118,8 @@ export async function initialize() {
 }
 
 // Directory path resolution
-// Resolves directory paths based on configuration and section
+//   Resolves directory paths based on configuration and section
+//   Retrieves directory paths from xldbv configuration with support for nested paths
 export function dirVar(...args) {
     let result = '';
     if (!window.xldbv) {
@@ -135,211 +156,96 @@ export function dirVar(...args) {
     return result;
 }
 
-// Event system setup
-// Configures application-wide event listeners and handlers
-export function setupEventDelegation() {
-    document.querySelectorAll('.titlebar-button').forEach(button => {
-        button.addEventListener('click', (event) => {
-            const action = event.target.closest('button').classList[1]?.replace('-button', '');
-            if (action) handleTitleBarAction(action);
-        });
-    });
-
-    if (window.xldbv?.firstRun !== 0) {
-        const startButton = document.getElementById('start-button');
-        if (startButton) {
-            startButton.addEventListener('click', () => {
-                window.xldbv.firstRun = 2;
-                xlp.setData('xldbv', window.xldbv);
-                xlp.loadSection('databasecontrol');
-            });
+// Header Button Generation
+//   Creates section navigation buttons based on sections configuration
+//   Generates header navigation buttons from sections config and sets up click handlers
+export function generateHeaderButtons() {
+    const headerButtons = xlp.getElement('dqs', '.header-buttons');
+    if (!headerButtons) return;
+    
+    headerButtons.innerHTML = '';
+    
+    if (!window.xldbv) {
+        window.xldbv = xlp.getData('xldbv');
+    }
+    
+    Object.entries(xlp.sections).forEach(([sectionId, section]) => {
+        const button = document.createElement('button');
+        button.className = `header-button ${sectionId}-button`;
+        button.textContent = section.label;
+        button.setAttribute('data-section', sectionId);
+        button.addEventListener('click', () => xlp.loadSection(sectionId));
+        button.classList.toggle('active', sectionId === state.currentSection);
+        
+        button.disabled = sectionId === state.currentSection;
+        
+        if (sectionId === 'launchlist' && window.xldbv?.firstRun !== 0) {
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
         }
-    }
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'F1') {
-            event.preventDefault();
-            xlp.openHelpFile();
-        }
+        headerButtons.appendChild(button);
     });
+}
 
-    const footerLeftButton = document.getElementById('footerLeftButton');
-    if (footerLeftButton) {
-        footerLeftButton.addEventListener('click', handleGreenButtonClick);
+// Storage Retrieval
+//   Gets and parses data from localStorage
+//   Retrieves and parses JSON data from localStorage with optional file name filtering
+export function getData(key, fileName = null) {
+    const value = localStorage.getItem(key);
+    if (value === null) return null;
+    try {
+        const parsedValue = JSON.parse(value);
+        if (fileName && typeof parsedValue === 'object') {
+            return parsedValue[fileName] || null;
+        }
+        return parsedValue;
+    } catch (e) {
+        return value;
     }
+}
 
-    const footerRightButton = document.getElementById('footerRightButton');
-    if (footerRightButton) {
-        footerRightButton.addEventListener('click', () => {
-            xlp.exitApp();
-        });
+// Navigation Helper: Go to Update Section
+//   Navigates to the Configuration section and loads the Update sub-section
+//   Loads configuration section and activates the Update panel
+export async function goToUpdateSection() {
+    if (state.currentSection !== 'configuration') {
+        await xlp.loadSection('configuration');
     }
-    const updateArrow = document.getElementById('titlebarUpdateIndicator');
-    if (updateArrow) {
-        updateArrow.addEventListener('click', () => {
-            if (state.isInitialized) {
-                goToUpdateSection();
-            }
-        });
+    if (typeof xlp.loadConfigSection === 'function') {
+        xlp.loadConfigSection('update');
+    }
+}
+
+// Error Handler
+//   Displays error messages in status container
+//   Displays error message in status message element with error styling
+export function handleError(message, error) {
+    const statusMessage = xlp.getElement('statusMessage');
+    if (statusMessage) {
+        statusMessage.textContent = `Error: ${message}`;
+        statusMessage.classList.add('error');
     }
 }
 
 // Title bar handler
-// Processes window control actions from the title bar
+//   Processes window control actions from the title bar
+//   Executes window action from configuration including minimize, maximize, close, and help
 export async function handleTitleBarAction(action) {
-    switch (action) {
-        case 'minimize':
-            await e.Api.invoke('minimize-window');
-            break;
-        case 'maximize':
-            await e.Api.invoke('maximize-window');
-            break;
-        case 'close':
-            if (window.xldbv?.configOpts?.system?.closeTo) {
-                await e.Api.invoke('minimize-to-tray');
-            } else {
-                await xlp.exitApp();
-            }
-            break;
-        case 'help':
-            await xlp.openHelpFile();
-            break;
+    const config = xlp.windowActionConfig?.[action];
+    if (!config) return;
+
+    if (config.apiCall) {
+        await e.Api.invoke(config.apiCall);
+    } else if (config.handler) {
+        await config.handler();
     }
-}
-
-// Green button handler
-// Processes actions for the footer left button based on current section
-export function handleGreenButtonClick() {
-    switch (state.currentSection) {
-        case 'launchlist':
-            if (window.selectedApp) {
-                xlp.handleLaunch();
-            }
-            break;
-        case 'databasecontrol':
-            xlp.saveDatabase();
-            break;
-        case 'themes':
-            xlp.applySelectedTheme();
-            break;
-        case 'configuration':
-            xlp.saveConfiguration();
-            break;
-    }
-}
-
-// Script loading
-// Imports and attaches module exports to xlp namespace
-export async function loadScript(name) {
-    try {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
-        Object.assign(xlp, module);
-        return true;
-    } catch (error) {
-        throw new Error(`Failed to load script xlp.${name}.js: ${error.message}`);
-    }
-}
-
-// Script unloading
-// Removes module exports from xlp namespace and resources
-export async function unloadScript(name) {
-    try {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
-        Object.keys(module).forEach(key => {
-            delete xlp[key];
-        });
-        state.loadedResources.delete(name);
-    } catch (error) {
-    }
-}
-
-// Section Style Loading
-// Loads and attaches section-specific style resources
-export async function loadSectionStyles(section) {
-    if (section.styles && section.styles.length > 0) {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
-        
-        const stylePromises = section.styles.map(async style => {
-            const stylePath = `${themesDir}/s.${style}.css`;
-            await xlp.loadStyle(stylePath);
-            state.loadedResources.add(`style:${style}`);
-        });
-        
-        await Promise.all(stylePromises);
-    }
-}
-
-// Section Script Loading
-// Loads and attaches section-specific JavaScript modules
-export async function loadSectionScripts(section) {
-    if (section.scripts && section.scripts.length > 0) {
-        const scriptPromises = section.scripts.map(async script => {
-            const scriptKey = `script:${script}`;
-            if (!state.loadedResources.has(scriptKey)) {
-                try {
-                    await xlp.loadScript(script);
-                    state.loadedResources.add(scriptKey);
-                } catch (error) {
-                    throw error;
-                }
-            }
-        });
-        
-        await Promise.all(scriptPromises);
-    }
-}
-
-// Resource Availability Check
-// Verifies section resources are loaded and ready
-export function waitForSectionResources(sectionId) {
-    const section = xlp.sections[sectionId];
-    if (!section) {
-        return Promise.reject(new Error(`Section ${sectionId} not found`));
-    }
-
-    return new Promise((resolve) => {
-        const mainTemplate = document.querySelector(`.${section.templates.main}`);
-        if (!mainTemplate) {
-            return;
-        }
-
-        const areStylesLoaded = section.styles.every(style => {
-            const styleLoaded = Array.from(document.styleSheets).some(sheet => {
-                try {
-                    return sheet.href?.includes(`s.${style}.css`);
-                } catch (e) {
-                    return false;
-                }
-            });
-            
-            const element = document.querySelector(`.${style}`);
-            const computedStyle = element ? window.getComputedStyle(element).display : 'none';
-            
-            return styleLoaded && element && computedStyle !== '';
-        });
-        
-        if (!areStylesLoaded) {
-            return;
-        }
-
-        const mainScript = section.scripts[section.scripts.length - 1];
-        const scriptName = mainScript.replace(/^m\./, '');
-        const initFunctionName = `initialize${scriptName.charAt(0).toUpperCase()}${scriptName.slice(1)}`;
-        const isLoaded = typeof xlp[initFunctionName] === 'function';
-        
-        if (!isLoaded) {
-            return;
-        }
-
-        resolve();
-    });
 }
 
 // Section Loading
-// Loads and initializes a new application section
+//   Loads and initializes a new application section
+//   Handles section navigation, resource loading, cleanup, and initialization
+//   Manages unsaved changes dialogs and section state transitions
 export async function loadSection(sectionId) {
     try {
         if (state.currentSection === sectionId) {
@@ -360,8 +266,8 @@ export async function loadSection(sectionId) {
             throw new Error(`Section ${sectionId} not found`);
         }
 
-        const dynamicContent = document.getElementById('dynamicContent');
-        const sectionOverlay = document.getElementById('sectionOverlay');
+        const dynamicContent = xlp.getElement('dynamicContent');
+        const sectionOverlay = xlp.getElement('sectionOverlay');
         
         if (state.currentSection !== 'initialization' && state.currentSection !== 'welcome') {
             const rect = dynamicContent.getBoundingClientRect();
@@ -381,8 +287,9 @@ export async function loadSection(sectionId) {
         }
 
         if (state.currentSection === 'databasecontrol') {
-            const preloadedData = getData('preloadedData') || {};
-            if (window.tempData && JSON.stringify(preloadedData) !== JSON.stringify(window.tempData)) {
+            const preloadedData = getData('preloadedData') ?? {};
+            const tempData = window.tempData ?? {};
+            if (tempData && Object.keys(tempData).length > 0 && JSON.stringify(preloadedData) !== JSON.stringify(tempData)) {
                 const shouldSave = await xlp.showDatabaseChangeDialog();
                 if (shouldSave) {
                     await xlp.showDialog('databasecontrolsave');
@@ -418,7 +325,7 @@ export async function loadSection(sectionId) {
                 const dialogPromises = section.templates.dialogs.map(async dialogId => {
                     try {
                         const dialogHtml = await loadSectionHtml('d', dialogId);
-                        const dialogContainer = document.getElementById('dialogContainer');
+                        const dialogContainer = xlp.getElement('dialogContainer');
                         if (!dialogContainer) {
                             return;
                         }
@@ -426,7 +333,7 @@ export async function loadSection(sectionId) {
                         tempDiv.innerHTML = dialogHtml;
                         const dialogElement = tempDiv.firstElementChild;
                         if (dialogElement) {
-                            const existingDialog = document.getElementById(dialogElement.id);
+                            const existingDialog = xlp.getElement(dialogElement.id);
                             if (existingDialog) {
                                 existingDialog.remove();
                             }
@@ -483,79 +390,28 @@ export async function loadSection(sectionId) {
     }
 }
 
-// Section Style Cleanup
-// Removes section-specific style resources
-export async function unloadSectionStyles(section) {
-    if (section.styles && section.styles.length > 0) {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
-        
-        for (const style of section.styles) {
-            await xlp.unloadStyle(`${themesDir}/s.${style}.css`);
-            state.loadedResources.delete(`style:${style}`);
-        }
-    }
-}
-
-// Section Script Cleanup
-// Removes section-specific JavaScript modules
-export async function unloadSectionScripts(section) {
-    const coreScripts = window.xldbv?.coreScripts || [];
-    
-    if (section.scripts && section.scripts.length > 0) {
-        for (const script of section.scripts) {
-            if (!coreScripts.includes(script)) {
-                const scriptKey = `script:${script}`;
-                await xlp.unloadScript(script);
-                state.loadedResources.delete(scriptKey);
-            }
-        }
-    }
-}
-
-// Section Unloading
-// Cleans up and removes an active section
-export async function unloadSection(sectionId) {
+// HTML Content Loading
+//   Loads section HTML content from file
+//   Loads HTML content from section files using file protocol
+export async function loadSectionHtml(type, name) {
     try {
-        if (sectionId === 'initialization' || sectionId === 'welcome') {
-            document.getElementById(`${sectionId}Section`)?.classList.add('hidden');
-            
-            if (sectionId === 'initialization') {
-                await xlp.unloadScript('init');
-            }
-            
-            const header = document.getElementById('headerContainer');
-            const footer = document.querySelector('.footer');
-            header?.classList.remove('hidden');
-            footer?.classList.remove('hidden');
-            
-            return;
+        const appDir = await e.Api.invoke('get-app-dir');
+        const includeDir = dirVar('include');
+        const url = `file://${appDir}/files/${includeDir}/xlp.${type}.${name}.html`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to load section HTML: ${response.statusText}`);
         }
-
-        const section = state.sections.get(sectionId) || xlp.sections[sectionId];
-        if (!section) {
-            return;
-        }
-
-        const cleanupFunctionName = `cleanup${sectionId.charAt(0).toUpperCase()}${sectionId.slice(1)}`;
-        if (xlp[cleanupFunctionName]) {
-            await xlp[cleanupFunctionName]();
-        }
-
-        await unloadSectionScripts(section);
-        await unloadSectionStyles(section);
-
-        document.getElementById('dynamicContent').innerHTML = '';
-
-        state.sections.delete(sectionId);
-
+        const text = await response.text();
+        return text;
     } catch (error) {
-        xlp.handleError(`Failed to unload section ${sectionId}`, error);
+        throw new Error(`Failed to load section HTML: ${error.message}`);
     }
 }
 
 // Resource Loading
-// Loads all required section resources
+//   Loads all required section resources
+//   Loads all styles and scripts for section and tracks loaded resources
 export async function loadSectionResources(section) {
     const appDir = await e.Api.invoke('get-app-dir');
     
@@ -583,8 +439,187 @@ export async function loadSectionResources(section) {
     }
 }
 
+// Section Script Loading
+//   Loads and attaches section-specific JavaScript modules
+//   Loads all JavaScript modules for section and tracks loaded resources
+export async function loadSectionScripts(section) {
+    if (section.scripts && section.scripts.length > 0) {
+        const scriptPromises = section.scripts.map(async script => {
+            const scriptKey = `script:${script}`;
+            if (!state.loadedResources.has(scriptKey)) {
+                try {
+                    await xlp.loadScript(script);
+                    state.loadedResources.add(scriptKey);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        });
+        
+        await Promise.all(scriptPromises);
+    }
+}
+
+// Section Style Loading
+//   Loads and attaches section-specific style resources
+//   Loads all CSS files for section from compiled themes directory
+export async function loadSectionStyles(section) {
+    if (section.styles && section.styles.length > 0) {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
+        
+        const stylePromises = section.styles.map(async style => {
+            const stylePath = `${themesDir}/s.${style}.css`;
+            await xlp.loadStyle(stylePath);
+            state.loadedResources.add(`style:${style}`);
+        });
+        
+        await Promise.all(stylePromises);
+    }
+}
+
+// Script loading
+//   Imports and attaches module exports to xlp namespace
+//   Dynamically imports module and assigns all exports to global xlp object
+export async function loadScript(name) {
+    try {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
+        Object.assign(xlp, module);
+        return true;
+    } catch (error) {
+        throw new Error(`Failed to load script xlp.${name}.js: ${error.message}`);
+    }
+}
+
+// Style Loading
+//   Loads external stylesheet using file protocol
+//   Creates link element and appends to document head with file protocol
+export async function loadStyle(href) {
+    return new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = `file://${href}`;
+        link.onload = () => resolve();
+        link.onerror = () => reject(new Error(`Failed to load style: ${href}`));
+        document.head.appendChild(link);
+    });
+}
+
+// Storage Update
+//   Stores data in localStorage with optional partitioning
+//   Stores data in localStorage with optional file name partitioning support
+export function setData(key, data, fileName = null) {
+    if (fileName) {
+        let existingData = getData(key) ?? {};
+        existingData[fileName] = data;
+        localStorage.setItem(key, JSON.stringify(existingData));
+    } else {
+        if (typeof data === 'string') {
+            localStorage.setItem(key, data);
+        } else {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+    }
+}
+
+// Event system setup
+//   Configures application-wide event listeners and handlers
+//   Sets up global event listeners from configuration
+export function setupEventDelegation() {
+    if (xlp.setupEventListenersFromConfig) {
+        xlp.setupEventListenersFromConfig('global');
+    }
+}
+
+// Section Display
+//   Shows or hides sections based on current state
+//   Hides all sections, shows specified section, and updates header/footer visibility
+export function showSection(sectionId) {
+    xlp.getElement('dqa', '.content-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    let section;
+    if (sectionId === 'initialization' || sectionId === 'welcome') {
+        section = xlp.getElement(`${sectionId}Section`);
+    } else {
+        section = xlp.getElement('dynamicContent');
+    }
+
+    if (section) {
+        section.classList.remove('hidden');
+    }
+
+    const header = xlp.getElement('headerContainer');
+    const footer = document.querySelector('.footer');
+
+    if (sectionId === 'initialization' || sectionId === 'welcome') {
+        header?.classList.add('hidden');
+        footer?.classList.add('hidden');
+    } else {
+        header?.classList.remove('hidden');
+        footer?.classList.remove('hidden');
+    }
+
+    state.currentSection = sectionId;
+}
+
+// Section Unloading
+//   Cleans up and removes an active section
+//   Hides section element, unloads styles and scripts, and calls section cleanup function
+export async function unloadSection(sectionId) {
+    try {
+        if (sectionId === 'initialization' || sectionId === 'welcome') {
+            const sectionElement = xlp.getElement(`${sectionId}Section`);
+            if (sectionElement) {
+                sectionElement.classList.add('hidden');
+            }
+            
+            if (sectionId === 'initialization') {
+                await xlp.unloadScript('init');
+            }
+            
+            const header = xlp.getElement('headerContainer');
+            const footer = xlp.getElement('dqs', '.footer');
+            if (header) {
+                header.classList.remove('hidden');
+            }
+            if (footer) {
+                footer.classList.remove('hidden');
+            }
+            
+            return;
+        }
+
+        const section = state.sections.get(sectionId) || xlp.sections[sectionId];
+        if (!section) {
+            return;
+        }
+
+        const cleanupFunctionName = `cleanup${sectionId.charAt(0).toUpperCase()}${sectionId.slice(1)}`;
+        if (xlp[cleanupFunctionName]) {
+            await xlp[cleanupFunctionName]();
+        }
+
+        await unloadSectionScripts(section);
+        await unloadSectionStyles(section);
+
+        const dynamicContent = xlp.getElement('dynamicContent');
+        if (dynamicContent) {
+            dynamicContent.innerHTML = '';
+        }
+
+        state.sections.delete(sectionId);
+
+    } catch (error) {
+        xlp.handleError(`Failed to unload section ${sectionId}`, error);
+    }
+}
+
 // Resource Cleanup
-// Unloads all section resources
+//   Unloads all section resources
+//   Unloads all styles and scripts for section except core scripts
 export async function unloadSectionResources(section) {
     const coreScripts = window.xldbv?.coreScripts || [];
     
@@ -608,32 +643,68 @@ export async function unloadSectionResources(section) {
     }
 }
 
-// Style Loading
-// Loads external stylesheet using file protocol
-export async function loadStyle(href) {
-    return new Promise((resolve, reject) => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = `file://${href}`;
-        link.onload = () => resolve();
-        link.onerror = () => reject(new Error(`Failed to load style: ${href}`));
-        document.head.appendChild(link);
-    });
+// Section Script Cleanup
+//   Removes section-specific JavaScript modules
+//   Unloads all JavaScript modules for section except core scripts
+export async function unloadSectionScripts(section) {
+    const coreScripts = window.xldbv?.coreScripts || [];
+    
+    if (section.scripts && section.scripts.length > 0) {
+        for (const script of section.scripts) {
+            if (!coreScripts.includes(script)) {
+                const scriptKey = `script:${script}`;
+                await xlp.unloadScript(script);
+                state.loadedResources.delete(scriptKey);
+            }
+        }
+    }
+}
+
+// Section Style Cleanup
+//   Removes section-specific style resources
+//   Unloads all CSS files for section and removes from loaded resources tracking
+export async function unloadSectionStyles(section) {
+    if (section.styles && section.styles.length > 0) {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const themesDir = `${appDir}/files/${dirVar('themes', 'compiled')}`;
+        
+        for (const style of section.styles) {
+            await xlp.unloadStyle(`${themesDir}/s.${style}.css`);
+            state.loadedResources.delete(`style:${style}`);
+        }
+    }
+}
+
+// Script unloading
+//   Removes module exports from xlp namespace and resources
+//   Removes module exports from xlp object and updates loaded resources tracking
+export async function unloadScript(name) {
+    try {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const module = await import(`${appDir}/files/js/xlp.${name}.js`);
+        Object.keys(module).forEach(key => {
+            delete xlp[key];
+        });
+        state.loadedResources.delete(name);
+    } catch (error) {
+    }
 }
 
 // Style Removal
-// Removes stylesheet from document
+//   Removes stylesheet from document
+//   Removes all link elements matching the specified href
 export function unloadStyle(href) {
-    const links = document.querySelectorAll(`link[href="file://${href}"]`);
+    const links = xlp.getElement('dqa', `link[href="file://${href}"]`);
     links.forEach(link => link.remove());
 }
 
 // UI State Update
-// Updates interface elements based on section state
+//   Updates interface elements based on section state
+//   Updates document title, header, footer visibility, and footer button states
 export function updateUI(section) {
     document.title = `xLauncher Plus v${window.xldbv.version}`;
 
-    const header = document.getElementById('headerContainer');
+    const header = xlp.getElement('headerContainer');
     const footer = document.querySelector('.footer');
 
     if (state.currentSection === 'initialization' || state.currentSection === 'welcome') {
@@ -643,7 +714,7 @@ export function updateUI(section) {
         header?.classList.remove('hidden');
         footer?.classList.remove('hidden');
 
-        const footerLeftButton = document.getElementById('footerLeftButton');
+        const footerLeftButton = xlp.getElement('footerLeftButton');
         if (footerLeftButton) {
             const buttonConfig = section?.footerButtons?.left;
             if (buttonConfig) {
@@ -654,7 +725,7 @@ export function updateUI(section) {
             }
         }
 
-        document.querySelectorAll('.header-buttons button').forEach(button => {
+        xlp.getElement('dqa', '.header-buttons button').forEach(button => {
             const buttonSection = Object.entries(xlp.sections).find(([_, s]) => s.label === button.textContent)?.[0];
             if (buttonSection) {
                 button.classList.toggle('active', buttonSection === state.currentSection);
@@ -664,133 +735,11 @@ export function updateUI(section) {
     }
 }
 
-// Section Display
-// Shows or hides sections based on current state
-export function showSection(sectionId) {
-    document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.add('hidden');
-    });
-
-    let section;
-    if (sectionId === 'initialization' || sectionId === 'welcome') {
-        section = document.getElementById(`${sectionId}Section`);
-    } else {
-        section = document.getElementById('dynamicContent');
-    }
-
-    if (section) {
-        section.classList.remove('hidden');
-    }
-
-    const header = document.getElementById('headerContainer');
-    const footer = document.querySelector('.footer');
-
-    if (sectionId === 'initialization' || sectionId === 'welcome') {
-        header?.classList.add('hidden');
-        footer?.classList.add('hidden');
-    } else {
-        header?.classList.remove('hidden');
-        footer?.classList.remove('hidden');
-    }
-
-    state.currentSection = sectionId;
-}
-
-// Storage Retrieval
-// Gets and parses data from localStorage
-export function getData(key, fileName = null) {
-    const value = localStorage.getItem(key);
-    if (value === null) return null;
-    try {
-        const parsedValue = JSON.parse(value);
-        if (fileName && typeof parsedValue === 'object') {
-            return parsedValue[fileName] || null;
-        }
-        return parsedValue;
-    } catch (e) {
-        return value;
-    }
-}
-
-// Storage Update
-// Stores data in localStorage with optional partitioning
-export function setData(key, data, fileName = null) {
-    if (fileName) {
-        let existingData = getData(key) || {};
-        existingData[fileName] = data;
-        localStorage.setItem(key, JSON.stringify(existingData));
-    } else {
-        if (typeof data === 'string') {
-            localStorage.setItem(key, data);
-        } else {
-            localStorage.setItem(key, JSON.stringify(data));
-        }
-    }
-}
-
-// HTML Content Loading
-// Loads section HTML content from file
-export async function loadSectionHtml(type, name) {
-    try {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const includeDir = dirVar('include');
-        const url = `file://${appDir}/files/${includeDir}/xlp.${type}.${name}.html`;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to load section HTML: ${response.statusText}`);
-        }
-        const text = await response.text();
-        return text;
-    } catch (error) {
-        throw new Error(`Failed to load section HTML: ${error.message}`);
-    }
-}
-
-// Header Button Generation
-// Creates section navigation buttons based on sections configuration
-export function generateHeaderButtons() {
-    const headerButtons = document.querySelector('.header-buttons');
-    if (!headerButtons) return;
-    
-    headerButtons.innerHTML = '';
-    
-    if (!window.xldbv) {
-        window.xldbv = xlp.getData('xldbv');
-    }
-    
-    Object.entries(xlp.sections).forEach(([sectionId, section]) => {
-        const button = document.createElement('button');
-        button.className = `header-button ${sectionId}-button`;
-        button.textContent = section.label;
-        button.setAttribute('data-section', sectionId);
-        button.addEventListener('click', () => xlp.loadSection(sectionId));
-        button.classList.toggle('active', sectionId === state.currentSection);
-        
-        button.disabled = sectionId === state.currentSection;
-        
-        if (sectionId === 'launchlist' && window.xldbv?.firstRun !== 0) {
-            button.disabled = true;
-            button.style.opacity = '0.5';
-            button.style.cursor = 'not-allowed';
-        }
-        headerButtons.appendChild(button);
-    });
-}
-
-// Error Handler
-// Displays error messages in status container
-export function handleError(message, error) {
-    const statusMessage = document.getElementById('statusMessage');
-    if (statusMessage) {
-        statusMessage.textContent = `Error: ${message}`;
-        statusMessage.classList.add('error');
-    }
-}
-
 // Section State Verification
-// Verifies and sets correct section state based on DOM
+//   Verifies and sets correct section state based on DOM
+//   Detects current section from DOM structure and updates state and UI accordingly
 export function verifyAndSetSection() {
-    const dynamicContent = document.getElementById('dynamicContent');
+    const dynamicContent = xlp.getElement('dynamicContent');
     if (!dynamicContent || dynamicContent.children.length === 0) return;
 
     const firstChild = dynamicContent.children[0];
@@ -807,13 +756,49 @@ export function verifyAndSetSection() {
     }
 }
 
-// Navigation Helper: Go to Update Section
-// Navigates to the Configuration section and loads the Update sub-section
-export async function goToUpdateSection() {
-    if (state.currentSection !== 'configuration') {
-        await xlp.loadSection('configuration');
+// Resource Availability Check
+//   Verifies section resources are loaded and ready
+//   Checks if section styles and scripts are loaded and initialization function exists
+export function waitForSectionResources(sectionId) {
+    const section = xlp.sections[sectionId];
+    if (!section) {
+        return Promise.reject(new Error(`Section ${sectionId} not found`));
     }
-    if (typeof xlp.loadConfigSection === 'function') {
-        xlp.loadConfigSection('update');
-    }
+
+    return new Promise((resolve) => {
+        const mainTemplate = xlp.getElement('dqs', `.${section.templates.main}`);
+        if (!mainTemplate) {
+            return;
+        }
+
+        const areStylesLoaded = section.styles.every(style => {
+            const styleLoaded = Array.from(document.styleSheets).some(sheet => {
+                try {
+                    return sheet.href?.includes(`s.${style}.css`);
+                } catch (e) {
+                    return false;
+                }
+            });
+            
+            const element = xlp.getElement('dqs', `.${style}`);
+            const computedStyle = element ? window.getComputedStyle(element).display : 'none';
+            
+            return styleLoaded && element && computedStyle !== '';
+        });
+        
+        if (!areStylesLoaded) {
+            return;
+        }
+
+        const mainScript = section.scripts[section.scripts.length - 1];
+        const scriptName = mainScript.replace(/^m\./, '');
+        const initFunctionName = `initialize${scriptName.charAt(0).toUpperCase()}${scriptName.slice(1)}`;
+        const isLoaded = typeof xlp[initFunctionName] === 'function';
+        
+        if (!isLoaded) {
+            return;
+        }
+
+        resolve();
+    });
 }

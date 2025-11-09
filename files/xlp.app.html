@@ -119,7 +119,9 @@
     <!-- Core Scripts -->
     <script>
         // Application Namespace Setup
-        // Initializes global API and application namespaces
+        //   Initializes global API and application namespaces
+        //   Creates global e object for Electron API access and xlp namespace for application modules
+        //   Establishes foundation for module loading and API communication
         if (typeof e === 'undefined') {
             e = { Api: {} };
         }
@@ -128,14 +130,18 @@
     
     <script type="module">
         // Core Application Module
-        // Imports and attaches application functionality
+        //   Imports and attaches application functionality
+        //   Loads main application module and assigns all exports to global xlp namespace
+        //   Enables access to application functions and state management throughout the application
         import * as app from './js/xlp.app.js';
         Object.assign(xlp, app);
     </script>
 
     <script>
         // Application Initialization and Event Handlers
-        // Sets up core functionality and window control events
+        //   Sets up core functionality and window control events
+        //   Initializes application on DOM content loaded and sets up application closing handler
+        //   Coordinates application startup and shutdown procedures
         document.addEventListener('DOMContentLoaded', () => {
             xlp.initialize();
 

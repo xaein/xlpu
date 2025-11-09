@@ -1,399 +1,87 @@
 // Configuration Module
-// Handles all configuration settings and user interface interactions
+//   Handles all configuration settings and user interface interactions
+//   Manages configuration tabs, panel switching, and settings persistence
+//   Handles logging configuration, theme settings, and application preferences
+//   Provides configuration validation and change tracking
 
-// Core configuration state and defaults
-let activeConfigPanel = null;
-let documentClickHandler = null;  // Add tracking for the click handler
-let configDefaults = {
-    logging: {
-        dateFormat: 'dd-MM-yy',
-        timeFormat: 'HH:mm:ss',
-        construct: 'dateFormat timeFormat',
-        leftEncapsule: "'['",
-        rightEncapsule: "']'",
-        messageSeperator: "'>'",
-        messagePrefix: "'Launching:'",
-        maxLogEntries: 1001
-    },
-    theme: {
-        favourite: '★',
-        rowSelector: 'indent',
-        rowWidth: 100
-    },
-    system: {
-        show: false,
-        minimizeTo: false,
-        closeTo: false,
-        startWithWindows: false,
-        startMinimized: false
-    },
-    triggercmd: {
-        overwriteFile: 'keep',
-        addCommands: 'favourited',
-        autoGenerate: true,
-        inPath: true
-    },
-    update: {
-        autoCheck: true,
-        periodic: {
-            enable: false,
-            interval: 24
-        }
-    }
-};
+// Core configuration state
+//   Tracks document click handler for configuration module
+//   Manages global click handler reference for cleanup operations
+let documentClickHandler = null;
 
 // Initialize Configuration Process
-// Sets up and loads all configuration interface components and states
+//   Sets up and loads all configuration interface components and states
+//   Initializes DOM cache, configuration states, UI, event handlers, and update indicators
 export async function initializeConfiguration() {
-    // Initialize DOM cache for configuration section
     initializeConfigurationDomCache();
-    // Add flag to track if listener is already attached
+    
     if (window.updateLinkListenerAttached) {
         return;
     }
     
-    window[getStateName('b', 'general')] = {
-        xlaunchConfig: { ...configDefaults.logging, ...xlp.getData('xlaunchConfig') },
-        theme: { ...configDefaults.theme, ...window.xldbv.configOpts.theme },
-        system: { ...configDefaults.system, ...window.xldbv.configOpts.system }
-    };
-    window[getStateName('b', 'triggercmd')] = { ...configDefaults.triggercmd, ...window.xldbv.configOpts.triggercmd };
-    window[getStateName('b', 'update')] = { ...configDefaults.update, ...window.xldbv.configOpts.updates };
+    xlp.initializeConfigurationStates?.();
+    await xlp.initializeConfigurationUI?.();
+    xlp.initializeUpdateIndicator?.();
+    xlp.initializeDocumentClickHandler?.();
+    xlp.initializeDocumentChangeHandler?.();
+    xlp.initializeDocumentInputHandler?.();
+    xlp.finalizeConfigurationInitialization?.();
+}
 
-    window[getStateName('t', 'general')] = null;
-    window[getStateName('t', 'triggercmd')] = null;
-    window[getStateName('t', 'update')] = null;
-
-    await setupConfigList();
-    await populateFavouriteIcons();
-    await loadRowSelectors();
-    setupHighlightWidthSlider();
-    await loadConfigSection('general');
-    
+// Export Config Data
+//   Saves complete configuration state to external system file
+//   Exports xlaunchConfig and configOpts to external file using Electron API
+export async function exportConfiguration() {
     try {
-        const updateIndicator = window[window.domCacheName]?.updateIndicator || document.getElementById('updateIndicator');
-        xlp.getUpdateInfo().then(({ hasUpdate }) => {
-            if (updateIndicator && hasUpdate) {
-                updateIndicator.textContent = window.xldbv.updtico || "⥥";
-                updateIndicator.classList.add('visible');
-            }
-        });
-    } catch (error) { }
+        const config = {
+            xlaunchConfig: xlp.getData('xlaunchConfig'),
+            configOpts: window.xldbv.configOpts
+        };
 
-    const handleUpdateLinkClick = xlp.debounce(() => {
-        e.Api.invoke('open-external', 'https://xaein.github.io/xlpu/versions/');
-    }, 300);
-
-    // Remove existing click handler if it exists
-    if (documentClickHandler) {
-        document.removeEventListener('click', documentClickHandler);
-    }
-
-    // Store reference to new click handler
-    documentClickHandler = (event) => {
-        const target = event.target;
-
-        if (target.closest('.update-link')) {
-            handleUpdateLinkClick();
-            return;
+        const result = await e.Api.invoke('export-config', config);
+        if (!result) {
+            throw new Error('Failed to export configuration');
         }
-
-        if (target.closest('.config-item')) {
-            const configItem = target.closest('.config-item');
-            const newSection = configItem.dataset.config;
-            if (newSection === activeConfigPanel) return;
-
-            if (hasUnsavedChanges()) {
-                xlp.showConfigChangeDialog(activeConfigPanel).then(shouldSave => {
-                    if (shouldSave) {
-                        saveCurrentSection();
-                    }
-                });
-            }
-            loadConfigSection(newSection);
-        }
-
-        if (target.matches('#updateAppButton')) {
-            
-            xlp.getUpdateInfo().then(async updateInfo => {
-                if (!updateInfo.hasUpdate) return;
-
-                xlp.showUpdateOverlay();
-                await xlp.handleUpdateProcess(updateInfo);
-                const success = await xlp.updateFiles((file) => {
-                    if (window.updateState.progressHandler) {
-                        const newText = window.updateState.progressHandler(file);
-                        const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
-                        if (updateInfoPreview && newText) {
-                            updateInfoPreview.innerHTML = newText;
-                        }
-                    }
-                });
-
-                if (success) {
-                    const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
-                    if (updateInfoPreview) {
-                        updateInfoPreview.innerHTML += '\n\nUpdate completed successfully.' + 
-                            (updateInfo.requiresRestart ? '\nPlease restart the application for the changes to take effect.' : '');
-                    }
-                    xlp.scrollToLine(updateInfoPreview, 'Please restart');
-                    await loadConfigSection('update');
-                    
-                    const updateIndicator = window[window.domCacheName]?.updateIndicator || document.getElementById('updateIndicator');
-                    const updateButton = window[window.domCacheName]?.updateAppButton || document.getElementById('updateAppButton');
-                    if (updateIndicator) {
-                        updateIndicator.classList.remove('visible');
-                    }
-                    if (updateButton) {
-                        updateButton.disabled = true;
-                    }
-                }
-            }).catch(error => {
-                const updateInfoPreview = window[window.domCacheName]?.updateInfoPreview || document.getElementById('updateInfoPreview');
-                if (updateInfoPreview) {
-                    updateInfoPreview.innerHTML = `Error updating: ${error.message}`;
-                }
-            }).finally(() => {
-                xlp.hideUpdateOverlay();
-            });
-        }
-
-        if (target.matches('#updateTriggerCMDFile')) {
-            runXltcScript();
-        }
-    };
-
-    document.addEventListener('click', documentClickHandler);
-
-    document.addEventListener('change', (event) => {
-        const target = event.target;
-        
-        if (target.closest('.config-details')) {
-            if (['dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
-                 'rightEncapsule', 'messageSeperator', 'maxLogEntries'].includes(target.id)) {
-                if (['dateFormat', 'timeFormat'].includes(target.id)) {
-                    updateConstructOptions();
-                }
-                updateConfigTemp('general', 'logging');
-                if (target.id !== 'maxLogEntries') {
-                    updateLogFormatPreview();
-                }
-            }
-            else if (target.type === 'checkbox') {
-                if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
-                    updateConfigTemp('general', 'system');
-
-                    const minimizeToTray = window[window.domCacheName]?.minimizeToTray || document.getElementById('minimizeToTray');
-                    const closeToTray = window[window.domCacheName]?.closeToTray || document.getElementById('closeToTray');
-                    const startWithWindows = window[window.domCacheName]?.startWithWindows || document.getElementById('startWithWindows');
-                    const startMinimized = window[window.domCacheName]?.startMinimized || document.getElementById('startMinimized');
-                    const showTray = window[window.domCacheName]?.showTray || document.getElementById('showTray');
-
-                    if (target.id === 'showTray') {
-                        if (minimizeToTray) minimizeToTray.disabled = !target.checked;
-                        if (closeToTray) closeToTray.disabled = !target.checked;
-                        if (startMinimized && startWithWindows) {
-                            startMinimized.disabled = !(target.checked && startWithWindows.checked);
-                        }
-                    } else if (target.id === 'startWithWindows') {
-                        if (startMinimized && showTray) {
-                            startMinimized.disabled = !(target.checked && showTray.checked);
-                        }
-                    }
-                } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
-                    updateConfigTemp('update');
-                }
-            }
-            else if (target.tagName === 'SELECT') {
-                if (target.id === 'favouriteIcon') {
-                    updateConfigTemp('general', 'theme');
-                } else if (target.id === 'updateFrequency') {
-                    updateConfigTemp('update');
-                }
-            }
-            else if (target.type === 'range') {
-                if (target.id === 'highlightWidth') {
-                    updateConfigTemp('general', 'theme');
-                }
-            }
-            else if (target.type === 'radio') {
-                if (target.name === 'triggerCMDUpdateOption' || target.name === 'triggerCMDAppsOption') {
-                    updateConfigTemp('triggercmd');
-                }
-            }
-            
-            xlp.updateGreenButtonState();
-        }
-    });
-
-    document.addEventListener('input', xlp.debounce((event) => {
-        const target = event.target;
-        
-        if (target.id === 'messagePrefix') {
-            updateConfigTemp('general', 'logging');
-            updateLogFormatPreview();
-            xlp.updateGreenButtonState();
-        }
-    }, 300));
-    
-    updateConstructOptions();
-    xlp.verifyAndSetSection();
-}
-
-// State Name Generator
-// Generates unique state identifiers for managing multiple configuration panels
-function getStateName(type, section) {
-    if (!section) {
-        return null;
-    }
-    const prefix = type === 'b' ? 'base' : 'temp';
-    const stateName = `${prefix}${section.charAt(0).toUpperCase()}${section.slice(1)}State`;
-    return stateName;
-}
-
-// Configure Section List
-// Manages visibility and initialization of all configuration section panels
-async function setupConfigList() {
-    const triggerCmdFileExists = await e.Api.invoke('check-triggercmd-file');
-    const triggerCmdItem = document.querySelector('[data-config="triggercmd"]');
-
-    if (triggerCmdFileExists) {
-        triggerCmdItem.style.display = 'block';
-    } else {
-        triggerCmdItem.style.display = 'none';
+        return true;
+    } catch (error) {
+        return false;
     }
 }
 
-// Initialize Section UI
-// Configures and populates all interface elements with current settings
-function initializeUIForSection(section) {
-    switch (section) {
-        case 'general':
-            const loggingConfig = xlp.getData('xlaunchConfig');
-            populateConfigFields(loggingConfig);
-            updateLogFormatPreview();
-
-            const systemConfig = window.xldbv.configOpts.system;
-            const systemElements = ['showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized'];
-            systemElements.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.checked = systemConfig[id === 'showTray' ? 'show' : 
-                                   id === 'minimizeToTray' ? 'minimizeTo' : 
-                                   id === 'closeToTray' ? 'closeTo' : 
-                                   id === 'startWithWindows' ? 'startWithWindows' : 'startMinimized'];
-                }
-            });
-
-            const showTray = document.getElementById('showTray');
-            const minimizeToTray = document.getElementById('minimizeToTray');
-            const closeToTray = document.getElementById('closeToTray');
-            const startWithWindows = document.getElementById('startWithWindows');
-            const startMinimized = document.getElementById('startMinimized');
-
-            if (showTray && minimizeToTray && closeToTray) {
-                minimizeToTray.disabled = !showTray.checked;
-                closeToTray.disabled = !showTray.checked;
-            }
-            
-            if (startMinimized && showTray && startWithWindows) {
-                startMinimized.disabled = !(showTray.checked && startWithWindows.checked);
-            }
-            break;
-
-        case 'triggercmd':
-            const triggerConfig = window.xldbv.configOpts.triggercmd;
-            const overwriteElement = document.querySelector(`input[name="triggerCMDUpdateOption"][value="${triggerConfig.overwriteFile}"]`);
-            if (overwriteElement) overwriteElement.checked = true;
-
-            const addCommandsElement = document.querySelector(`input[name="triggerCMDAppsOption"][value="${triggerConfig.addCommands}"]`);
-            if (addCommandsElement) addCommandsElement.checked = true;
-
-            const autoGenerateCheckbox = document.getElementById('autoGenerateTriggerCMD');
-            if (autoGenerateCheckbox) autoGenerateCheckbox.checked = triggerConfig.autoGenerate;
-
-            const addToPathCheckbox = document.getElementById('addToPath');
-            if (addToPathCheckbox) addToPathCheckbox.checked = triggerConfig.inPath;
-            break;
-
-        case 'update':
-            const updateConfig = window.xldbv.configOpts.updates;
-            const updateElements = {
-                checkUpdate: document.getElementById('checkUpdate'),
-                periodicUpdateCheck: document.getElementById('periodicUpdateCheck'),
-                updateFrequency: document.getElementById('updateFrequency'),
-                updateButton: document.getElementById('updateAppButton'),
-                updateInfoPreview: document.getElementById('updateInfoPreview')
-            };
-
-            if (updateElements.checkUpdate) updateElements.checkUpdate.checked = updateConfig.autoCheck;
-            if (updateElements.periodicUpdateCheck) updateElements.periodicUpdateCheck.checked = updateConfig.periodic?.enable || false;
-            if (updateElements.updateFrequency) updateElements.updateFrequency.value = updateConfig.periodic?.interval || 24;
-
-            if (updateElements.updateInfoPreview) {
-                updateElements.updateInfoPreview.innerHTML = 'Checking for updates. Please wait...\n\n';
-                xlp.checkForUpdatesConfig().then(({ text, hasUpdate }) => {
-                    updateElements.updateInfoPreview.innerHTML = text;
-                    if (updateElements.updateButton) updateElements.updateButton.disabled = !hasUpdate;
-                }).catch(error => {
-                    updateElements.updateInfoPreview.innerHTML = error.message;
-                    if (updateElements.updateButton) updateElements.updateButton.disabled = true;
-                });
-            }
-            break;
-    }
-}
-
-// Load Config Section
-// Initializes and displays the selected configuration panel with data
-export async function loadConfigSection(section) {
-    if (section === activeConfigPanel) {
-        return;
+// Format Date String
+//   Formats date object according to specified pattern string
+//   Formats date using pattern replacements for year, month, day, time, and AM/PM
+function formatDate(date, format) {
+    function pad(num, size = 2) {
+        return num.toString().padStart(size, '0');
     }
     
-    document.querySelectorAll('.config-section').forEach(el => {
-        el.classList.add('hidden');
-    });
-    
-    const selectedSection = document.querySelector(`#${section}Config`);
-    if (!selectedSection) {
-        return;
-    }
-    selectedSection.classList.remove('hidden');
-    
-    const baseStateName = getStateName('b', section);
-    const tempStateName = getStateName('t', section);
-    
-    window[tempStateName] = JSON.parse(JSON.stringify(window[baseStateName]));
-    
-    initializeUIForSection(section);
-    
-    activeConfigPanel = section;
-    updateSelectedConfigItem(section);
-    xlp.updateGreenButtonState();
-}
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours24 = pad(date.getHours());
+    const hours12 = pad(date.getHours() % 12 || 12);
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    const milliseconds = pad(date.getMilliseconds(), 3);
+    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
 
-// Scroll View Position
-// Moves viewport to specified text location within element display
-export function scrollToLine(element, text) {
-    if (!element || !text) return;
-    
-    const content = element.textContent || element.innerText;
-    const lines = content.split('\n');
-    const lineIndex = lines.findIndex(line => line.includes(text));
-    
-    if (lineIndex !== -1) {
-        const lineHeight = getLineHeight(element);
-        const scrollTop = lineIndex * lineHeight;
-        element.scrollTo({
-            top: scrollTop,
-            behavior: 'smooth'
-        });
-    }
+    return format
+        .replace(/yyyy/g, year)
+        .replace(/yy/g, year.toString().slice(-2))
+        .replace(/MM/g, month)
+        .replace(/dd/g, day)
+        .replace(/HH/g, hours24)
+        .replace(/hh/g, hours12)
+        .replace(/mm/g, minutes)
+        .replace(/ss/g, seconds)
+        .replace(/SSS/g, milliseconds)
+        .replace(/a/g, ampm);
 }
 
 // Calculate Text Height
-// Determines line height using dynamic element measurement and scaling
+//   Determines line height using dynamic element measurement and scaling
+//   Creates temporary element to measure actual line height based on computed font style
 function getLineHeight(element) {
     const temp = document.createElement('div');
     temp.style.position = 'absolute';
@@ -407,104 +95,171 @@ function getLineHeight(element) {
     return lineHeight;
 }
 
-// Populate Form Data
-// Fills all configuration form fields with current stored values
-function populateConfigFields(config) {
-    if (typeof config !== 'object' || config === null) {
-        return;
+// State Name Generator
+//   Generates unique state identifiers for managing multiple configuration panels
+//   Creates state name with base or temp prefix based on type parameter
+function getStateName(type, section) {
+    if (!section) {
+        return null;
     }
-
-    setAndLogValue('dateFormat', config.dateFormat);
-    setAndLogValue('timeFormat', config.timeFormat);
-    setAndLogValue('leftEncapsule', config.leftEncapsule.replace(/^'|'$/g, ''));
-    setAndLogValue('rightEncapsule', config.rightEncapsule.replace(/^'|'$/g, ''));
-    setAndLogValue('messageSeperator', config.messageSeperator.replace(/^'|'$/g, ''));
-    setAndLogValue('messagePrefix', config.messagePrefix.replace(/^'|'$/g, ''));
-    setAndLogValue('maxLogEntries', config.maxLogEntries);
-
-    const constructSelect = document.getElementById('construct');
-    if (constructSelect) {
-        const constructValue = config.construct === 'timeFormat dateFormat' ? '1' : '0';
-        constructSelect.value = constructValue;
-    }
+    const prefix = type === 'b' ? 'base' : 'temp';
+    const stateName = `${prefix}${section.charAt(0).toUpperCase()}${section.slice(1)}State`;
+    return stateName;
 }
 
-// Set Form Elements
-// Updates form elements with validation and proper value handling
-function setAndLogValue(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        if (element.tagName === 'SELECT' || element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-            element.value = value || '';
+// Handle System Startup
+//   Manages system startup shortcut creation and removal process
+//   Creates or removes startup shortcut based on enabled parameter
+export async function handleStartupShortcut(enabled) {
+    try {
+        if (enabled) {
+            await e.Api.invoke('create-startup-shortcut');
+        } else {
+            await e.Api.invoke('remove-startup-shortcut');
         }
+    } catch (error) {
+        xlp.silentError();
     }
 }
 
-// Update Format Preview
-// Generates and displays preview using current logging format settings
-function updateLogFormatPreview() {
-    const dateFormat = (window[window.domCacheName]?.dateFormat || document.getElementById('dateFormat'))?.value;
-    const timeFormat = (window[window.domCacheName]?.timeFormat || document.getElementById('timeFormat'))?.value;
-    const construct = (window[window.domCacheName]?.construct || document.getElementById('construct'))?.value;
-    const leftEncapsule = (window[window.domCacheName]?.leftEncapsule || document.getElementById('leftEncapsule'))?.value;
-    const rightEncapsule = (window[window.domCacheName]?.rightEncapsule || document.getElementById('rightEncapsule'))?.value;
-    const messageSeperator = (window[window.domCacheName]?.messageSeperator || document.getElementById('messageSeperator'))?.value;
-    const messagePrefix = (window[window.domCacheName]?.messagePrefix || document.getElementById('messagePrefix'))?.value;
+// Check State Changes
+//   Determines if current configuration panel contains any modifications made
+//   Compares base state and temp state to detect unsaved changes using configuration
+export function hasUnsavedChanges() {
+    const activeConfigPanel = xlp.getState('config.activePanel');
+    if (!activeConfigPanel) {
+        return false;
+    }
+    const config = xlp.configSectionConfig?.[activeConfigPanel];
+    if (!config || !config.hasUnsavedChanges) {
+        return false;
+    }
 
-    if (!dateFormat || !timeFormat || !construct || !leftEncapsule || !rightEncapsule || !messageSeperator || !messagePrefix) {
+    if (activeConfigPanel === 'themes') {
+        return config.hasUnsavedChanges();
+    }
+
+    const baseStateName = getStateName('b', activeConfigPanel);
+    const tempStateName = getStateName('t', activeConfigPanel);
+    
+    const baseState = window[baseStateName];
+    const tempState = window[tempStateName];
+
+    if (!baseState || !tempState) {
+        return false;
+    }
+
+    try {
+        return config.hasUnsavedChanges(baseState, tempState);
+    } catch (error) {
+        return false;
+    }
+}
+
+// Import Config Data
+//   Loads complete configuration from external file into system
+//   Imports configuration from external file, validates, and updates system state
+export async function importConfiguration() {
+    try {
+        const config = await e.Api.invoke('import-config');
+        if (!config) {
+            throw new Error('No configuration data received');
+        }
+
+        if (!validateConfiguration(config)) {
+            throw new Error('Invalid configuration format');
+        }
+
+        xlp.setState('config.xlaunchConfig', config.xlaunchConfig);
+        window.xlaunchConfig = config.xlaunchConfig;
+        xlp.setData('xlaunchConfig', config.xlaunchConfig);
+        window.xldbv.configOpts = { ...config.configOpts };
+
+        loadConfigSection(xlp.getState('config.activePanel'));
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+// Initialize DOM Cache
+//   Creates cached DOM element references for configuration section
+//   Stores element references in window object for faster access throughout the module
+function initializeConfigurationDomCache() {
+    const section = xlp.sections.configuration;
+    if (!section?.domElements) {
         return;
     }
-
-    const sampleDate = new Date();
-    const formattedDate = formatDate(sampleDate, dateFormat);
-    const formattedTime = formatDate(sampleDate, timeFormat);
-
-    let preview = leftEncapsule;
-    if (construct === '1') {
-        preview += `${formattedTime} ${formattedDate}`;
-    } else {
-        preview += `${formattedDate} ${formattedTime}`;
-    }
-    preview += rightEncapsule;
-    preview += ` ${messageSeperator} ${messagePrefix} Sample Message`;
-
-    const previewElement = window[window.domCacheName]?.logFormatPreview || document.getElementById('logFormatPreview');
-    if (previewElement) {
-        previewElement.textContent = preview;
-    }
-}
-
-// Load Icon Options
-// Populates icon selector dropdown with all available system options
-async function populateFavouriteIcons() {
-    const favouriteIconSelect = window[window.domCacheName]?.favouriteIcon || document.getElementById('favouriteIcon');
-    
-    const xldbv = xlp.getData('xldbv') || {};
-    
-    const favouriteSymbols = xldbv.favourite_symbols || '';
-    const currentFavourite = xldbv.configOpts?.theme?.favourite || '';
-
-    const symbols = favouriteSymbols.split(' ');
-
-    favouriteIconSelect.innerHTML = '';
-
-    symbols.forEach(symbol => {
-        const option = new Option(symbol, symbol);
-        favouriteIconSelect.add(option);
-
-        if (symbol === currentFavourite) {
-            option.selected = true;
+    const sectionLabel = section.label.replace(/\s+/g, '');
+    const domCacheName = `${sectionLabel}Dom`;
+    window[domCacheName] = {};
+    xlp.setState('ui.domCacheName', domCacheName);
+    section.domElements.forEach(elementId => {
+        const element = xlp.getElement(elementId);
+        if (element) {
+            window[domCacheName][elementId] = element;
         }
     });
+}
 
-    if (favouriteIconSelect.selectedIndex === -1 && favouriteIconSelect.options.length > 0) {
-        favouriteIconSelect.selectedIndex = 0;
+// Initialize Section UI
+//   Configures and populates all interface elements with current settings
+//   Calls section-specific UI initialization function from configuration
+function initializeUIForSection(section) {
+    const config = xlp.sectionUIConfig?.[section];
+    if (config && config.initialize) {
+        config.initialize(xlp);
     }
+}
+
+// Load Config Section
+//   Initializes and displays the selected configuration panel with data
+//   Hides all sections, shows selected section, loads state, and initializes UI
+//   Handles themes section initialization and resize operations
+export async function loadConfigSection(section) {
+    if (section === xlp.getState('config.activePanel')) {
+        return;
+    }
+    
+    xlp.getElement('dqa', '.config-section').forEach(el => {
+        el.classList.add('hidden');
+    });
+    
+    const selectedSection = xlp.getElement('id', `${section}Config`);
+    if (!selectedSection) {
+        return;
+    }
+    selectedSection.classList.remove('hidden');
+    
+    const baseState = xlp.getState(`config.baseStates.${section}`);
+    if (baseState !== undefined && baseState !== null) {
+        xlp.setState(`config.tempStates.${section}`, JSON.parse(JSON.stringify(baseState)));
+        window[getStateName('t', section)] = xlp.getState(`config.tempStates.${section}`);
+    } else {
+        xlp.setState(`config.tempStates.${section}`, null);
+        window[getStateName('t', section)] = null;
+    }
+    
+    initializeUIForSection(section);
+    
+    if (section === 'themes' && xlp.initializeThemes) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        await xlp.initializeThemes();
+        if (xlp.handleResizeThemes) {
+            await xlp.handleResizeThemes();
+        }
+    }
+    
+    xlp.setState('config.activePanel', section);
+    updateSelectedConfigItem(section);
+    xlp.updateGreenButtonState();
 }
 
 // Setup Row Display
-// Initializes row selector interface with all available display options
-async function loadRowSelectors() {
+//   Initializes row selector interface with all available display options
+//   Loads SVG selector files, creates option elements, and sets up selection interface
+//   Restores previously selected selector from configuration
+export async function loadRowSelectors() {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
         const themesDir = xlp.dirVar('themes');
@@ -573,8 +328,198 @@ async function loadRowSelectors() {
     }
 }
 
+// Populate Form Data
+//   Fills all configuration form fields with current stored values
+//   Populates all logging configuration fields with values from config object
+export function populateConfigFields(config) {
+    if (typeof config !== 'object' || config === null) {
+        return;
+    }
+
+    setAndLogValue('dateFormat', config.dateFormat);
+    setAndLogValue('timeFormat', config.timeFormat);
+    setAndLogValue('leftEncapsule', config.leftEncapsule?.replace(/^'|'$/g, '') ?? config.leftEncapsule ?? '');
+    setAndLogValue('rightEncapsule', config.rightEncapsule?.replace(/^'|'$/g, '') ?? config.rightEncapsule ?? '');
+    setAndLogValue('messageSeperator', config.messageSeperator?.replace(/^'|'$/g, '') ?? config.messageSeperator ?? '');
+    setAndLogValue('messagePrefix', config.messagePrefix?.replace(/^'|'$/g, '') ?? config.messagePrefix ?? '');
+    const maxLogEntries = config.maxLogEntries ? (typeof config.maxLogEntries === 'string' ? parseInt(config.maxLogEntries, 10) : config.maxLogEntries) : '';
+    setAndLogValue('maxLogEntries', maxLogEntries);
+
+    const constructSelect = xlp.getElement('construct');
+    if (constructSelect) {
+        const constructValue = config.construct === 'timeFormat dateFormat' ? '1' : '0';
+        constructSelect.value = constructValue;
+    }
+}
+
+// Load Icon Options
+//   Populates icon selector dropdown with all available system options
+//   Creates option elements for each favourite symbol and sets current selection
+export async function populateFavouriteIcons() {
+    const favouriteIconSelect = xlp.getElement('favouriteIcon');
+    
+    const xldbv = xlp.getData('xldbv') ?? {};
+    
+    const favouriteSymbols = xldbv.favourite_symbols ?? '';
+    const currentFavourite = xldbv.configOpts?.theme?.favourite ?? '';
+
+    const symbols = favouriteSymbols.split(' ');
+
+    favouriteIconSelect.innerHTML = '';
+
+    symbols.forEach(symbol => {
+        const option = new Option(symbol, symbol);
+        favouriteIconSelect.add(option);
+
+        if (symbol === currentFavourite) {
+            option.selected = true;
+        }
+    });
+
+    if (favouriteIconSelect.selectedIndex === -1 && favouriteIconSelect.options.length > 0) {
+        favouriteIconSelect.selectedIndex = 0;
+    }
+}
+
+// Generate Command File
+//   Creates and updates command configuration file with current settings
+//   Generates trigger command file using xltc script with current configuration options
+export async function runXltcScript() {
+    const statusElement = xlp.getElement('triggerCmdUpdateStatus');
+    try {
+        const configOpts = {
+            overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
+            addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
+        };
+        const result = await e.Api.invoke('generate-triggercmd', configOpts);
+        if (result) {
+            statusElement.textContent = 'TriggerCMD file updated successfully!';
+            statusElement.classList.add('success');
+            statusElement.classList.remove('error');
+        } else {
+            statusElement.textContent = 'Failed to update TriggerCMD file.';
+            statusElement.classList.add('error');
+            statusElement.classList.remove('success');
+        }
+        setTimeout(() => {
+            statusElement.textContent = '';
+            statusElement.classList.remove('success', 'error');
+        }, 5000);
+    } catch (error) {
+        statusElement.textContent = 'Failed to update TriggerCMD file.';
+        statusElement.classList.add('error');
+        statusElement.classList.remove('success');
+        setTimeout(() => {
+            statusElement.textContent = '';
+            statusElement.classList.remove('success', 'error');
+        }, 5000);
+    }
+}
+
+// Save Config Changes
+//   Writes and applies all configuration modifications to system state
+//   Saves configuration to xldbv.json, updates base states, and shows save confirmation
+export async function saveConfiguration(skipDialog = false) {
+    const promises = [];
+    const section = xlp.getState('config.activePanel');
+    const tempState = xlp.getState(`config.tempStates.${section}`) ?? window[getStateName('t', section)];
+
+    const config = xlp.configSectionConfig?.[section];
+    if (config && config.saveConfiguration) {
+        const result = await config.saveConfiguration(tempState, promises, xlp);
+        if (result === true) {
+            return;
+        }
+    }
+    
+    xlp.setData('xldbv', window.xldbv);
+    const validJson = xlp.validateXldbvJson(window.xldbv);
+    
+    if (validJson) {
+        try {
+            const baseDir = await e.Api.invoke('get-app-dir');
+            const utilsDir = xlp.dirVar('utils');
+            const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
+            const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
+            
+            if (!xldbvResult) {
+                throw new Error('Failed to save xldbv.json');
+            }
+        } catch (error) {
+            throw new Error(`Failed to write configuration: ${error.message}`);
+        }
+
+        await Promise.all(promises);
+        
+        xlp.setState(`config.baseStates.${section}`, { ...tempState });
+        window[getStateName('b', section)] = xlp.getState(`config.baseStates.${section}`);
+        
+        xlp.updateGreenButtonState();
+        
+        if (!skipDialog) {
+            await xlp.showConfigSaveDialog(section);
+        }
+        
+        return true;
+    } else {
+        throw new Error('Invalid xldbv.json structure');
+    }
+}
+
+// Save Section Data
+//   Applies all current section modifications to system configuration
+//   Saves temp state to base state, updates window objects, and shows save confirmation
+export function saveCurrentSection() {
+    const activeConfigPanel = xlp.getState('config.activePanel');
+    if (!activeConfigPanel) {
+        return;
+    }
+
+    const config = xlp.configSectionConfig?.[activeConfigPanel];
+    if (!config || !config.saveSection) {
+        return;
+    }
+
+    const tempState = xlp.getState(`config.tempStates.${activeConfigPanel}`) ?? window[getStateName('t', activeConfigPanel)];
+    
+    if (!tempState && activeConfigPanel !== 'themes') {
+        return;
+    }
+
+    config.saveSection(tempState);
+
+    if (activeConfigPanel !== 'themes') {
+        xlp.setState(`config.baseStates.${activeConfigPanel}`, JSON.parse(JSON.stringify(tempState)));
+        window[getStateName('b', activeConfigPanel)] = xlp.getState(`config.baseStates.${activeConfigPanel}`);
+    }
+
+    xlp.showConfigSaveDialog(activeConfigPanel);
+    xlp.updateGreenButtonState();
+}
+
+// Scroll View Position
+//   Moves viewport to specified text location within element display
+//   Finds line containing text and scrolls element to that line position
+export function scrollToLine(element, text) {
+    if (!element || !text) return;
+    
+    const content = element.textContent || element.innerText;
+    const lines = content.split('\n');
+    const lineIndex = lines.findIndex(line => line.includes(text));
+    
+    if (lineIndex !== -1) {
+        const lineHeight = getLineHeight(element);
+        const scrollTop = lineIndex * lineHeight;
+        element.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+        });
+    }
+}
+
 // Update Row Display
-// Applies selected row style settings to interface configuration display
+//   Applies selected row style settings to interface configuration display
+//   Updates custom select display, closes options container, and saves selection to temporary state
 function selectRowSelector(fileName, svgElement, customSelect, selectedValue, optionsContainer) {
     if (svgElement && customSelect && selectedValue) {
         selectedValue.innerHTML = '';
@@ -584,7 +529,7 @@ function selectRowSelector(fileName, svgElement, customSelect, selectedValue, op
             optionsContainer.classList.remove('show');
         }
         
-        const tempState = window[getStateName('t', 'general')];
+        const tempState = xlp.getState('config.tempStates.general') ?? window[getStateName('t', 'general')];
         if (!tempState) return;
         
         if (!tempState.theme) tempState.theme = {};
@@ -594,11 +539,38 @@ function selectRowSelector(fileName, svgElement, customSelect, selectedValue, op
     }
 }
 
+// Set Form Elements
+//   Updates form elements with validation and proper value handling
+//   Sets value for form elements including select, input, and textarea elements
+function setAndLogValue(id, value) {
+    const element = xlp.getElement(id);
+    if (element) {
+        if (element.tagName === 'SELECT' || element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+            element.value = value ?? '';
+        }
+    }
+}
+
+// Configure Section List
+//   Manages visibility and initialization of all configuration section panels
+//   Shows or hides triggercmd configuration item based on file existence
+export async function setupConfigList() {
+    const triggerCmdFileExists = await e.Api.invoke('check-triggercmd-file');
+    const triggerCmdItem = xlp.getElement('dqs', '[data-config="triggercmd"]');
+
+    if (triggerCmdFileExists) {
+        triggerCmdItem.style.display = 'block';
+    } else {
+        triggerCmdItem.style.display = 'none';
+    }
+}
+
 // Setup Width Controls
-// Initializes and configures width adjustment slider with event handling
-function setupHighlightWidthSlider() {
-    const highlightWidth = window[window.domCacheName]?.highlightWidth || document.getElementById('highlightWidth');
-    const highlightWidthValue = window[window.domCacheName]?.highlightWidthValue || document.getElementById('highlightWidthValue');
+//   Initializes and configures width adjustment slider with event handling
+//   Sets up slider with saved width value and updates temporary state on input and change
+export function setupHighlightWidthSlider() {
+    const highlightWidth = xlp.getElement('highlightWidth');
+    const highlightWidthValue = xlp.getElement('highlightWidthValue');
     
     if (highlightWidth && highlightWidthValue) {
         const savedWidth = window.xldbv?.configOpts?.theme?.rowWidth || 100;
@@ -634,125 +606,96 @@ function setupHighlightWidthSlider() {
     }
 }
 
-// Generate Command File
-// Creates and updates command configuration file with current settings
-async function runXltcScript() {
-    const statusElement = window[window.domCacheName]?.triggerCmdUpdateStatus || document.getElementById('triggerCmdUpdateStatus');
-    try {
-        const configOpts = {
-            overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
-            addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited'
-        };
-        const result = await e.Api.invoke('generate-triggercmd', configOpts);
-        if (result) {
-            statusElement.textContent = 'TriggerCMD file updated successfully!';
-            statusElement.classList.add('success');
-            statusElement.classList.remove('error');
-        } else {
-            statusElement.textContent = 'Failed to update TriggerCMD file.';
-            statusElement.classList.add('error');
-            statusElement.classList.remove('success');
-        }
-        setTimeout(() => {
-            statusElement.textContent = '';
-            statusElement.classList.remove('success', 'error');
-        }, 5000);
-    } catch (error) {
-        statusElement.textContent = 'Failed to update TriggerCMD file.';
-        statusElement.classList.add('error');
-        statusElement.classList.remove('success');
-        setTimeout(() => {
-            statusElement.textContent = '';
-            statusElement.classList.remove('success', 'error');
-        }, 5000);
-    }
-}
-
-// Check State Changes
-// Determines if current configuration panel contains any modifications made
-export function hasUnsavedChanges() {
-    if (!activeConfigPanel) {
-        return false;
-    }
-
-    const baseStateName = getStateName('b', activeConfigPanel);
-    const tempStateName = getStateName('t', activeConfigPanel);
+// Update Config Data
+//   Synchronizes all temporary configuration data with form modifications
+//   Updates temp state using section-specific update function from configuration
+export function updateConfigTemp(section, subsection) {
+    const tempState = xlp.getState(`config.tempStates.${section}`) ?? window[getStateName('t', section)];
+    const baseState = xlp.getState(`config.baseStates.${section}`) ?? window[getStateName('b', section)];
     
-    const baseState = window[baseStateName];
-    const tempState = window[tempStateName];
-
-    if (!baseState || !tempState) {
-        return false;
+    if (!tempState || !baseState) {
+        return;
     }
 
-    try {
-        switch (activeConfigPanel) {
-            case 'general': {
-                const configDiff = JSON.stringify(tempState.xlaunchConfig || {}) !== 
-                                 JSON.stringify(baseState.xlaunchConfig || {});
-                const themeDiff = JSON.stringify(tempState.theme || {}) !== 
-                                JSON.stringify(baseState.theme || {});
-                const systemDiff = JSON.stringify(tempState.system || {}) !== 
-                                 JSON.stringify(baseState.system || {});
+    const sectionConfig = xlp.sectionUpdateConfig?.[section];
+    if (!sectionConfig) {
+        return;
+    }
 
-                if (configDiff || themeDiff || systemDiff) {
-                    return true;
-                }
+    let stateChanged = false;
 
-                return false;
-            }
-                
-            case 'triggercmd':
-            case 'update': {
-                const isDifferent = JSON.stringify(tempState) !== JSON.stringify(baseState);
-                return isDifferent;
-            }
-        }
-        
-        return false;
-    } catch (error) {
-        return false;
+    if (subsection && sectionConfig[subsection]) {
+        stateChanged = sectionConfig[subsection](xlp, tempState);
+    } else if (sectionConfig.update) {
+        stateChanged = sectionConfig.update(xlp, tempState);
+    }
+
+    if (stateChanged) {
+        xlp.updateGreenButtonState();
     }
 }
 
-// Save Section Data
-// Applies all current section modifications to system configuration
-function saveCurrentSection() {
-    if (!activeConfigPanel) return;
+// Update Construct Options
+//   Updates select options based on date and time format settings
+//   Updates construct select options with date and time format combinations
+export function updateConstructOptions() {
+    const dateFormatSelect = xlp.getElement('dateFormat');
+    const timeFormatSelect = xlp.getElement('timeFormat');
+    const constructSelect = xlp.getElement('construct');
+    
+    if (!dateFormatSelect || !timeFormatSelect || !constructSelect) return;
 
-    const tempState = window[getStateName('t', activeConfigPanel)];
-    if (!tempState) return;
+    const dateFormat = dateFormatSelect.value;
+    const timeFormat = timeFormatSelect.value;
 
-    switch (activeConfigPanel) {
-        case 'general':
-            if (tempState.xlaunchConfig) {
-                xlp.setData('xlaunchConfig', tempState.xlaunchConfig);
-            }
-            if (tempState.theme) {
-                window.xldbv.configOpts.theme = { ...tempState.theme };
-            }
-            if (tempState.system) {
-                window.xldbv.configOpts.system = { ...tempState.system };
-            }
-            break;
+    constructSelect.innerHTML = '';
+    constructSelect.add(new Option(`${dateFormat} ${timeFormat}`, '0'));
+    constructSelect.add(new Option(`${timeFormat} ${dateFormat}`, '1'));
 
-        case 'triggercmd':
-            window.xldbv.configOpts.triggercmd = { ...tempState };
-            break;
+    const currentConstruct = (xlp.getState('config.tempStates.general') ?? window[getStateName('t', 'general')])?.xlaunchConfig?.construct;
+    constructSelect.value = currentConstruct === 'timeFormat dateFormat' ? '1' : '0';
+    
+    updateLogFormatPreview();
+}
 
-        case 'update':
-            window.xldbv.configOpts.updates = { ...tempState };
-            break;
+// Update Format Preview
+//   Generates and displays preview using current logging format settings
+//   Constructs preview string using date, time, encapsulation, separator, and prefix values
+export function updateLogFormatPreview() {
+    const dateFormat = xlp.getElement('dateFormat')?.value;
+    const timeFormat = xlp.getElement('timeFormat')?.value;
+    const construct = xlp.getElement('construct')?.value;
+    const leftEncapsule = xlp.getElement('leftEncapsule')?.value;
+    const rightEncapsule = xlp.getElement('rightEncapsule')?.value;
+    const messageSeperator = xlp.getElement('messageSeperator')?.value;
+    const messagePrefix = xlp.getElement('messagePrefix')?.value;
+
+    if (!dateFormat || !timeFormat || !construct || !leftEncapsule || !rightEncapsule || !messageSeperator || !messagePrefix) {
+        return;
     }
 
-    window[getStateName('b', activeConfigPanel)] = JSON.parse(JSON.stringify(tempState));
+    const sampleDate = new Date();
+    const formattedDate = formatDate(sampleDate, dateFormat);
+    const formattedTime = formatDate(sampleDate, timeFormat);
 
-    xlp.showConfigSaveDialog(activeConfigPanel);
-    xlp.updateGreenButtonState();
+    let preview = leftEncapsule;
+    if (construct === '1') {
+        preview += `${formattedTime} ${formattedDate}`;
+    } else {
+        preview += `${formattedDate} ${formattedTime}`;
+    }
+    preview += rightEncapsule;
+    preview += ` ${messageSeperator} ${messagePrefix} Sample Message`;
+
+    const previewElement = xlp.getElement('logFormatPreview');
+    if (previewElement) {
+        previewElement.textContent = preview;
+    }
 }
 
 // Update Item Selection
-// Updates interface to highlight currently selected configuration section item
+//   Updates interface to highlight currently selected configuration section item
+//   Adds selected class to matching config item and removes from others
 function updateSelectedConfigItem(section) {
     const configItems = document.querySelectorAll('.config-item');
     configItems.forEach(item => {
@@ -764,50 +707,9 @@ function updateSelectedConfigItem(section) {
     });
 }
 
-// Export Config Data
-// Saves complete configuration state to external system file
-export async function exportConfiguration() {
-    try {
-        const config = {
-            xlaunchConfig: xlp.getData('xlaunchConfig'),
-            configOpts: window.xldbv.configOpts
-        };
-
-        const result = await e.Api.invoke('export-config', config);
-        if (!result) {
-            throw new Error('Failed to export configuration');
-        }
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
-// Import Config Data
-// Loads complete configuration from external file into system
-export async function importConfiguration() {
-    try {
-        const config = await e.Api.invoke('import-config');
-        if (!config) {
-            throw new Error('No configuration data received');
-        }
-
-        if (!validateConfiguration(config)) {
-            throw new Error('Invalid configuration format');
-        }
-
-        xlp.setData('xlaunchConfig', config.xlaunchConfig);
-        window.xldbv.configOpts = { ...config.configOpts };
-
-        loadConfigSection(activeConfigPanel);
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
-
 // Validate Config Data
-// Performs complete validation of configuration data structure and fields
+//   Performs complete validation of configuration data structure and fields
+//   Validates required fields in xlaunchConfig and configOpts objects
 function validateConfiguration(config) {
     if (!config || typeof config !== 'object') {
         return false;
@@ -855,254 +757,20 @@ function validateConfiguration(config) {
     return true;
 }
 
-// Handle System Startup
-// Manages system startup shortcut creation and removal process
-async function handleStartupShortcut(enabled) {
-    try {
-        if (enabled) {
-            await e.Api.invoke('create-startup-shortcut');
-        } else {
-            await e.Api.invoke('remove-startup-shortcut');
-        }
-    } catch (error) { }
-}
-
-// Save Config Changes
-// Writes and applies all configuration modifications to system state
-export async function saveConfiguration(skipDialog = false) {
-    const promises = [];
-    const section = activeConfigPanel;
-    const tempState = window[getStateName('t', section)];
-
-    switch (section) {
-        case 'general': {
-            if (tempState.system) {
-                const systemConfig = tempState.system;
-                if (systemConfig.show !== window.xldbv.configOpts.system.show) {
-                    promises.push(e.Api.invoke('update-tray-visibility', systemConfig.show));
-                }
-                if (systemConfig.startWithWindows !== window.xldbv.configOpts.system.startWithWindows) {
-                    promises.push(handleStartupShortcut(systemConfig.startWithWindows));
-                }
-            }
-            
-            xlp.setData('xlaunchConfig', tempState.xlaunchConfig);
-            window.xldbv.configOpts.theme.favourite = tempState.theme.favourite;
-            window.xldbv.configOpts.theme.rowSelector = tempState.theme.rowSelector;
-            window.xldbv.configOpts.theme.rowWidth = tempState.theme.rowWidth;
-            window.xldbv.configOpts.system = { ...tempState.system };
-            break;
-        }
-        case 'triggercmd': {
-            const oldInPath = window.xldbv.configOpts.triggercmd?.inPath ?? false;
-            const newInPath = tempState?.inPath ?? false;
-            
-            if (oldInPath !== newInPath) {
-                try {
-                    if (newInPath) {
-                        await e.Api.invoke('run-xlu', 'add');
-                    } else {
-                        await e.Api.invoke('run-xlu', 'remove');
-                    }
-                } catch (error) { }
-            }
-            
-            window.xldbv.configOpts.triggercmd = { ...tempState };
-            break;
-        }
-        case 'update': {
-            window.xldbv.configOpts.updates = { ...tempState };
-            break;
-        }
-    }
-    
-    xlp.setData('xldbv', window.xldbv);
-    const validJson = xlp.validateXldbvJson(window.xldbv);
-    if (validJson) {
-        try {
-            const baseDir = await e.Api.invoke('get-app-dir');
-            const utilsDir = xlp.dirVar('utils');
-            const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');
-            const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
-            if (!xldbvResult) {
-                throw new Error('Failed to save xldbv.json');
-            }
-        } catch (error) {
-            throw new Error(`Failed to write configuration: ${error.message}`);
-        }
-
-        await Promise.all(promises);
-        
-        window[getStateName('b', section)] = { ...tempState };
-        xlp.updateGreenButtonState();
-        
-        if (!skipDialog) {
-            await xlp.showConfigSaveDialog(section);
-        }
-        
-        return true;
-    } else {
-        throw new Error('Invalid xldbv.json structure');
-    }
-}
-
-// Update Config Data
-// Synchronizes all temporary configuration data with form modifications
-function updateConfigTemp(section, subsection) {
-    const tempState = window[getStateName('t', section)];
-    const baseState = window[getStateName('b', section)];
-    if (!tempState || !baseState) return;
-
-    let stateChanged = false;
-
-    switch (section) {
-        case 'general':
-            switch (subsection) {
-                case 'system': {
-                    const newSystem = {
-                        show: document.getElementById('showTray').checked,
-                        minimizeTo: document.getElementById('minimizeToTray').checked,
-                        closeTo: document.getElementById('closeToTray').checked,
-                        startWithWindows: document.getElementById('startWithWindows').checked,
-                        startMinimized: document.getElementById('startMinimized').checked
-                    };
-                    stateChanged = JSON.stringify(newSystem) !== JSON.stringify(tempState.system);
-                    tempState.system = newSystem;
-                    break;
-                }
-                case 'logging': {
-                    const newConfig = {
-                        dateFormat: document.getElementById('dateFormat').value,
-                        timeFormat: document.getElementById('timeFormat').value,
-                        construct: document.getElementById('construct').value === '1' ? 'timeFormat dateFormat' : 'dateFormat timeFormat',
-                        leftEncapsule: `'${document.getElementById('leftEncapsule').value}'`,
-                        rightEncapsule: `'${document.getElementById('rightEncapsule').value}'`,
-                        messageSeperator: `'${document.getElementById('messageSeperator').value}'`,
-                        messagePrefix: `'${document.getElementById('messagePrefix').value}'`,
-                        maxLogEntries: document.getElementById('maxLogEntries').value
-                    };
-                    stateChanged = JSON.stringify(newConfig) !== JSON.stringify(tempState.xlaunchConfig);
-                    tempState.xlaunchConfig = newConfig;
-                    break;
-                }
-                case 'theme': {
-                    if (!tempState.theme) tempState.theme = {};
-                    const newTheme = { ...tempState.theme };
-                    
-                    const element = document.getElementById('favouriteIcon');
-                    if (element) newTheme.favourite = element.value;
-                    
-                    const customSelect = document.querySelector('.custom-select');
-                    if (customSelect) newTheme.rowSelector = customSelect.dataset.value;
-                    
-                    const highlightWidth = document.getElementById('highlightWidth');
-                    if (highlightWidth) newTheme.rowWidth = parseInt(highlightWidth.value);
-                    
-                    stateChanged = JSON.stringify(newTheme) !== JSON.stringify(tempState.theme);
-                    tempState.theme = newTheme;
-                    break;
-                }
-            }
-            break;
-            
-        case 'triggercmd': {
-            const newTriggerState = {
-                overwriteFile: document.querySelector('input[name="triggerCMDUpdateOption"]:checked')?.value || 'keep',
-                addCommands: document.querySelector('input[name="triggerCMDAppsOption"]:checked')?.value || 'favourited',
-                autoGenerate: document.getElementById('autoGenerateTriggerCMD')?.checked || false,
-                inPath: document.getElementById('addToPath')?.checked || false
-            };
-            stateChanged = JSON.stringify(newTriggerState) !== JSON.stringify(tempState);
-            Object.assign(tempState, newTriggerState);
-            break;
-        }
-            
-        case 'update': {
-            const newUpdateState = {
-                autoCheck: document.getElementById('checkUpdate')?.checked || false,
-                periodic: {
-                    enable: document.getElementById('periodicUpdateCheck')?.checked || false,
-                    interval: parseInt(document.getElementById('updateFrequency')?.value || '24')
-                }
-            };
-            stateChanged = JSON.stringify(newUpdateState) !== JSON.stringify(tempState);
-            Object.assign(tempState, newUpdateState);
-            break;
-        }
-    }
-
-    if (stateChanged) {
-        xlp.updateGreenButtonState();
-    }
-}
-
-// Format Date String
-// Formats date object according to specified pattern string
-function formatDate(date, format) {
-    function pad(num, size = 2) {
-        return num.toString().padStart(size, '0');
-    }
-    
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-    const hours24 = pad(date.getHours());
-    const hours12 = pad(date.getHours() % 12 || 12);
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    const milliseconds = pad(date.getMilliseconds(), 3);
-    const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
-
-    return format
-        .replace(/yyyy/g, year)
-        .replace(/yy/g, year.toString().slice(-2))
-        .replace(/MM/g, month)
-        .replace(/dd/g, day)
-        .replace(/HH/g, hours24)
-        .replace(/hh/g, hours12)
-        .replace(/mm/g, minutes)
-        .replace(/ss/g, seconds)
-        .replace(/SSS/g, milliseconds)
-        .replace(/a/g, ampm);
-}
-
-// Update Construct Options
-// Updates select options based on date and time format settings
-function updateConstructOptions() {
-    const dateFormatSelect = document.getElementById('dateFormat');
-    const timeFormatSelect = document.getElementById('timeFormat');
-    const constructSelect = document.getElementById('construct');
-    
-    if (!dateFormatSelect || !timeFormatSelect || !constructSelect) return;
-
-    const dateFormat = dateFormatSelect.value;
-    const timeFormat = timeFormatSelect.value;
-
-    constructSelect.innerHTML = '';
-    constructSelect.add(new Option(`${dateFormat} ${timeFormat}`, '0'));
-    constructSelect.add(new Option(`${timeFormat} ${dateFormat}`, '1'));
-
-    const currentConstruct = window[getStateName('t', 'general')]?.xlaunchConfig?.construct;
-    constructSelect.value = currentConstruct === 'timeFormat dateFormat' ? '1' : '0';
-    
-    updateLogFormatPreview();
-}
-
 // Cleanup Config System
-// Performs complete cleanup of configuration module state and listeners
+//   Performs complete cleanup of configuration module state and listeners
+//   Removes event listeners, observers, DOM cache, and resets configuration state
 export async function cleanupConfiguration() {
     if (window.configObserver) {
         window.configObserver.disconnect();
         window.configObserver = null;
     }
 
-    // Remove document click listener
     if (documentClickHandler) {
         document.removeEventListener('click', documentClickHandler);
         documentClickHandler = null;
     }
 
-    // Remove existing click listeners
     const oldConfigDetails = document.querySelector('.config-details');
     if (oldConfigDetails) {
         const newConfigDetails = oldConfigDetails.cloneNode(true);
@@ -1110,9 +778,9 @@ export async function cleanupConfiguration() {
     }
 
     const elementsToClean = [
-        document.getElementById('messagePrefix'),
-        document.getElementById('updateTriggerCMDFile'),
-        document.getElementById('configList')
+        xlp.getElement('messagePrefix'),
+        xlp.getElement('updateTriggerCMDFile'),
+        xlp.getElement('configList')
     ];
 
     elementsToClean.forEach(element => {
@@ -1124,32 +792,13 @@ export async function cleanupConfiguration() {
 
     window.configSectionTemp = null;
     window.xlaunchConfigTemp = null;
-    activeConfigPanel = null;
+    xlp.setState('config.activePanel', null);
 
-    document.querySelectorAll('.config-section').forEach(s => s.classList.add('hidden'));
+    xlp.getElement('dqa', '.config-section').forEach(s => s.classList.add('hidden'));
 
-    // Clean up DOM cache
-    if (window.domCacheName && window[window.domCacheName]) {
-        delete window[window.domCacheName];
+    const domCacheName = xlp.getState('ui.domCacheName');
+    if (domCacheName && window[domCacheName]) {
+        delete window[domCacheName];
     }
-    delete window.domCacheName;
-}
-
-// Initialize DOM Cache
-// Creates cached DOM element references for configuration section
-function initializeConfigurationDomCache() {
-    const section = xlp.sections.configuration;
-    if (!section?.domElements) {
-        return;
-    }
-    const sectionLabel = section.label.replace(/\s+/g, '');
-    const domCacheName = `${sectionLabel}Dom`;
-    window[domCacheName] = {};
-    window.domCacheName = domCacheName;
-    section.domElements.forEach(elementId => {
-        const element = document.getElementById(elementId);
-        if (element) {
-            window[domCacheName][elementId] = element;
-        }
-    });
+    xlp.setState('ui.domCacheName', null);
 }

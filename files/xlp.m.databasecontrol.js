@@ -1,22 +1,27 @@
 // Database Control Module
-// Manages application database categories and entries
+//   Manages application database categories and entries
+//   Handles category management, row operations, and table display
+//   Provides database editing interface with add, edit, and remove functionality
+//   Manages temporary data state and change tracking for database operations
 
 // Module state variables
+//   Tracks current category, category list, selected row, and temporary data
+//   Manages database control state including active category, available categories, selected row, and unsaved changes
 window.currentCategory = null;
 window.categories = [];
 window.selectedRow = null;
 window.tempData = {};
 
 // Initialize Database Control
-// Sets up all database interface components and event handlers
+//   Sets up all database interface components and event handlers
+//   Initializes DOM cache, loads data, sets up event listeners, and configures UI elements
 export async function initializeDatabasecontrol() {
     try {
-        // Initialize DOM cache for databasecontrol section
         initializeDatabasecontrolDomCache();
         
-        window.xldbv = xlp.getData('xldbv') || {};
-        window.xldbf = xlp.getData('xldbf') || {};
-        const preloadedData = xlp.getData('preloadedData') || {};
+        window.xldbv = xlp.getData('xldbv') ?? {};
+        window.xldbf = xlp.getData('xldbf') ?? {};
+        const preloadedData = xlp.getData('preloadedData') ?? {};
         window.tempData = JSON.parse(JSON.stringify(preloadedData));
         
         setupTempDataProxy();
@@ -25,73 +30,8 @@ export async function initializeDatabasecontrol() {
             window.xldbv.xldbFiles = [];
         }
         
-        const controlPanel = document.getElementById('controlPanel');
-        if (controlPanel) {
-            controlPanel.addEventListener('click', function(event) {
-                const target = event.target.closest('button');
-                if (!target) return;
-                
-                switch (target.id) {
-                    case 'addCategoryButton':
-                        xlp.showDialog('databasecontrolcatadd');
-                        break;
-                    case 'renameCategoryButton':
-                        xlp.showDialog('databasecontrolcatrename');
-                        break;
-                    case 'removeCategoryButton':
-                        xlp.showDialog('databasecontrolcatremove');
-                        break;
-                    
-                    case 'addRowButton':
-                        xlp.showDialog('databasecontrolrowadd');
-                        break;
-                    case 'editRowButton':
-                        xlp.showDialog('databasecontrolrowedit');
-                        break;
-                    case 'removeRowButton':
-                        xlp.confirmRowRemove();
-                        break;
-                }
-            });
-        }
-        
-        const tabList = document.getElementById('tabList');
-        if (tabList) {
-            tabList.addEventListener('click', function(event) {
-                const target = event.target.closest('.tablinks');
-                if (!target) return;
-                
-                const categoryName = target.getAttribute('data-category');
-                if (categoryName) {
-                    selectTab(categoryName, { currentTarget: target });
-                }
-            });
-        }
-        
-        const appTable = document.getElementById('appTable');
-        if (appTable) {
-            appTable.addEventListener('click', function(event) {
-                const row = event.target.closest('.table-row');
-                if (!row || row.classList.contains('empty-row')) return;
-                
-                const appCell = row.querySelector('.app-column');
-                const commandCell = row.querySelector('.command-column');
-                if (!appCell || !commandCell) return;
-                
-                const appName = appCell.textContent;
-                const command = commandCell.textContent;
-                const rowData = `${appName},${command}`;
-                
-                document.querySelectorAll('#appTable .table-row').forEach(r => {
-                    r.classList.remove('selected');
-                });
-                
-                row.classList.add('selected');
-                window.selectedRow = rowData;
-                
-                updateEditButtonState();
-                xlp.updateGreenButtonState();
-            });
+        if (xlp.setupEventListenersFromConfig) {
+            xlp.setupEventListenersFromConfig('databasecontrol');
         }
         
         loadTabButtons();
@@ -99,16 +39,29 @@ export async function initializeDatabasecontrol() {
         updateEditButtonState();
         xlp.updateGreenButtonState();
         
-        window.addEventListener('resize', () => xlp.handleResize());
-        
         setupTableScrollSnapping();
         
         xlp.verifyAndSetSection();
-    } catch (error) { }
+    } catch (error) {
+        xlp.silentError();
+    }
+}
+
+// Create Single Tab Button
+//   Creates and configures a single category tab button element
+//   Sets button text, class, and data attributes before appending to tab list
+function createTabButton(categoryName, tabList) {
+    const button = document.createElement('button');
+    button.className = 'tablinks';
+    button.textContent = categoryName;
+    button.setAttribute('data-category', categoryName);
+    tabList.appendChild(button);
+    return button;
 }
 
 // Initialize DOM Cache
-// Creates cached DOM element references for databasecontrol section
+//   Creates cached DOM element references for databasecontrol section
+//   Stores element references in window object for faster access throughout the module
 function initializeDatabasecontrolDomCache() {
     const section = xlp.sections.databasecontrol;
     if (!section?.domElements) {
@@ -121,22 +74,40 @@ function initializeDatabasecontrolDomCache() {
     window.domCacheName = domCacheName;
     
     section.domElements.forEach(elementId => {
-        const element = document.getElementById(elementId);
+        const element = xlp.getElement(elementId);
         if (element) {
             window[domCacheName][elementId] = element;
         }
     });
 }
 
+// Load File Content
+//   Retrieves and displays database entries from selected file
+//   Parses file data from tempData and renders table with entries, updates button states
+function loadFileData(fileName) {
+    const fileData = window.tempData[fileName];
+    
+    if (!fileData) {
+        return;
+    }
+
+    try {
+        xlp.createDatabaseTable();
+        updateEditButtonState();
+        xlp.updateGreenButtonState();
+    } catch (error) {
+        xlp.silentError();
+    }
+}
+
 // Create Tab Buttons
-// Generates and configures category tab buttons in navigation panel
+//   Generates and configures category tab buttons in navigation panel
+//   Creates buttons for each database file, handles initial tab selection, and updates button states
 function loadTabButtons(newCategoryName = null) {
-    const tabList = window[window.domCacheName]?.tabList || document.getElementById('tabList');
-    const addRowButton = window[window.domCacheName]?.addRowButton || document.getElementById('addRowButton');
-    const renameCategoryButton = window[window.domCacheName]?.renameCategoryButton || document.getElementById('renameCategoryButton');
-    const removeCategoryButton = window[window.domCacheName]?.removeCategoryButton || document.getElementById('removeCategoryButton');
+    const tabList = xlp.getElement('tabList') || window[window.domCacheName]?.tabList;
 
     if (!window.xldbv || !window.xldbv.xldbFiles || !Array.isArray(window.xldbv.xldbFiles)) {
+        updateCategoryButtonStates(false);
         return;
     }
 
@@ -152,11 +123,7 @@ function loadTabButtons(newCategoryName = null) {
 
     window.xldbv.xldbFiles.forEach((fileName, index) => {
         const categoryName = fileName.replace('.xlfc', '');
-        const button = document.createElement('button');
-        button.className = 'tablinks';
-        button.textContent = categoryName;
-        button.setAttribute('data-category', categoryName);
-        tabList.appendChild(button);
+        const button = createTabButton(categoryName, tabList);
 
         if (categoryName === newCategoryName) {
             newTabButton = button;
@@ -172,15 +139,14 @@ function loadTabButtons(newCategoryName = null) {
     }
 
     const hasCategories = window.xldbv.xldbFiles.length > 0;
-    if (addRowButton) addRowButton.disabled = !hasCategories;
-    if (renameCategoryButton) renameCategoryButton.disabled = !hasCategories;
-    if (removeCategoryButton) removeCategoryButton.disabled = !hasCategories;
+    updateCategoryButtonStates(hasCategories);
 }
 
 // Handle Tab Selection
-// Updates active tab and loads corresponding category data
+//   Updates active tab and loads corresponding category data
+//   Removes active class from all tabs, sets new active tab, and loads file data for selected category
 export function selectTab(categoryName, event) {
-    document.querySelectorAll('.tablinks').forEach(tab => {
+    xlp.getElement('dqa', '.tablinks').forEach(tab => {
         tab.classList.remove('active');
     });
     event.currentTarget.classList.add('active');
@@ -189,58 +155,17 @@ export function selectTab(categoryName, event) {
     loadFileData(`${categoryName}.xlfc`);
 }
 
-// Load File Content
-// Retrieves and displays database entries from selected file
-function loadFileData(fileName) {
-    const fileData = window.tempData[fileName];
-    
-    if (!fileData) {
-        return;
-    }
-
-    try {
-        xlp.createDatabaseTable();
-        updateEditButtonState();
-        xlp.updateGreenButtonState();
-    } catch (error) { }
-}
-
-// Update Button States
-// Enables or disables edit buttons based on row selection
-export function updateEditButtonState() {
-    const editButton = window[window.domCacheName]?.editRowButton || document.getElementById('editRowButton');
-    const removeButton = window[window.domCacheName]?.removeRowButton || document.getElementById('removeRowButton');
-    
-    if (!editButton || !removeButton) return;
-    
-    const isRowSelected = window.selectedRow !== undefined && window.selectedRow !== null;
-    
-    editButton.disabled = !isRowSelected;
-    removeButton.disabled = !isRowSelected;
-}
-
-// Setup Data Proxy
-// Creates proxy object to track changes in temporary data
-function setupTempDataProxy() {
-    window.tempData = new Proxy(window.tempData || {}, {
-        set: function(target, property, value) {
-            target[property] = value;
-            xlp.updateGreenButtonState();
-            return true;
-        }
-    });
-}
-
 // Configure Table Scrolling
-// Implements smooth scrolling behavior for database table rows
+//   Implements smooth scrolling behavior for database table rows
+//   Adds debounced scroll handler that snaps to nearest row boundary for better UX
 function setupTableScrollSnapping() {
-    const scrollContainer = document.querySelector('.table-scroll-container');
+    const scrollContainer = xlp.getElement('dqs', '.table-scroll-container');
     if (!scrollContainer) return;
     
     let lastScrollTop = 0;
     
     const handleScrollEnd = xlp.debounce(function() {
-        const { scrollTop, rowHeight, currentRow } = xlp.getTableScrollPosition() || {};
+        const { scrollTop, rowHeight, currentRow } = xlp.getTableScrollPosition() ?? {};
         if (!scrollTop || !rowHeight) return;
         
         const scrollingDown = scrollTop > lastScrollTop;
@@ -264,37 +189,68 @@ function setupTableScrollSnapping() {
     scrollContainer.addEventListener('scroll', handleScrollEnd);
 }
 
-// Cleanup Database Control
-// Removes all event listeners and resets module state
-export async function cleanupDatabasecontrol() {
-    const containers = [
-        document.querySelector('.category-buttons-container') || window[window.domCacheName]?.tabContainer || document.getElementById('tabContainer'),
-        document.querySelector('.row-buttons-container') || window[window.domCacheName]?.tableControls || document.getElementById('tableControls'),
-        window[window.domCacheName]?.tabList || document.getElementById('tabList'),
-        window[window.domCacheName]?.appTable || document.getElementById('appTable')
-    ];
-    
-    containers.forEach(container => {
-        if (container && container.parentNode) {
-            const clone = container.cloneNode(true);
-            container.parentNode.replaceChild(clone, container);
+// Setup Data Proxy
+//   Creates proxy object to track changes in temporary data
+//   Wraps tempData in Proxy to automatically update green button state when data changes
+function setupTempDataProxy() {
+    window.tempData = new Proxy(window.tempData ?? {}, {
+        set: function(target, property, value) {
+            target[property] = value;
+            xlp.updateGreenButtonState();
+            return true;
         }
     });
+}
+
+// Update Category Button States
+//   Enables or disables category-related buttons based on category availability
+//   Controls add, rename, and remove category button states when no categories exist
+function updateCategoryButtonStates(hasCategories) {
+    const addRowButton = xlp.getElement('addRowButton') || window[window.domCacheName]?.addRowButton;
+    const renameCategoryButton = xlp.getElement('renameCategoryButton') || window[window.domCacheName]?.renameCategoryButton;
+    const removeCategoryButton = xlp.getElement('removeCategoryButton') || window[window.domCacheName]?.removeCategoryButton;
     
-    const tableContainer = window[window.domCacheName]?.tableContainer || document.getElementById('tableContainer');
+    if (addRowButton) addRowButton.disabled = !hasCategories;
+    if (renameCategoryButton) renameCategoryButton.disabled = !hasCategories;
+    if (removeCategoryButton) removeCategoryButton.disabled = !hasCategories;
+}
+
+// Update Button States
+//   Enables or disables edit buttons based on row selection
+//   Checks if a row is selected and updates edit and remove button disabled states accordingly
+export function updateEditButtonState() {
+    const editButton = xlp.getElement('editRowButton') || window[window.domCacheName]?.editRowButton;
+    const removeButton = xlp.getElement('removeRowButton') || window[window.domCacheName]?.removeRowButton;
+    
+    if (!editButton || !removeButton) return;
+    
+    const selectedRow = window.selectedRow;
+    const isRowSelected = selectedRow !== undefined && selectedRow !== null;
+    
+    editButton.disabled = !isRowSelected;
+    removeButton.disabled = !isRowSelected;
+}
+
+// Cleanup Database Control
+//   Removes all event listeners and resets module state
+//   Clears tracked listeners, removes scroll handlers, empties DOM elements, and resets window variables
+export async function cleanupDatabasecontrol() {
+    if (xlp.removeTrackedEventListeners) {
+        xlp.removeTrackedEventListeners('databasecontrol');
+    }
+    
+    const tableContainer = xlp.getElement('tableContainer') || window[window.domCacheName]?.tableContainer;
     if (tableContainer && tableContainer.scrollHandler) {
         tableContainer.removeEventListener('scroll', tableContainer.scrollHandler);
         tableContainer.scrollHandler = null;
     }
     
-    window.removeEventListener('resize', () => xlp.handleResize());
-    
-    const tabList = window[window.domCacheName]?.tabList || document.getElementById('tabList');
+    const tabList = xlp.getElement('tabList') || window[window.domCacheName]?.tabList;
     if (tabList) {
         tabList.innerHTML = '';
     }
     
-    const tableBody = document.querySelector('#appTable tbody');
+    const tableBody = xlp.getElement('dqs', '#appTable tbody');
     if (tableBody) {
         tableBody.innerHTML = '';
     }
@@ -302,10 +258,9 @@ export async function cleanupDatabasecontrol() {
     window.currentCategory = null;
     window.categories = [];
     window.selectedRow = null;
-    window.tempData = null;
+    window.tempData = {};
     
-    // Clean up DOM cache
-    if (window[window.domCacheName]) {
+    if (window.domCacheName && window[window.domCacheName]) {
         delete window[window.domCacheName];
     }
     delete window.domCacheName;

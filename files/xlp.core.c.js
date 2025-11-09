@@ -1,285 +1,71 @@
 // Core Application Components
-// Manages core utilities and configurations for the application
+//   Manages core utilities and configurations for the application
+//   Provides essential helper functions for DOM manipulation, event handling, file operations
+//   Handles application exit procedures, version checking, and row selector management
+//   Centralizes common functionality used across all application modules
 
-// Core section configuration
-export const sections = {
-    launchlist: {
-        label: 'Launch List',
-        styles: ['launchlist'],
-        templates: {
-            main: 'launchlist',
-            dialogs: ['launch']
-        },
-        scripts: ['m.tables', 'm.launchlist'],
-        domElements: [
-            'tabContent', 'appTable', 'measureDiv', 'tableContainer', 'searchInput',
-            'clearButton', 'iconCircle', 'searchContainer', 'searchWrapper', 'launchDialog'
-        ],
-        footerButtons: {
-            left: {
-                text: 'Launch',
-                enabled: false,
-                visible: true
-            }
-        }
-    },
-    databasecontrol: {
-        label: 'Database Control',
-        styles: ['databasecontrol'],
-        templates: {
-            main: 'databasecontrol',
-            dialogs: [
-                'databasecontrolcatadd', 'databasecontrolcatremove', 'databasecontrolcatrename',
-                'databasecontrolrowadd', 'databasecontrolrowremove', 'databasecontrolrowedit',
-                'databasecontrolconfirm', 'databasecontrolsave'
-            ]
-        },
-        scripts: ['m.tables', 'm.databasecontrol.s', 'm.databasecontrol'],
-        domElements: [
-            'tabContainer', 'tabListContainer', 'tabList', 'tableControls', 'tableContainer',
-            'appTable', 'controlPanel', 'addCategoryButton', 'renameCategoryButton',
-            'removeCategoryButton', 'addRowButton', 'editRowButton', 'removeRowButton',
-            'databasecontrolsaveDialog', 'saveCurrentCategory', 'saveHeaderMain', 'saveCategoryLabel'
-        ],
-        footerButtons: {
-            left: {
-                text: 'Save',
-                enabled: false,
-                visible: true
-            }
-        }
-    },
-    themes: {
-        label: 'Themes',
-        styles: ['themes'],
-        templates: {
-            main: 'themes',
-            dialogs: ['themeimport', 'themedelete', 'themeapply']
-        },
-        scripts: ['m.themes'],
-        domElements: [
-            'themeList', 'importThemeButton', 'removeThemeButton', 'themePreview',
-            'previewTableBody', 'themeToDelete', 'applyThemeProgressBar',
-            'applyThemeProgressText', 'applyThemeHeaderMain'
-        ],
-        footerButtons: {
-            left: {
-                text: 'Apply',
-                enabled: false,
-                visible: true
-            }
-        }
-    },
-    configuration: {
-        label: 'Configuration',
-        styles: ['configuration'],
-        templates: {
-            main: 'configuration',
-            dialogs: ['configsave', 'configchange']
-        },
-        scripts: ['m.configuration.u', 'm.configuration'],
-        domElements: [
-            'configList', 'updateIndicator', 'favouriteIcon', 'highlightWidth', 'highlightWidthValue',
-            'dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 'rightEncapsule',
-            'messageSeperator', 'messagePrefix', 'maxLogEntries', 'logFormatPreview',
-            'showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized',
-            'autoGenerateTriggerCMD', 'addToPath', 'triggerCmdUpdateStatus', 'updateTriggerCMDFile',
-            'updateInfoPreview', 'checkUpdate', 'periodicUpdateCheck', 'updateFrequency', 'updateAppButton'
-        ],
-        footerButtons: {
-            left: {
-                text: 'Save',
-                enabled: false,
-                visible: true
-            }
-        }
-    },
-    logging: {
-        label: 'Logging',
-        styles: ['logging'],
-        templates: {
-            main: 'logging'
-        },
-        scripts: ['m.logging'],
-        domElements: [
-            'logContent'
-        ],
-        footerButtons: {
-            left: {
-                text: '',
-                enabled: false,
-                visible: false
-            }
-        }
-    }
-};
-
-// Path Management System
-// Combines and normalizes paths for consistent cross platform use
-export function joinPath(...parts) {
-    return parts.join('/').replace(/\\/g, '/').replace(/\/+/g, '/');
-}
-
-// Function Delay Control
-// Prevents rapid function execution by enforcing time delay period
-export function debounce(func, delay) {
-    let timeoutId;
-    return function (...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
-// Application Exit Handler
-// Saves application state and performs cleanup before shutting down
-export async function exitApp() {
-    xlp.setData('xldbv', window.xldbv);
-    xlp.setData('xldbf', window.xldbf);
-
-    let hasXldbu = false;
-    let hasUpdtmp = false;
-
-    try {
-        const baseDir = await e.Api.invoke('get-app-dir');
-        const utilsDir = xlp.dirVar('utils');
-
-        if (xlp.validateXldbvJson(window.xldbv)) {
-            const xldbvPath = joinPath(baseDir, utilsDir, 'xldbv.json');
-            const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
-            if (!xldbvResult) {
-                throw new Error('Failed to save xldbv.json');
-            }
-        } else {
-            throw new Error('Invalid xldbv.json structure');
-        }
-        
-        const cleanedXldbfData = xlp.validateXldbfJson(window.xldbf);
-        if (cleanedXldbfData) {
-            const xldbfPath = joinPath(baseDir, utilsDir, 'xldbf.json');
-            const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
-            if (!xldbfResult) {
-                throw new Error('Failed to update xldbf.json');
-            }
-        } else {
-            throw new Error('Invalid xldbf.json structure');
-        }
-
-        const xldbuPath = joinPath(baseDir, utilsDir, 'xldbu.json');
-        const updtmpPath = joinPath(baseDir, utilsDir, 'updtmp');
-        
-        try {
-            hasXldbu = await e.Api.invoke('file-exists', xldbuPath);
-        } catch (error) { }
-
-        try {
-            const updtmpContents = await e.Api.invoke('read-directory', updtmpPath);
-            hasUpdtmp = Array.isArray(updtmpContents) && updtmpContents.length > 0;
-        } catch (error) { }
-        
-        if (hasXldbu || hasUpdtmp) {
-            const newXluPath = joinPath(updtmpPath, 'utils', 'xlu.exe');
-            const hasNewXlu = await e.Api.invoke('file-exists', newXluPath);
-            
-            if (hasNewXlu) {
-                const currentXluPath = joinPath(baseDir, utilsDir, 'xlu.exe');
-                await e.Api.invoke('copy-file', newXluPath, currentXluPath);
-            }
-        }
-
-        const keysToKeep = ['updateAvailable'];
-        for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (!keysToKeep.includes(key)) {
-                localStorage.removeItem(key);
-            }
-        }
-        xlp.setData('updateAvailable', false);
-    } catch (error) {
-        throw error;
-    } finally {
-        if (hasXldbu || hasUpdtmp) {
-            e.Api.invoke('run-xlu', 'update');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        e.Api.send('toMain', 'exit');
-    }
-}
-
-// File System Writer
-// Writes content to file system with comprehensive error handling
-export async function writeFile(filePath, content) {
-    try {
-        const result = await e.Api.invoke('write-file', filePath, content);
-        if (!result) {
-            throw new Error('Failed to write file');
-        }
-    } catch (error) {
-        throw error;
-    }
-}
-
-// Remote Content Fetcher
-// Downloads and processes remote content with specified response type
-export async function fetchFile(url, responseType = 'json') {
-    try {
-        const response = await e.Api.invoke('fetch-url', url, responseType);
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        }
-        return response.data;
-    } catch (error) {
-        throw new Error(`Failed to fetch file: ${error.message}`);
-    }
-}
-
-// Version Data Retriever
-// Fetches and returns current version information from update server
-export async function getVersionInfo() {
-    const uurl = window.xldbv.uurl;
-    return await fetchFile(`${uurl}/version.json`);
-}
-
-// Documentation Display Handler
-// Opens application help documentation in the default system browser
-export function openHelpFile() {
-    const helpDir = xlp.dirVar('help');
-    const helpFilePath = `${helpDir}/xlauncher_plus_help.html`;
-    e.Api.invoke('open-external', helpFilePath);
-}
-
-// Version Update Checker
-// Compares version numbers to determine if update is needed
-export function isNewerVersion(version1, version2) {
-    const [major1, minor1, patch1] = version1.split('.').map(Number);
-    const [major2, minor2, patch2] = version2.split('.').map(Number);
+// Tracked Event Delegation
+//   Sets up event delegation and tracks it for cleanup
+//   Creates delegated event handler and stores reference in window.eventListeners for later removal
+export function addTrackedEventDelegation(parentElement, eventType, selector, handler, section = 'global', options = {}) {
+    if (!parentElement) return null;
     
-    return major2 > major1 || 
-           (major2 === major1 && minor2 > minor1) ||
-           (major2 === major1 && minor2 === minor1 && patch2 > patch1);
+    const delegatedHandler = (event) => {
+        const target = event.target.closest(selector);
+        if (target) {
+            handler(event, target);
+        }
+    };
+    
+    parentElement.addEventListener(eventType, delegatedHandler, options);
+    
+    if (!window.eventListeners) {
+        window.eventListeners = {};
+    }
+    if (!window.eventListeners[section]) {
+        window.eventListeners[section] = [];
+    }
+    
+    window.eventListeners[section].push({
+        element: parentElement,
+        event: eventType,
+        handler: delegatedHandler,
+        selector
+    });
+    
+    return delegatedHandler;
 }
 
-// SVG Generator Handler
-// Creates and processes SVG selectors for row highlighting system
-export async function generateRowSelectorSVG(svgPath, isConfig = false) {
-    try {
-        const appDir = await e.Api.invoke('get-app-dir');
-        const themesDir = xlp.dirVar('themes');
-        const fullPath = joinPath(appDir, 'files', themesDir, 'selectors', svgPath);
-        const { data: svgContent } = await e.Api.invoke('get-file', fullPath);
-        
-        if (!svgContent) return null;
-
-        const modifiedSvg = svgContent.replace(/currentColor/g, 'var(--main-table-hover-color)');
-        return modifiedSvg;
-    } catch (error) {
-        return null;
+// Tracked Event Listener
+//   Adds event listener and tracks it for cleanup
+//   Registers event listener and stores reference in window.eventListeners for later removal
+export function addTrackedEventListener(elementIdOrElement, event, handler, section = 'global') {
+    const element = typeof elementIdOrElement === 'string' ? xlp.getElement(elementIdOrElement) : elementIdOrElement;
+    if (!element) return null;
+    
+    element.addEventListener(event, handler);
+    
+    if (!window.eventListeners) {
+        window.eventListeners = {};
     }
+    if (!window.eventListeners[section]) {
+        window.eventListeners[section] = [];
+    }
+    
+    window.eventListeners[section].push({
+        element,
+        event,
+        handler
+    });
+    
+    return { element, event, handler };
 }
 
 // Row Highlight Manager
-// Creates and configures highlight elements for table row selection
+//   Creates and configures highlight elements for table row selection
+//   Generates highlight overlay with SVG selector or background color, handles hover and selection states
 export async function createRowHighlight(row) {
-    const existingHighlight = row.querySelector('.row-highlight');
+    const existingHighlight = xlp.getElement('rqs', '.row-highlight', row);
     if (existingHighlight) {
         existingHighlight.remove();
     }
@@ -323,7 +109,7 @@ export async function createRowHighlight(row) {
 
     if (row.classList.contains('selected')) {
         highlight.style.opacity = '1';
-        const svg = highlight.querySelector('svg');
+        const svg = xlp.getElement('rqs', 'svg', highlight);
         if (svg) {
             svg.innerHTML = svg.innerHTML.replace(/var\(--main-table-hover-color\)/g, 'var(--main-table-selected-color)');
         }
@@ -332,27 +118,195 @@ export async function createRowHighlight(row) {
     return highlight;
 }
 
-// Selector Update Handler
-// Updates interface elements when row selector choice is changed
-export function selectRowSelector(fileName, svgElement, customSelect, selectedValue, optionsContainer) {
-    if (svgElement && customSelect && selectedValue) {
-        selectedValue.innerHTML = '';
-        selectedValue.appendChild(svgElement.cloneNode(true));
-        customSelect.dataset.value = fileName;
-        if (optionsContainer) {
-            optionsContainer.classList.remove('show');
+// Function Delay Control
+//   Prevents rapid function execution by enforcing time delay period
+//   Returns a debounced version of the function that delays execution until delay period has passed
+export function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Application Exit Handler
+//   Saves application state and performs cleanup before shutting down
+//   Validates and saves xldbv.json and xldbf.json, handles update file processing
+//   Cleans up localStorage and triggers application exit
+export async function exitApp() {
+    xlp.setData('xldbv', window.xldbv);
+    xlp.setData('xldbf', window.xldbf);
+
+    let hasXldbu = false;
+    let hasUpdtmp = false;
+
+    try {
+        const baseDir = await e.Api.invoke('get-app-dir');
+        const utilsDir = xlp.dirVar('utils');
+
+        if (xlp.validateXldbvJson(window.xldbv)) {
+            const xldbvPath = joinPath(baseDir, utilsDir, 'xldbv.json');
+            const xldbvResult = await e.Api.invoke('update-vars', xldbvPath, window.xldbv);
+            if (!xldbvResult) {
+                throw new Error('Failed to save xldbv.json');
+            }
+        } else {
+            throw new Error('Invalid xldbv.json structure');
         }
         
-        if (!window.currentSectionTemp) window.currentSectionTemp = {};
-        if (!window.currentSectionTemp.theme) window.currentSectionTemp.theme = {};
-        window.currentSectionTemp.theme.rowSelector = fileName;
+        const cleanedXldbfData = xlp.validateXldbfJson(window.xldbf);
+        if (cleanedXldbfData) {
+            const xldbfPath = joinPath(baseDir, utilsDir, 'xldbf.json');
+            const xldbfResult = await e.Api.invoke('update-favs', xldbfPath, cleanedXldbfData);
+            if (!xldbfResult) {
+                throw new Error('Failed to update xldbf.json');
+            }
+        } else {
+            throw new Error('Invalid xldbf.json structure');
+        }
+
+        const xldbuPath = joinPath(baseDir, utilsDir, 'xldbu.json');
+        const updtmpPath = joinPath(baseDir, utilsDir, 'updtmp');
         
-        xlp.updateSaveButtonState();
+        try {
+            hasXldbu = await e.Api.invoke('file-exists', xldbuPath);
+        } catch (error) {
+            xlp.silentError();
+        }
+
+        try {
+            const updtmpContents = await e.Api.invoke('read-directory', updtmpPath);
+            hasUpdtmp = Array.isArray(updtmpContents) && updtmpContents.length > 0;
+        } catch (error) {
+            xlp.silentError();
+        }
+        
+        if (hasXldbu || hasUpdtmp) {
+            const newXluPath = joinPath(updtmpPath, 'utils', 'xlu.exe');
+            const hasNewXlu = await e.Api.invoke('file-exists', newXluPath);
+            
+            if (hasNewXlu) {
+                const currentXluPath = joinPath(baseDir, utilsDir, 'xlu.exe');
+                await e.Api.invoke('copy-file', newXluPath, currentXluPath);
+            }
+        }
+
+        const keysToKeep = ['updateAvailable'];
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (!keysToKeep.includes(key)) {
+                localStorage.removeItem(key);
+            }
+        }
+        xlp.setData('updateAvailable', false);
+    } catch (error) {
+        throw error;
+    } finally {
+        if (hasXldbu || hasUpdtmp) {
+            e.Api.invoke('run-xlu', 'update');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        e.Api.send('toMain', 'exit');
     }
 }
 
+// Remote Content Fetcher
+//   Downloads and processes remote content with specified response type
+//   Fetches remote URL content and returns parsed data based on response type
+export async function fetchFile(url, responseType = 'json') {
+    try {
+        const response = await e.Api.invoke('fetch-url', url, responseType);
+        if (!response.ok) {
+            throw new Error(response.statusText);
+        }
+        return response.data;
+    } catch (error) {
+        throw new Error(`Failed to fetch file: ${error.message}`);
+    }
+}
+
+// Input Focus Delay
+//   Focuses input element after specified delay
+//   Provides delayed focus for dialog inputs to ensure proper rendering
+export function focusInputAfterDelay(selector, delay = 100) {
+    setTimeout(() => {
+        const element = xlp.getElement('dqs', selector);
+        if (element) {
+            element.focus();
+        }
+    }, delay);
+}
+
+// SVG Generator Handler
+//   Creates and processes SVG selectors for row highlighting system
+//   Loads SVG file and replaces currentColor with CSS variable for theme integration
+export async function generateRowSelectorSVG(svgPath, isConfig = false) {
+    try {
+        const appDir = await e.Api.invoke('get-app-dir');
+        const themesDir = xlp.dirVar('themes');
+        const fullPath = joinPath(appDir, 'files', themesDir, 'selectors', svgPath);
+        const { data: svgContent } = await e.Api.invoke('get-file', fullPath);
+        
+        if (!svgContent) return null;
+
+        const modifiedSvg = svgContent.replace(/currentColor/g, 'var(--main-table-hover-color)');
+        return modifiedSvg;
+    } catch (error) {
+        return null;
+    }
+}
+
+// Version Data Retriever
+//   Fetches and returns current version information from update server
+//   Retrieves version.json from configured update URL
+export async function getVersionInfo() {
+    const uurl = window.xldbv.uurl;
+    return await fetchFile(`${uurl}/version.json`);
+}
+
+// Green Button Handler
+//   Processes actions for the footer left button based on current section
+//   Retrieves section-specific handler from configuration and executes it
+export function handleGreenButtonClick() {
+    const currentSection = window.state?.currentSection;
+    if (!currentSection) return;
+
+    const config = xlp.greenButtonConfig?.[currentSection];
+    if (!config) return;
+
+    if (currentSection === 'launchlist' && !window.selectedApp) {
+        return;
+    }
+
+    const handlerFunc = xlp[config.handler];
+    if (handlerFunc) {
+        handlerFunc();
+    }
+}
+
+// Version Update Checker
+//   Compares version numbers to determine if update is needed
+//   Parses semantic version strings and compares major, minor, and patch versions
+export function isNewerVersion(version1, version2) {
+    const [major1, minor1, patch1] = version1.split('.').map(Number);
+    const [major2, minor2, patch2] = version2.split('.').map(Number);
+    
+    return major2 > major1 || 
+           (major2 === major1 && minor2 > minor1) ||
+           (major2 === major1 && minor2 === minor1 && patch2 > patch1);
+}
+
+// Path Management System
+//   Combines and normalizes paths for consistent cross platform use
+//   Handles path joining and separator normalization across different operating systems
+export function joinPath(...parts) {
+    return parts.join('/').replace(/\\/g, '/').replace(/\/+/g, '/');
+}
+
 // Row Selector Initializer
-// Sets up and configures all available row selector options
+//   Sets up and configures all available row selector options
+//   Loads SVG selector files, creates option elements, and sets up selection interface
+//   Restores previously selected selector from configuration
 export async function loadRowSelectors() {
     try {
         const appDir = await e.Api.invoke('get-app-dir');
@@ -361,9 +315,9 @@ export async function loadRowSelectors() {
         const files = await e.Api.invoke('read-directory', selectorsPath);
         
         const svgFiles = files.filter(file => file.endsWith('.svg'));
-        const customSelect = document.querySelector('.custom-select');
-        const selectedValue = customSelect?.querySelector('.selected-value');
-        const optionsContainer = customSelect?.querySelector('.options-container');
+    const customSelect = xlp.getElement('dqs', '.custom-select');
+    const selectedValue = customSelect ? xlp.getElement('rqs', '.selected-value', customSelect) : null;
+    const optionsContainer = customSelect ? xlp.getElement('rqs', '.options-container', customSelect) : null;
         
         if (customSelect && selectedValue && optionsContainer) {
             optionsContainer.innerHTML = '';
@@ -408,7 +362,7 @@ export async function loadRowSelectors() {
             if (savedSelector) {
                 for (const option of optionsContainer.children) {
                     if (option.dataset.value === savedSelector) {
-                        const svgElement = option.querySelector('svg');
+                        const svgElement = xlp.getElement('rqs', 'svg', option);
                         if (svgElement) {
                             selectRowSelector(savedSelector, svgElement, customSelect, selectedValue);
                         }
@@ -422,41 +376,227 @@ export async function loadRowSelectors() {
     }
 }
 
+// Documentation Display Handler
+//   Opens application help documentation in the default system browser
+//   Constructs help file path and opens it using Electron external API
+export function openHelpFile() {
+    const helpDir = xlp.dirVar('help');
+    const helpFilePath = `${helpDir}/xlauncher_plus_help.html`;
+    e.Api.invoke('open-external', helpFilePath);
+}
+
+// Remove Tracked Event Listeners
+//   Removes all tracked event listeners for a section
+//   Cleans up all event listeners registered for the specified section
+export function removeTrackedEventListeners(section) {
+    if (!window.eventListeners || !window.eventListeners[section]) {
+        return;
+    }
+    
+    window.eventListeners[section].forEach(({ element, event, handler }) => {
+        if (element && handler) {
+            element.removeEventListener(event, handler);
+        }
+    });
+    
+    delete window.eventListeners[section];
+}
+
+// Safe Event Listener
+//   Adds event listener to element if it exists
+//   Prevents errors when attempting to add listeners to non-existent elements
+export function safeAddEventListener(elementId, event, handler) {
+    const element = xlp.getElement(elementId);
+    if (element) {
+        element.addEventListener(event, handler);
+    }
+}
+
+// Selector Update Handler
+//   Updates interface elements when row selector choice is changed
+//   Updates custom select display, closes options container, and saves selection to temporary state
+export function selectRowSelector(fileName, svgElement, customSelect, selectedValue, optionsContainer) {
+    if (svgElement && customSelect && selectedValue) {
+        selectedValue.innerHTML = '';
+        selectedValue.appendChild(svgElement.cloneNode(true));
+        customSelect.dataset.value = fileName;
+        if (optionsContainer) {
+            optionsContainer.classList.remove('show');
+        }
+        
+        if (!window.currentSectionTemp) window.currentSectionTemp = {};
+        if (!window.currentSectionTemp.theme) window.currentSectionTemp.theme = {};
+        window.currentSectionTemp.theme.rowSelector = fileName;
+        
+        xlp.updateSaveButtonState();
+    }
+}
+
+// Dialog Button Setup
+//   Configures dialog button with click handler
+//   Locates dialog and button elements, then attaches click event handler
+export function setupDialogButton(dialogName, handler, buttonClass = '.ok-button') {
+    const dialog = xlp.getElement('id', `${dialogName}Dialog`);
+    if (!dialog) return;
+    
+    const button = xlp.getElement('rqs', buttonClass, dialog);
+    if (button) {
+        button.onclick = handler;
+    }
+}
+
+// Event Delegation Helper
+//   Sets up event delegation on a parent element for child elements matching selector
+//   Creates event handler that delegates to matching child elements, returns handler for cleanup
+export function setupEventDelegation(parentElement, eventType, selector, handler, options = {}) {
+    if (!parentElement) return null;
+    
+    const delegatedHandler = (event) => {
+        const target = event.target.closest(selector);
+        if (target) {
+            handler(event, target);
+        }
+    };
+    
+    parentElement.addEventListener(eventType, delegatedHandler, options);
+    return delegatedHandler;
+}
+
+// Setup Event Listeners from Config
+//   Initializes event listeners and delegations from configuration array
+//   Processes configuration array to set up event listeners and delegations with optional debouncing
+//   Handles both direct listeners and delegated events based on configuration type
+export function setupEventListenersFromConfig(section = 'global') {
+    const config = xlp.getEventListenerConfig?.(section);
+    
+    if (!config || !Array.isArray(config)) {
+        return;
+    }
+
+    config.forEach(listenerConfig => {
+        if (listenerConfig.condition && !listenerConfig.condition()) {
+            return;
+        }
+
+        let handler = listenerConfig.handler;
+        
+        if (typeof handler === 'string') {
+            const handlerFunc = xlp[handler];
+            if (!handlerFunc) {
+                const moduleHandler = window[handler];
+                if (moduleHandler) {
+                    handler = moduleHandler;
+                } else {
+                    return;
+                }
+            } else {
+                handler = handlerFunc;
+            }
+        }
+
+        if (listenerConfig.debounce && typeof handler === 'function') {
+            handler = xlp.debounce(handler, listenerConfig.debounce);
+        }
+
+        if (listenerConfig.type === 'delegation') {
+            let parentElement;
+            if (typeof listenerConfig.parent === 'string') {
+                if (listenerConfig.parent.startsWith('.')) {
+                    parentElement = xlp.getElement('dqs', listenerConfig.parent);
+                } else if (listenerConfig.parent.startsWith('#')) {
+                    parentElement = xlp.getElement('id', listenerConfig.parent.slice(1));
+                } else {
+                    parentElement = xlp.getElement('id', listenerConfig.parent);
+                }
+            } else {
+                parentElement = listenerConfig.parent;
+            }
+
+            if (parentElement) {
+                xlp.addTrackedEventDelegation(
+                    parentElement,
+                    listenerConfig.event,
+                    listenerConfig.selector,
+                    handler,
+                    section,
+                    listenerConfig.options
+                );
+            }
+        } else if (listenerConfig.type === 'listener') {
+            let element;
+            if (listenerConfig.getElement) {
+                if (typeof listenerConfig.element === 'string') {
+                    if (listenerConfig.element.startsWith('.')) {
+                        element = xlp.getElement('dqs', listenerConfig.element);
+                    } else if (listenerConfig.element.startsWith('#')) {
+                        element = xlp.getElement('id', listenerConfig.element.slice(1));
+                    } else {
+                        element = xlp.getElement('id', listenerConfig.element);
+                    }
+                } else {
+                    element = listenerConfig.element;
+                }
+            } else {
+                element = typeof listenerConfig.element === 'string' 
+                    ? xlp.getElement(listenerConfig.element) 
+                    : listenerConfig.element;
+            }
+
+            if (element) {
+                xlp.addTrackedEventListener(element, listenerConfig.event, handler, section);
+            }
+        }
+    });
+}
+
+// Silent Error Handler
+//   No-op function for intentional silent error handling
+//   Used in catch blocks where errors should be silently ignored
+export function silentError() {
+}
+
+// Class Toggle Helper
+//   Manages class list operations on elements
+//   Adds, removes, or toggles CSS classes on elements with validation
+export function toggleClass(elementId, className, action = 'toggle') {
+    const element = xlp.getElement(elementId);
+    if (element && ['add', 'remove', 'toggle'].includes(action)) {
+        element.classList[action](className);
+    }
+}
+
 // Button State Controller
-// Updates footer button states based on current section context
+//   Updates footer button states based on current section context
+//   Retrieves button configuration for current section and updates enabled state and text
 export function updateGreenButtonState() {
-    const greenButton = document.getElementById('footerLeftButton');
+    const greenButton = xlp.getElement('footerLeftButton');
     if (!greenButton) return;
 
+    const currentSection = window.state?.currentSection;
     let shouldEnable = false;
     let buttonText = 'Launch';
 
-    switch (window.state.currentSection) {
-        case 'launchlist':
-            shouldEnable = !!window.selectedApp;
-            buttonText = 'Launch';
-            break;
-        case 'databasecontrol':
-            const preloadedData = xlp.getData('preloadedData') || {};
-            const isDifferent = JSON.stringify(preloadedData) !== JSON.stringify(window.tempData);
-            shouldEnable = isDifferent;
-            buttonText = 'Save';
-            break;
-        case 'themes':
-            const isDifferentTheme = window.selectedTheme && window.selectedTheme !== window.currentTheme;
-            shouldEnable = isDifferentTheme;
-            buttonText = 'Apply';
-            break;
-        case 'configuration':
-            shouldEnable = xlp.hasUnsavedChanges();
-            buttonText = 'Save';
-            break;
-        default:
-            shouldEnable = false;
-            buttonText = 'Launch';
+    if (currentSection && xlp.greenButtonConfig?.[currentSection]) {
+        const config = xlp.greenButtonConfig[currentSection];
+        shouldEnable = config.getEnabled();
+        buttonText = config.getButtonText();
     }
 
     greenButton.disabled = !shouldEnable;
     greenButton.textContent = buttonText;
     greenButton.classList.toggle('disabled', !shouldEnable);
+}
+
+// File System Writer
+//   Writes content to file system with comprehensive error handling
+//   Invokes Electron API to write file content and validates operation success
+export async function writeFile(filePath, content) {
+    try {
+        const result = await e.Api.invoke('write-file', filePath, content);
+        if (!result) {
+            throw new Error('Failed to write file');
+        }
+    } catch (error) {
+        throw error;
+    }
 }

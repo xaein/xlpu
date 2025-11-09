@@ -1,7 +1,12 @@
 // Json Validation Module
-// Manages data validation and format conversion
+//   Manages data validation and format conversion
+//   Validates JSON structure for xldbv.json and xldbf.json files
+//   Handles data cleaning and format standardization
+//   Ensures data integrity and prevents invalid configurations
 
-// Initialize validation variables
+// Required Directory Structure
+//   Defines expected directory structure for application files
+//   Maps directory names to their paths including nested structures for utils and themes
 const requiredDirectories = {
     xldb: "xldb",
     help: "help",
@@ -17,22 +22,34 @@ const requiredDirectories = {
     }
 };
 
+// Default Core Scripts
+//   Defines list of core scripts loaded by default
+//   Contains core.d, core.s, and core.w module names
 const defaultCoreScripts = [
     "core.d",
     "core.s",
     "core.w"
 ];
 
+// Allowed Top Level Keys
+//   Defines valid top-level keys for xldbv.json structure
+//   Set of allowed keys for validation and data integrity checks
 const allowedTopLevelKeys = new Set([
     'version', 'config', 'logfile', 'mainXLFC', 'uurl',
     'favourite_symbols', 'updtico', 'firstRun', 'directories',
     'configOpts', 'coreScripts', 'xldbFiles'
 ]);
 
+// Required String Fields
+//   Defines mandatory string fields in xldbv.json
+//   List of required fields that must be present and be string type
 const requiredStringFields = [
     'version', 'config', 'logfile', 'mainXLFC', 'uurl'
 ];
 
+// Configuration Validation Rules
+//   Defines validation rules for configuration sections
+//   Contains validation rules for system, triggercmd, updates, and theme configurations
 const configValidation = {
     system: {
         keys: new Set(['show', 'minimizeTo', 'closeTo', 'startWithWindows', 'startMinimized']),
@@ -72,7 +89,8 @@ const configValidation = {
 };
 
 // Check File Format
-// Validates and converts data files to current specification
+//   Validates and converts data files to current specification
+//   Converts xldbv.json or xldbf.json to current format and saves if changes were made
 export async function conversionCheck(fileName, data) {
     let convertedData = data;
 
@@ -97,7 +115,8 @@ export async function conversionCheck(fileName, data) {
 }
 
 // Convert Favorites File
-// Transforms favorites data structure into current version format
+//   Transforms favorites data structure into current version format
+//   Converts old favorites format to new structure with favourites and recent arrays
 function convertXldbf(data) {
     if (!data || data.trim().length === 0) {
         return JSON.stringify({ favourites: [], recent: [] }, null, 2);
@@ -115,8 +134,8 @@ function convertXldbf(data) {
         }
 
         return JSON.stringify({
-            favourites: parsedData.favourites || [],
-            recent: parsedData.recent || []
+            favourites: parsedData.favourites ?? [],
+            recent: parsedData.recent ?? []
         }, null, 2);
     } catch (error) {
         return JSON.stringify({ favourites: [], recent: [] }, null, 2);
@@ -124,12 +143,12 @@ function convertXldbf(data) {
 }
 
 // Convert Variables File
-// Transforms configuration variables into current version structure
+//   Transforms configuration variables into current version structure
+//   Migrates old configuration format to new structure with configOpts and directories
 function convertXldbv(data) {
     try {
         const variables = JSON.parse(data);
 
-        // Set default for updtico if it doesn't exist
         if (!variables.updtico) {
             variables.updtico = "⥥";
         }
@@ -139,11 +158,11 @@ function convertXldbv(data) {
         }
 
         if (!variables.configOpts.system || typeof variables.configOpts.system !== 'object') {
-            const traySettings = variables.configOpts.tray || {};
+            const traySettings = variables.configOpts.tray ?? {};
             variables.configOpts.system = {
                 show: traySettings.show !== undefined ? traySettings.show : true,
-                minimizeTo: traySettings.minimizeTo || false,
-                closeTo: traySettings.closeTo || false,
+                minimizeTo: traySettings.minimizeTo ?? false,
+                closeTo: traySettings.closeTo ?? false,
                 startWithWindows: false,
                 startMinimized: false
             };
@@ -155,7 +174,7 @@ function convertXldbv(data) {
                 overwriteFile: variables.tcuo || variables.configOpts.tcuo || 'keep',
                 addCommands: variables.tcao || variables.configOpts.tcao || 'favourited',
                 autoGenerate: variables.tcag === 'on' || variables.configOpts.tcag === 'on',
-                inPath: variables.inPath || variables.configOpts.inPath || false
+                inPath: variables.inPath ?? variables.configOpts.inPath ?? false
             };
             delete variables.tcuo;
             delete variables.tcao;
@@ -167,7 +186,7 @@ function convertXldbv(data) {
             variables.configOpts.updates = {
                 autoCheck: variables.aupd === 'on' || variables.configOpts.aupd === 'on' || true,
                 periodic: {
-                    enable: variables.configOpts?.periodic?.enable || false,
+                    enable: variables.configOpts?.periodic?.enable ?? false,
                     interval: variables.configOpts?.periodic?.interval || 24
                 }
             };
@@ -194,6 +213,11 @@ function convertXldbv(data) {
         
         if (!Array.isArray(variables.coreScripts)) {
             variables.coreScripts = [...defaultCoreScripts];
+        } else {
+            variables.coreScripts = variables.coreScripts.filter(script => script !== 'core.v');
+            if (variables.coreScripts.length === 0) {
+                variables.coreScripts = [...defaultCoreScripts];
+            }
         }
 
         if (variables.rows) {
@@ -210,8 +234,103 @@ function convertXldbv(data) {
     }
 }
 
+// System Config Check
+//   Validates system configuration settings
+//   Validates system config keys and types against configuration validation rules
+function validateSystemConfig(system) {
+    if (!system || typeof system !== 'object') return false;
+    
+    const { keys, type } = configValidation.system;
+    for (const key of Object.keys(system)) {
+        if (!keys.has(key) || typeof system[key] !== type) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Theme Config Check
+//   Validates theme configuration settings
+//   Validates theme config keys and types including rowWidth range validation
+function validateThemeConfig(theme) {
+    if (!theme || typeof theme !== 'object') return false;
+    
+    const { keys, types } = configValidation.theme;
+    for (const key of keys) {
+        const type = types[key];
+        if (typeof type === 'string') {
+            if (typeof theme[key] !== type) return false;
+        } else {
+            if (typeof theme[key] !== type.type || theme[key] < type.min || theme[key] > type.max) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// TriggerCmd Config Check
+//   Validates trigger command configuration settings
+//   Validates triggercmd config keys, valid values, and types against configuration rules
+function validateTriggerCmdConfig(triggercmd) {
+    if (!triggercmd || typeof triggercmd !== 'object') return false;
+    
+    const { keys, validValues } = configValidation.triggercmd;
+    for (const key of Object.keys(triggercmd)) {
+        if (!keys.has(key)) return false;
+        
+        if (key === 'overwriteFile' && !validValues.overwriteFile.includes(triggercmd[key])) return false;
+        if (key === 'addCommands' && !validValues.addCommands.includes(triggercmd[key])) return false;
+        if (['autoGenerate', 'inPath'].includes(key) && typeof triggercmd[key] !== 'boolean') return false;
+    }
+    return true;
+}
+
+// Updates Config Check
+//   Validates update configuration settings
+//   Validates updates config structure, autoCheck, and periodic interval settings
+function validateUpdatesConfig(updates) {
+    if (!updates || typeof updates !== 'object') return false;
+    if (typeof updates.autoCheck !== 'boolean') return false;
+    
+    const { periodic } = updates;
+    if (!periodic || typeof periodic !== 'object') return false;
+    if (typeof periodic.enable !== 'boolean') return false;
+    
+    const { min, max } = configValidation.updates.periodic.interval;
+    if (typeof periodic.interval !== 'number' || periodic.interval < min || periodic.interval > max) {
+        return false;
+    }
+    return true;
+}
+
+// XLDBF Validation
+//   Validates favorites file structure and content
+//   Validates and cleans favourites and recent arrays, returns cleaned data or false
+export function validateXldbfJson(data) {
+    if (typeof data !== 'object' || data === null) {
+        return false;
+    }
+
+    const cleanedData = {
+        favourites: Array.isArray(data.favourites) 
+            ? data.favourites.filter(item => typeof item === 'string')
+            : [],
+        recent: Array.isArray(data.recent)
+            ? data.recent.filter(item => typeof item === 'string')
+            : []
+    };
+
+    if (!Array.isArray(cleanedData.favourites) || !Array.isArray(cleanedData.recent)) {
+        return false;
+    }
+
+    return cleanedData;
+}
+
 // Validate Config File
-// Verifies configuration file structure and data integrity rules
+//   Verifies configuration file structure and data integrity rules
+//   Validates top-level keys, version format, required fields, directories, and configOpts structure
 export function validateXldbvJson(data) {
     if (typeof data !== 'object' || data === null) {
         return false;
@@ -297,92 +416,3 @@ export function validateXldbvJson(data) {
 
     return true;
 }
-
-// XLDBF Validation
-// Validates favorites file structure and content
-export function validateXldbfJson(data) {
-    if (typeof data !== 'object' || data === null) {
-        return false;
-    }
-
-    const cleanedData = {
-        favourites: Array.isArray(data.favourites) 
-            ? data.favourites.filter(item => typeof item === 'string')
-            : [],
-        recent: Array.isArray(data.recent)
-            ? data.recent.filter(item => typeof item === 'string')
-            : []
-    };
-
-    if (!Array.isArray(cleanedData.favourites) || !Array.isArray(cleanedData.recent)) {
-        return false;
-    }
-
-    return cleanedData;
-}
-
-// System Config Check
-// Validates system configuration settings
-function validateSystemConfig(system) {
-    if (!system || typeof system !== 'object') return false;
-    
-    const { keys, type } = configValidation.system;
-    for (const key of Object.keys(system)) {
-        if (!keys.has(key) || typeof system[key] !== type) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// TriggerCmd Config Check
-// Validates trigger command configuration settings
-function validateTriggerCmdConfig(triggercmd) {
-    if (!triggercmd || typeof triggercmd !== 'object') return false;
-    
-    const { keys, validValues } = configValidation.triggercmd;
-    for (const key of Object.keys(triggercmd)) {
-        if (!keys.has(key)) return false;
-        
-        if (key === 'overwriteFile' && !validValues.overwriteFile.includes(triggercmd[key])) return false;
-        if (key === 'addCommands' && !validValues.addCommands.includes(triggercmd[key])) return false;
-        if (['autoGenerate', 'inPath'].includes(key) && typeof triggercmd[key] !== 'boolean') return false;
-    }
-    return true;
-}
-
-// Updates Config Check
-// Validates update configuration settings
-function validateUpdatesConfig(updates) {
-    if (!updates || typeof updates !== 'object') return false;
-    if (typeof updates.autoCheck !== 'boolean') return false;
-    
-    const { periodic } = updates;
-    if (!periodic || typeof periodic !== 'object') return false;
-    if (typeof periodic.enable !== 'boolean') return false;
-    
-    const { min, max } = configValidation.updates.periodic.interval;
-    if (typeof periodic.interval !== 'number' || periodic.interval < min || periodic.interval > max) {
-        return false;
-    }
-    return true;
-}
-
-// Theme Config Check
-// Validates theme configuration settings
-function validateThemeConfig(theme) {
-    if (!theme || typeof theme !== 'object') return false;
-    
-    const { keys, types } = configValidation.theme;
-    for (const key of keys) {
-        const type = types[key];
-        if (typeof type === 'string') {
-            if (typeof theme[key] !== type) return false;
-        } else {
-            if (typeof theme[key] !== type.type || theme[key] < type.min || theme[key] > type.max) {
-                return false;
-            }
-        }
-    }
-    return true;
-} 
