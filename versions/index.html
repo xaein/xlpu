@@ -180,11 +180,16 @@
                     const comment = domCache.versionComment;
                     const details = domCache.versionDetails;
                     
+                    // Calculate the height of the details section (statistics + files)
+                    const detailsHeight = details.offsetHeight;
+                    
+                    // Set padding-bottom on comment to prevent overlap with absolutely positioned details
+                    comment.style.paddingBottom = `${detailsHeight + 20}px`;
+                    
                     const containerHeight = container.clientHeight;
                     const headerHeight = container.querySelector('.version-header')?.offsetHeight || 0;
                     const commentTop = comment.offsetTop;
                     const commentHeight = comment.scrollHeight;
-                    const detailsHeight = details.offsetHeight;
                     
                     const availableHeight = containerHeight - headerHeight - 20;
                     const usedHeight = commentTop + commentHeight + detailsHeight + 40;
@@ -236,7 +241,7 @@
                     
                     setTimeout(() => {
                         resizeFileSections();
-                    }, 100);
+                    }, 150);
                     
                     highlightCurrentVersion();
                 }
