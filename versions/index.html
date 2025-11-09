@@ -20,39 +20,122 @@
         <div class="main-content">
             <div id="versions">
                 <div class="loading">Loading version history...</div>
+                <div id="versionContainer" class="version-container" style="display: none;">
+                    <div class="version-header">
+                        <span class="version-number" id="versionNumber"></span>
+                    </div>
+                    <div class="version-comment" id="versionComment"></div>
+                    <div class="version-details">
+                        <div class="detail-section statistics">
+                            <h3>Statistics</h3>
+                            <div class="statistics-grid">
+                                <p>Files Updated: <span id="filesUpdated">0</span></p>
+                                <p>Files Removed: <span id="filesRemoved">0</span></p>
+                            </div>
+                        </div>
+                        <div class="files-container">
+                            <div class="file-section">
+                                <h3>Updated Files</h3>
+                                <ul class="file-list" id="updatedFilesList"></ul>
+                            </div>
+                            <div class="file-section">
+                                <h3>Removed Files</h3>
+                                <ul class="file-list" id="removedFilesList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        const domCache = {};
+
+        function initializeDomCache() {
+            domCache.versionList = document.getElementById('versionList');
+            domCache.loadingDiv = document.querySelector('#versions .loading');
+            domCache.versionContainer = document.getElementById('versionContainer');
+            domCache.versionNumber = document.getElementById('versionNumber');
+            domCache.versionComment = document.getElementById('versionComment');
+            domCache.versionDetails = document.querySelector('.version-details');
+            domCache.filesUpdated = document.getElementById('filesUpdated');
+            domCache.filesRemoved = document.getElementById('filesRemoved');
+            domCache.updatedFilesList = document.getElementById('updatedFilesList');
+            domCache.removedFilesList = document.getElementById('removedFilesList');
+        }
+
         async function loadVersions() {
             try {
                 const pathParts = location.pathname.split('/');
-                const repo = pathParts[1];
+                const repo = pathParts[1] || 'xlpu';
                 
+                const versionDataMap = new Map();
+                const loadedVersions = new Set();
+
+                if (!domCache.versionList) {
+                    initializeDomCache();
+                }
+
+                domCache.versionList.innerHTML = '';
+
+                try {
+                    const currentVersionResponse = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/version.json`);
+                    const currentVersionFile = await currentVersionResponse.json();
+                    const currentVersionData = JSON.parse(atob(currentVersionFile.content));
+                    const currentVersionId = `v${currentVersionData.version.replace(/\./g, '-')}`;
+                    
+                    if (!loadedVersions.has(currentVersionData.version)) {
+                        versionDataMap.set(currentVersionId, currentVersionData);
+                        loadedVersions.add(currentVersionData.version);
+                    }
+                } catch (error) {
+                }
+
                 const response = await fetch(`https://api.github.com/repos/xaein/${repo}/contents/versions`);
                 const files = await response.json();
                 
                 const versionFiles = files
                     .filter(file => file.name.startsWith('version') && file.name.endsWith('.json'))
                     .sort((a, b) => {
-                        const vA = a.name.match(/\d+\.\d+\.\d+/)[0].split('.').map(Number);
-                        const vB = b.name.match(/\d+\.\d+\.\d+/)[0].split('.').map(Number);
-                        return (vB[0] - vA[0]) || (vB[1] - vA[1]) || (vB[2] - vA[2]);
+                        const vA = a.name.match(/\d+\.\d+\.\d+/);
+                        const vB = b.name.match(/\d+\.\d+\.\d+/);
+                        if (!vA || !vB) return 0;
+                        const vANum = vA[0].split('.').map(Number);
+                        const vBNum = vB[0].split('.').map(Number);
+                        return (vBNum[0] - vANum[0]) || (vBNum[1] - vANum[1]) || (vBNum[2] - vANum[2]);
                     });
-
-                const versionsContainer = document.getElementById('versions');
-                const versionList = document.getElementById('versionList');
-                versionsContainer.innerHTML = '';
-                versionList.innerHTML = '';
-
-                let latestVersion = null;
 
                 for (let i = 0; i < versionFiles.length; i++) {
                     const file = versionFiles[i];
-                    const versionResponse = await fetch(file.download_url);
-                    const versionData = await versionResponse.json();
-                    const versionId = `v${versionData.version.replace(/\./g, '-')}`;
+                    try {
+                        const versionResponse = await fetch(file.download_url);
+                        if (!versionResponse.ok) continue;
+                        
+                        const versionData = await versionResponse.json();
+                        const versionId = `v${versionData.version.replace(/\./g, '-')}`;
+                        
+                        if (!loadedVersions.has(versionData.version)) {
+                            versionDataMap.set(versionId, versionData);
+                            loadedVersions.add(versionData.version);
+                        }
+                    } catch (error) {
+                        console.error(`Error loading ${file.name}:`, error);
+                    }
+                }
+
+                function getSortedVersions() {
+                    return Array.from(versionDataMap.entries()).sort((a, b) => {
+                        const vA = a[1].version.split('.').map(Number);
+                        const vB = b[1].version.split('.').map(Number);
+                        return (vB[0] - vA[0]) || (vB[1] - vA[1]) || (vB[2] - vA[2]);
+                    });
+                }
+
+                const sortedVersions = getSortedVersions();
+
+                for (let i = 0; i < sortedVersions.length; i++) {
+                    const [versionId, versionData] = sortedVersions[i];
                     const isCurrent = i === 0;
                     
                     const listItem = document.createElement('li');
@@ -62,85 +145,115 @@
                     } else {
                         listItem.innerHTML = `<a href="#${versionId}">Version ${versionData.version}</a>`;
                     }
-                    versionList.appendChild(listItem);
+                    domCache.versionList.appendChild(listItem);
+                }
+
+                function populateVersion(versionData, isCurrent) {
+                    domCache.versionNumber.innerHTML = `Version ${versionData.version}`;
+                    if (isCurrent) {
+                        const currentTag = document.createElement('span');
+                        currentTag.className = 'current-tag';
+                        currentTag.textContent = 'Current';
+                        domCache.versionNumber.appendChild(currentTag);
+                    }
                     
-                    const versionElement = document.createElement('div');
-                    versionElement.className = 'version-container';
-                    versionElement.id = versionId;
-                    versionElement.style.display = 'none';
+                    domCache.versionComment.textContent = versionData.comment || 'No comment provided';
                     
                     const filesCount = countFiles(versionData.files);
                     const removedCount = versionData.rem ? versionData.rem.length : 0;
                     
-                    versionElement.innerHTML = `
-                        <div class="version-header">
-                            <span class="version-number">Version ${versionData.version}${isCurrent ? '<span class="current-tag">Current</span>' : ''}</span>
-                        </div>
-                        <div class="version-comment">${versionData.comment || 'No comment provided'}</div>
-                        <div class="version-details">
-                            <div class="detail-section statistics">
-                                <h3>Statistics</h3>
-                                <div class="statistics-grid">
-                                    <p>Files Updated: ${filesCount}</p>
-                                    <p>Files Removed: ${removedCount}</p>
-                                </div>
-                            </div>
-                            <div class="files-container">
-                                <div class="file-section">
-                                    <h3>Updated Files</h3>
-                                    <ul class="file-list">
-                                        ${generateFileList(versionData.files)}
-                                    </ul>
-                                </div>
-                                <div class="file-section">
-                                    <h3>Removed Files</h3>
-                                    <ul class="file-list">
-                                        ${versionData.rem && versionData.rem.length > 0 
-                                            ? versionData.rem.map(file => `<li>${file}</li>`).join('')
-                                            : '<li>No files removed</li>'}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    domCache.filesUpdated.textContent = filesCount;
+                    domCache.filesRemoved.textContent = removedCount;
                     
-                    versionsContainer.appendChild(versionElement);
+                    domCache.updatedFilesList.innerHTML = generateFileList(versionData.files);
                     
-                    if (isCurrent) {
-                        latestVersion = versionElement;
+                    domCache.removedFilesList.innerHTML = versionData.rem && versionData.rem.length > 0 
+                        ? versionData.rem.map(file => `<li>${file}</li>`).join('')
+                        : '<li>No files removed</li>';
+                }
+
+                function resizeFileSections() {
+                    if (!domCache.versionContainer || !domCache.versionComment || !domCache.versionDetails) return;
+                    if (domCache.versionContainer.style.display === 'none') return;
+                    
+                    const container = domCache.versionContainer;
+                    const comment = domCache.versionComment;
+                    const details = domCache.versionDetails;
+                    
+                    const containerHeight = container.clientHeight;
+                    const headerHeight = container.querySelector('.version-header')?.offsetHeight || 0;
+                    const commentTop = comment.offsetTop;
+                    const commentHeight = comment.scrollHeight;
+                    const detailsHeight = details.offsetHeight;
+                    
+                    const availableHeight = containerHeight - headerHeight - 20;
+                    const usedHeight = commentTop + commentHeight + detailsHeight + 40;
+                    
+                    if (usedHeight > availableHeight) {
+                        const overflow = usedHeight - availableHeight;
+                        const fileSections = container.querySelectorAll('.file-section');
+                        const currentHeight = 270;
+                        const newHeight = Math.max(150, currentHeight - overflow);
+                        
+                        fileSections.forEach(section => {
+                            section.style.height = `${newHeight}px`;
+                        });
+                    } else {
+                        const fileSections = container.querySelectorAll('.file-section');
+                        fileSections.forEach(section => {
+                            section.style.height = '270px';
+                        });
                     }
                 }
 
-                // Show latest version by default if no hash
-                if (!location.hash && latestVersion) {
-                    latestVersion.style.display = 'block';
+                let resizeTimer = null;
+                function debouncedResize() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        resizeFileSections();
+                    }, 100);
                 }
 
-                // Handle showing/hiding versions on hash change
-                function showVersion() {
-                    // Hide all versions
-                    document.querySelectorAll('.version-container').forEach(el => {
-                        el.style.display = 'none';
+                function getSortedVersionIds() {
+                    return Array.from(versionDataMap.keys()).sort((a, b) => {
+                        const vA = versionDataMap.get(a).version.split('.').map(Number);
+                        const vB = versionDataMap.get(b).version.split('.').map(Number);
+                        return (vB[0] - vA[0]) || (vB[1] - vA[1]) || (vB[2] - vA[2]);
                     });
+                }
 
-                    // Show selected version or latest
-                    if (location.hash) {
-                        const selected = document.querySelector(location.hash);
-                        if (selected) {
-                            selected.style.display = 'block';
-                        }
-                    } else if (latestVersion) {
-                        latestVersion.style.display = 'block';
-                    }
-
+                function showVersion(versionId) {
+                    const versionData = versionDataMap.get(versionId);
+                    if (!versionData) return;
+                    
+                    const sortedVersionIds = getSortedVersionIds();
+                    const isCurrent = versionId === sortedVersionIds[0];
+                    
+                    populateVersion(versionData, isCurrent);
+                    
+                    if (domCache.loadingDiv) domCache.loadingDiv.style.display = 'none';
+                    domCache.versionContainer.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        resizeFileSections();
+                    }, 100);
+                    
                     highlightCurrentVersion();
                 }
 
-                // Initial show
-                showVersion();
+                const sortedVersionIds = getSortedVersionIds();
+                const defaultVersionId = location.hash ? location.hash.substring(1) : sortedVersionIds[0];
+                if (defaultVersionId) {
+                    showVersion(defaultVersionId);
+                }
 
-                // Listen for hash changes
-                window.addEventListener('hashchange', showVersion);
+                window.addEventListener('hashchange', () => {
+                    const sortedVersionIds = getSortedVersionIds();
+                    const versionId = location.hash ? location.hash.substring(1) : sortedVersionIds[0];
+                    if (versionId) {
+                        showVersion(versionId);
+                    }
+                });
 
             } catch (error) {
                 document.getElementById('versions').innerHTML = `
@@ -152,12 +265,12 @@
         }
 
         function highlightCurrentVersion() {
-            // Remove all active classes
-            document.querySelectorAll('.version-list a').forEach(a => a.classList.remove('active'));
+            if (!domCache.versionList) return;
             
-            // Add active class to current version
+            domCache.versionList.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+            
             if (location.hash) {
-                const currentLink = document.querySelector(`.version-list a[href="${location.hash}"]`);
+                const currentLink = domCache.versionList.querySelector(`a[href="${location.hash}"]`);
                 if (currentLink) {
                     currentLink.classList.add('active');
                 }
@@ -199,8 +312,26 @@
             return fileList.length > 0 ? fileList.join('') : '<li>No files updated</li>';
         }
 
-        // Load versions when the page loads
-        document.addEventListener('DOMContentLoaded', loadVersions);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeDomCache();
+            loadVersions();
+            
+            if (window.ResizeObserver) {
+                const resizeObserver = new ResizeObserver(() => {
+                    debouncedResize();
+                });
+                
+                if (domCache.versionContainer) {
+                    resizeObserver.observe(domCache.versionContainer);
+                }
+            }
+            
+            window.addEventListener('resize', debouncedResize);
+            
+            setInterval(() => {
+                resizeFileSections();
+            }, 500);
+        });
     </script>
 </body>
 </html> 
