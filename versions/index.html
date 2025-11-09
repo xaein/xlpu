@@ -180,31 +180,39 @@
                     const comment = domCache.versionComment;
                     const details = domCache.versionDetails;
                     const statistics = container.querySelector('.statistics');
+                    const fileSections = container.querySelectorAll('.file-section');
+                    const filesContainer = container.querySelector('.files-container');
                     
                     const containerHeight = container.clientHeight;
                     const headerHeight = container.querySelector('.version-header')?.offsetHeight || 0;
-                    const commentTop = comment.offsetTop;
                     const statisticsHeight = statistics?.offsetHeight || 0;
-                    const filesContainer = container.querySelector('.files-container');
                     const filesContainerGap = 20; // gap between statistics and files-container
+                    const containerPadding = 40; // top and bottom padding of container
+                    
+                    // Calculate available space from the bottom of the container
+                    // This is the space we can use for the details section (statistics + files)
+                    const availableFromBottom = containerHeight - headerHeight - containerPadding;
+                    
+                    // Calculate how much space we need for statistics + gap
+                    const fixedDetailsHeight = statisticsHeight + filesContainerGap;
                     
                     // Calculate available space for file sections
-                    // Container height - header - comment top - statistics - gap - padding
-                    const availableForFiles = containerHeight - headerHeight - commentTop - statisticsHeight - filesContainerGap - 40;
+                    const availableForFiles = availableFromBottom - fixedDetailsHeight;
                     
-                    // Calculate optimal height for file sections (use 30-40% of available space, but respect min/max)
-                    const optimalHeight = Math.max(150, Math.min(350, Math.floor(availableForFiles * 0.35)));
+                    // Calculate optimal height for file sections (use available space efficiently, but respect min/max)
+                    const optimalHeight = Math.max(150, Math.min(350, Math.floor(availableForFiles * 0.85)));
                     
-                    const fileSections = container.querySelectorAll('.file-section');
+                    // Apply the calculated height
                     fileSections.forEach(section => {
                         section.style.height = `${optimalHeight}px`;
                     });
                     
-                    // Recalculate details height after resizing file sections
-                    const detailsHeight = details.offsetHeight;
+                    // Recalculate final details height after resizing file sections
+                    const finalFilesContainerHeight = filesContainer?.offsetHeight || 0;
+                    const finalDetailsHeight = statisticsHeight + filesContainerGap + finalFilesContainerHeight;
                     
                     // Set padding-bottom on comment to prevent overlap with absolutely positioned details
-                    comment.style.paddingBottom = `${detailsHeight + 20}px`;
+                    comment.style.paddingBottom = `${finalDetailsHeight + 20}px`;
                 }
 
                 let resizeTimer = null;
