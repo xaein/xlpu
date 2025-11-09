@@ -170,6 +170,14 @@
                     domCache.removedFilesList.innerHTML = versionData.rem && versionData.rem.length > 0 
                         ? versionData.rem.map(file => `<li>${file}</li>`).join('')
                         : '<li>No files removed</li>';
+                    
+                    // Reset and store the comment's natural height after content is loaded
+                    domCache.commentNaturalHeight = null;
+                    setTimeout(() => {
+                        if (domCache.versionComment) {
+                            domCache.commentNaturalHeight = domCache.versionComment.scrollHeight;
+                        }
+                    }, 100);
                 }
 
                 function resizeFileSections() {
@@ -189,9 +197,13 @@
                     const filesContainerGap = 20; // gap between statistics and files-container
                     const containerPadding = 40; // top and bottom padding of container
                     
-                    // Calculate available space from the bottom of the container
-                    // This is the space we can use for the details section (statistics + files)
-                    const availableFromBottom = containerHeight - headerHeight - containerPadding;
+                    // Use the comment's natural height if stored, otherwise use current height
+                    const commentHeight = domCache.commentNaturalHeight || comment.scrollHeight;
+                    const commentTop = comment.offsetTop;
+                    
+                    // Calculate available space from the bottom
+                    // Container height - header - comment top - comment natural height - padding
+                    const availableFromBottom = containerHeight - headerHeight - commentTop - commentHeight - containerPadding;
                     
                     // Calculate how much space we need for statistics + gap
                     const fixedDetailsHeight = statisticsHeight + filesContainerGap;
