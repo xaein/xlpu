@@ -1,18 +1,121 @@
 {
-  "version": "1.1.11",
+  "version": "1.1.10",
   "patch": 10,
-  "comment": "",
-  "files": {},
+  "comment": "Reconfiguration:\n Themes moved into configuration section.\n\nCode optimization:\n Refactored majority of the code.\n Updated comments before functions and variables.\n Split various modules into submodules.\n Created object arrays for configurations for modules.\n\nAll files included even if not modified, as this is a complete patch upgrade.",
+  "files": {
+    "files": {
+      "files": [
+        "xlp.app.html"
+      ],
+      "js": {
+        "files": [
+          "xlp.core.d.js",
+          "xlp.m.configuration.js",
+          "xlp.m.configuration.u.js",
+          "xlp.app.js",
+          "xlp.core.s.js",
+          "xlp.core.v.js",
+          "xlp.m.init.js",
+          "xlp.m.tables.js",
+          "xlp.m.themes.js",
+          "xlp.m.launchlist.js",
+          "xlp.core.c.js",
+          "xlp.m.databasecontrol.js",
+          "xlp.m.logging.js",
+          "xlp.m.databasecontrol.s.js",
+          "xlp.core.g.js",
+          "xlp.core.w.js",
+          "xlp.m.configuration.i.js",
+          "xlp.m.configuration.t.js"
+        ],
+        "config": {
+          "files": [
+            "xlp.buttons.js",
+            "xlp.defaults.js",
+            "xlp.dialogs.js",
+            "xlp.events.js",
+            "xlp.operations.js",
+            "xlp.sections.js",
+            "xlp.window.js"
+          ]
+        }
+      },
+      "themes": {
+        "files": [],
+        "base": {
+          "files": [
+            "s.configuration.scss",
+            "s.databasecontrol.scss",
+            "s.launchlist.scss",
+            "s.logging.scss",
+            "s.themes.scss",
+            "b.xlp.app.scss",
+            "b.xlp.dialogs.scss"
+          ]
+        },
+        "selectors": {
+          "files": [
+            "bulge.svg",
+            "indent normal.svg",
+            "indent straight.svg",
+            "pointed.svg",
+            "rectangle.svg",
+            "rounded.svg",
+            "sword.svg"
+          ]
+        }
+      },
+      "sections": {
+        "files": [
+          "xlp.d.launch.html",
+          "xlp.d.configchange.html",
+          "xlp.d.configsave.html",
+          "xlp.d.configupdatepreview.html",
+          "xlp.d.databasecontrolcatadd.html",
+          "xlp.d.databasecontrolcatremove.html",
+          "xlp.d.databasecontrolcatrename.html",
+          "xlp.d.databasecontrolconfirm.html",
+          "xlp.d.databasecontrolrowadd.html",
+          "xlp.d.databasecontrolrowedit.html",
+          "xlp.d.databasecontrolrowremove.html",
+          "xlp.d.databasecontrolsave.html",
+          "xlp.d.themedelete.html",
+          "xlp.d.themeimport.html",
+          "xlp.s.configuration.html",
+          "xlp.s.databasecontrol.html",
+          "xlp.s.launchlist.html",
+          "xlp.s.loader.html",
+          "xlp.s.logging.html"
+        ]
+      }
+    },
+    "utils": {
+      "files": [
+        "xlstitch.js",
+        "xltb.js",
+        "xltc.js",
+        "xlaunch.exe",
+        "xltb.exe",
+        "xlu.exe"
+      ]
+    }
+  },
   "mainFiles": {
     "xlauncherplus.js": 0,
     "xlauncherpluseapi.js": 0,
     "xlauncherplusfs.js": 0
   },
   "directoryZips": {
-    "help.zip": 0,
+    "help.zip": 1,
     "node_modules.zip": 0
   },
-  "rem": [],
+  "rem": [
+    "xlp.d.configupdatepreview.html",
+    "s.themes.scss",
+    "xlp.d.themeapply.html",
+    "xlp.m.themes.js",
+    "xlp.s.themes.html"
+  ],
   "lastFullUpdate": true,
   "dependencies": {
     "@vscode/sudo-prompt": "^9.3.1",
