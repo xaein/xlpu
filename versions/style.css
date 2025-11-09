@@ -186,4 +186,24 @@ body {
     padding: 20px;
     font-style: italic;
     color: #666;
+}
+
+.version-list .current a {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.version-header .current-tag {
+    background: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+    font-size: 0.9em;
+}
+
+.error-message {
+    text-align: center;
+    color: #dc3545;
+    padding: 20px;
 } 
