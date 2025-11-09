@@ -175,7 +175,13 @@
                     domCache.commentNaturalHeight = null;
                     setTimeout(() => {
                         if (domCache.versionComment) {
+                            // Set the comment height to its content height
                             domCache.commentNaturalHeight = domCache.versionComment.scrollHeight;
+                            domCache.versionComment.style.height = `${domCache.commentNaturalHeight}px`;
+                            // Trigger resize after comment height is set
+                            setTimeout(() => {
+                                resizeFileSections();
+                            }, 50);
                         }
                     }, 100);
                 }
@@ -197,12 +203,12 @@
                     const filesContainerGap = 20; // gap between statistics and files-container
                     const containerPadding = 40; // top and bottom padding of container
                     
-                    // Use the comment's natural height if stored, otherwise use current height
-                    const commentHeight = domCache.commentNaturalHeight || comment.scrollHeight;
+                    // Use the comment's fixed height (set after content is loaded)
+                    const commentHeight = domCache.commentNaturalHeight || comment.offsetHeight || comment.scrollHeight;
                     const commentTop = comment.offsetTop;
                     
                     // Calculate available space from the bottom
-                    // Container height - header - comment top - comment natural height - padding
+                    // Container height - header - comment top - comment height - padding
                     const availableFromBottom = containerHeight - headerHeight - commentTop - commentHeight - containerPadding;
                     
                     // Calculate how much space we need for statistics + gap

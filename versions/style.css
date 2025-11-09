@@ -104,8 +104,7 @@ body {
     background: #f8f9fa;
     padding: 15px;
     border-radius: 6px;
-    flex: 1;
-    min-height: 0;
+    flex-shrink: 0;
     overflow-y: auto;
     line-height: 1.4;
     padding-bottom: 20px;
