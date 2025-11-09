@@ -104,7 +104,7 @@ body {
     background: #f8f9fa;
     padding: 15px;
     border-radius: 6px;
-    height: 120px;
+    height: 180px;
     overflow-y: auto;
     line-height: 1.4;
 }
@@ -121,8 +121,13 @@ body {
 
 .statistics {
     background: #f8f9fa;
-    padding: 15px;
+    padding: 0 15px 15px 15px;
     border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.statistics h3 {
+    margin: 0 0 10px 0;
     flex-shrink: 0;
 }
 
