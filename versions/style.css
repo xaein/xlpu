@@ -90,6 +90,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
 }
 
 .version-header {
@@ -98,25 +99,30 @@ body {
 }
 
 .version-comment {
-    margin-bottom: 15px;
+    margin-bottom: 0;
     white-space: pre-wrap;
-    flex-shrink: 0;
     background: #f8f9fa;
     padding: 15px;
     border-radius: 6px;
-    height: 240px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
     line-height: 1.4;
+    padding-bottom: 20px;
 }
 
 .version-details {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    flex: 1;
+    flex-shrink: 0;
     overflow: hidden;
     min-height: 0;
     padding-bottom: 20px;
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    right: 20px;
 }
 
 .statistics {
@@ -146,7 +152,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
-    flex: 1;
+    flex-shrink: 0;
     overflow: hidden;
 }
 
