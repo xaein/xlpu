@@ -5,20 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>xLauncher Plus - Version History</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .version-list .current a {
-            font-weight: bold;
-            color: #4CAF50;
-        }
-        .version-header .current-tag {
-            background: #4CAF50;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 10px;
-            font-size: 0.9em;
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -210,7 +196,7 @@
 
             } catch (error) {
                 document.getElementById('versions').innerHTML = `
-                    <div style="text-align: center; color: #dc3545; padding: 20px;">
+                    <div class="error-message">
                         Error loading version history: ${error.message}
                     </div>
                 `;
