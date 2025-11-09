@@ -34,7 +34,13 @@ async function checkDependencyChanges() {
         if (removedDeps.length > 0) {
             const utilsDir = xlp.dirVar('utils');
             const xldbuPath = xlp.joinPath(appDir, utilsDir, 'xldbu.json');
-            const updateData = { removedDependencies: removedDeps };
+            let updateData = {};
+            try {
+                const existingData = await e.Api.invoke('read-file', xldbuPath);
+                updateData = JSON.parse(existingData);
+            } catch (error) {
+            }
+            updateData.RemovedDependencies = removedDeps;
             await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
         }
 
@@ -235,10 +241,16 @@ async function downloadAndApplyFiles(onProgress) {
 
         if (versionInfo.rem && versionInfo.rem.length > 0) {
             const xldbuPath = xlp.joinPath(appDir, xlp.dirVar('utils'), 'xldbu.json');
-            const updateData = {
-                removedFiles: versionInfo.rem,
-                removedDependencies: []
-            };
+            let updateData = {};
+            try {
+                const existingData = await e.Api.invoke('read-file', xldbuPath);
+                updateData = JSON.parse(existingData);
+            } catch (error) {
+            }
+            updateData.FilesToRemove = versionInfo.rem;
+            if (!updateData.RemovedDependencies) {
+                updateData.RemovedDependencies = [];
+            }
             await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
         }
 
