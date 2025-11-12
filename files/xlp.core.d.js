@@ -174,6 +174,9 @@ export function closeDialog(dialogName) {
 
     if (dialogName === 'launch') {
         xlp.resetAppSelection();
+        if (xlp.updateFooterLogMessage) {
+            xlp.updateFooterLogMessage();
+        }
     }
 
     activeDialog = null;

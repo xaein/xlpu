@@ -121,16 +121,22 @@ export const sectionUIConfig = {
             }
 
             const systemConfig = window.xldbv.configOpts.system;
-            const systemElements = ['showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized'];
+            const systemElements = ['showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized', 'showLastLogInFooter'];
             systemElements.forEach(id => {
                 const element = xlp.getElement(id);
                 if (element) {
                     element.checked = systemConfig[id === 'showTray' ? 'show' : 
                                    id === 'minimizeToTray' ? 'minimizeTo' : 
                                    id === 'closeToTray' ? 'closeTo' : 
-                                   id === 'startWithWindows' ? 'startWithWindows' : 'startMinimized'];
+                                   id === 'startWithWindows' ? 'startWithWindows' : 
+                                   id === 'startMinimized' ? 'startMinimized' : 'showLastLogInFooter'];
                 }
             });
+
+            const footerMessageDisplaySeconds = xlp.getElement('footerMessageDisplaySeconds');
+            if (footerMessageDisplaySeconds) {
+                footerMessageDisplaySeconds.value = systemConfig.footerMessageDisplaySeconds ?? 5;
+            }
 
             const showTray = xlp.getElement('showTray');
             const minimizeToTray = xlp.getElement('minimizeToTray');
@@ -205,12 +211,15 @@ export const sectionUIConfig = {
 export const sectionUpdateConfig = {
     general: {
         system: (xlp, tempState) => {
+            const footerSeconds = xlp.getElement('footerMessageDisplaySeconds')?.value;
             const newSystem = {
                 show: xlp.getElement('showTray')?.checked ?? false,
                 minimizeTo: xlp.getElement('minimizeToTray')?.checked ?? false,
                 closeTo: xlp.getElement('closeToTray')?.checked ?? false,
                 startWithWindows: xlp.getElement('startWithWindows')?.checked ?? false,
-                startMinimized: xlp.getElement('startMinimized')?.checked ?? false
+                startMinimized: xlp.getElement('startMinimized')?.checked ?? false,
+                showLastLogInFooter: xlp.getElement('showLastLogInFooter')?.checked ?? false,
+                footerMessageDisplaySeconds: footerSeconds ? parseInt(footerSeconds, 10) : 5
             };
             const stateChanged = JSON.stringify(newSystem) !== JSON.stringify(tempState.system);
             tempState.system = newSystem;

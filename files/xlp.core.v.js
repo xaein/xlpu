@@ -52,8 +52,20 @@ const requiredStringFields = [
 //   Contains validation rules for system, triggercmd, updates, and theme configurations
 const configValidation = {
     system: {
-        keys: new Set(['show', 'minimizeTo', 'closeTo', 'startWithWindows', 'startMinimized']),
-        type: 'boolean'
+        keys: new Set(['show', 'minimizeTo', 'closeTo', 'startWithWindows', 'startMinimized', 'showLastLogInFooter', 'footerMessageDisplaySeconds']),
+        types: {
+            show: 'boolean',
+            minimizeTo: 'boolean',
+            closeTo: 'boolean',
+            startWithWindows: 'boolean',
+            startMinimized: 'boolean',
+            showLastLogInFooter: 'boolean',
+            footerMessageDisplaySeconds: {
+                type: 'number',
+                min: 1,
+                max: 10
+            }
+        }
     },
     triggercmd: {
         keys: new Set(['overwriteFile', 'addCommands', 'autoGenerate', 'inPath']),
@@ -164,7 +176,9 @@ function convertXldbv(data) {
                 minimizeTo: traySettings.minimizeTo ?? false,
                 closeTo: traySettings.closeTo ?? false,
                 startWithWindows: false,
-                startMinimized: false
+                startMinimized: false,
+                showLastLogInFooter: false,
+                footerMessageDisplaySeconds: 5
             };
             delete variables.configOpts.tray;
         }
@@ -240,10 +254,17 @@ function convertXldbv(data) {
 function validateSystemConfig(system) {
     if (!system || typeof system !== 'object') return false;
     
-    const { keys, type } = configValidation.system;
+    const { keys, types } = configValidation.system;
     for (const key of Object.keys(system)) {
-        if (!keys.has(key) || typeof system[key] !== type) {
-            return false;
+        if (!keys.has(key)) return false;
+        
+        const typeSpec = types[key];
+        if (typeof typeSpec === 'string') {
+            if (typeof system[key] !== typeSpec) return false;
+        } else if (typeof typeSpec === 'object' && typeSpec.type) {
+            if (typeof system[key] !== typeSpec.type) return false;
+            if (typeSpec.min !== undefined && system[key] < typeSpec.min) return false;
+            if (typeSpec.max !== undefined && system[key] > typeSpec.max) return false;
         }
     }
     return true;

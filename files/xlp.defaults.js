@@ -66,7 +66,7 @@ export const sections = {
             'configList', 'updateIndicator', 'favouriteIcon', 'highlightWidth', 'highlightWidthValue',
             'dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 'rightEncapsule',
             'messageSeperator', 'messagePrefix', 'maxLogEntries', 'logFormatPreview',
-            'showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized',
+            'showTray', 'minimizeToTray', 'closeToTray', 'startWithWindows', 'startMinimized', 'showLastLogInFooter', 'footerMessageDisplaySeconds',
             'autoGenerateTriggerCMD', 'addToPath', 'triggerCmdUpdateStatus', 'updateTriggerCMDFile',
             'updateInfoPreview', 'checkUpdate', 'periodicUpdateCheck', 'updateFrequency', 'updateAppButton',
             'themeList', 'importThemeButton', 'removeThemeButton', 'themePreview',
@@ -124,7 +124,9 @@ export const configDefaults = {
         minimizeTo: false,
         closeTo: false,
         startWithWindows: false,
-        startMinimized: false
+        startMinimized: false,
+        showLastLogInFooter: false,
+        footerMessageDisplaySeconds: 5
     },
     triggercmd: {
         overwriteFile: 'keep',

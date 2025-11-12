@@ -8,7 +8,7 @@
 //   Tracks update delays, progress handler, and update state
 //   Manages patch delay, file delay, progress handler, last file, and last state
 const patchDelay = 250;  
-const fileDelay = 300;   
+const fileDelay = 200;   
 window.updateState = {
     progressHandler: null,
     lastFile: '',

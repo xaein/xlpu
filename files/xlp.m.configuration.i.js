@@ -278,18 +278,21 @@ export function initializeDocumentChangeHandler() {
         const target = event.target;
         
         if (target.closest('.config-details')) {
-            if (['dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
-                 'rightEncapsule', 'messageSeperator', 'maxLogEntries'].includes(target.id)) {
-                if (['dateFormat', 'timeFormat'].includes(target.id)) {
-                    xlp.updateConstructOptions();
+                if (['dateFormat', 'timeFormat', 'construct', 'leftEncapsule', 
+                     'rightEncapsule', 'messageSeperator', 'maxLogEntries'].includes(target.id)) {
+                    if (['dateFormat', 'timeFormat'].includes(target.id)) {
+                        xlp.updateConstructOptions();
+                    }
+                    xlp.updateConfigTemp('general', 'logging');
+                    if (target.id !== 'maxLogEntries') {
+                        xlp.updateLogFormatPreview();
+                    }
                 }
-                xlp.updateConfigTemp('general', 'logging');
-                if (target.id !== 'maxLogEntries') {
-                    xlp.updateLogFormatPreview();
+                else if (target.id === 'footerMessageDisplaySeconds') {
+                    xlp.updateConfigTemp('general', 'system');
                 }
-            }
             else if (target.type === 'checkbox') {
-                if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
+                if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized|showLastLogInFooter)$/)) {
                     xlp.updateConfigTemp('general', 'system');
 
                     const minimizeToTray = xlp.getElement('minimizeToTray');

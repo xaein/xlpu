@@ -190,6 +190,19 @@ $dropdown-arrow-svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
         text-align: center;
     }
 
+    #maxLogEntries {
+        width: 80px;
+    }
+
+    #footerMessageDisplaySeconds {
+        width: 45px;
+        margin-right: 4px;
+    }
+
+    .display-for-label {
+        margin-left: 20px;
+    }
+
     &.compact {
         margin-bottom: 6px;
         

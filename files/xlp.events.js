@@ -73,6 +73,16 @@ export const globalEventListenerConfig = [
                 }
             }
         }
+    },
+    {
+        type: 'listener',
+        element: 'lastLogMessage',
+        event: 'mouseenter',
+        handler: () => {
+            if (xlp.updateFooterLogMessage) {
+                xlp.updateFooterLogMessage();
+            }
+        }
     }
 ];
 
@@ -249,8 +259,11 @@ export const configurationEventListenerConfig = [
                         xlp.updateLogFormatPreview();
                     }
                 }
+                else if (target.id === 'footerMessageDisplaySeconds') {
+                    xlp.updateConfigTemp('general', 'system');
+                }
                 else if (target.type === 'checkbox') {
-                    if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized)$/)) {
+                    if (target.id.match(/^(showTray|minimizeToTray|closeToTray|startWithWindows|startMinimized|showLastLogInFooter)$/)) {
                         xlp.updateConfigTemp('general', 'system');
                         const minimizeToTray = xlp.getElement('minimizeToTray');
                         const closeToTray = xlp.getElement('closeToTray');

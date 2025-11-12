@@ -600,3 +600,78 @@ export async function writeFile(filePath, content) {
         throw error;
     }
 }
+
+// Get Last Log Entry
+//   Reads the log file and returns the last non-empty line with error flag
+//   Retrieves last log entry from log file and checks if it contains error text
+export async function getLastLogEntry() {
+    try {
+        if (!window.xldbv?.logfile) {
+            return { text: '', isError: false };
+        }
+
+        const appDir = await e.Api.invoke('get-app-dir');
+        const utilsDir = xlp.dirVar('utils');
+        const logFilePath = xlp.joinPath(appDir, utilsDir, window.xldbv.logfile);
+        const { data: logContent } = await e.Api.invoke('get-file', logFilePath);
+
+        if (!logContent || logContent.trim().length === 0) {
+            return { text: '', isError: false };
+        }
+
+        const lines = logContent.split('\n').filter(line => line.trim().length > 0);
+        if (lines.length === 0) {
+            return { text: '', isError: false };
+        }
+
+        const lastLine = lines[lines.length - 1].trim();
+        const isError = lastLine.toLowerCase().includes('error');
+
+        return { text: lastLine, isError };
+    } catch (error) {
+        return { text: '', isError: false };
+    }
+}
+
+// Update Footer Log Message
+//   Displays the last log entry in the footer message box with fade-out
+//   Shows log message, applies color styling, and fades out after configured duration
+export async function updateFooterLogMessage() {
+    if (!window.xldbv?.configOpts?.system?.showLastLogInFooter) {
+        return;
+    }
+
+    const messageElement = xlp.getElement('lastLogMessage');
+    if (!messageElement) {
+        return;
+    }
+
+    const fadeTimer = xlp.getState('ui.footerMessageFadeTimer');
+    if (fadeTimer) {
+        clearTimeout(fadeTimer);
+        xlp.setState('ui.footerMessageFadeTimer', null);
+    }
+
+    const { text, isError } = await getLastLogEntry();
+
+    if (!text) {
+        messageElement.textContent = '';
+        messageElement.style.color = 'transparent';
+        return;
+    }
+
+    messageElement.textContent = text;
+    messageElement.classList.remove('log-normal', 'log-error');
+    messageElement.classList.add(isError ? 'log-error' : 'log-normal');
+    messageElement.style.color = '';
+
+    const displaySeconds = window.xldbv.configOpts.system.footerMessageDisplaySeconds ?? 5;
+    const fadeOutDelay = displaySeconds * 1000;
+
+    const newTimer = setTimeout(() => {
+        messageElement.style.color = 'transparent';
+        xlp.setState('ui.footerMessageFadeTimer', null);
+    }, fadeOutDelay);
+    
+    xlp.setState('ui.footerMessageFadeTimer', newTimer);
+}

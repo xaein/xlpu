@@ -37,7 +37,8 @@ export const AppState = {
         selectedTheme: null
     },
     ui: {
-        domCacheName: null
+        domCacheName: null,
+        footerMessageFadeTimer: null
     },
     update: {
         state: null,

@@ -104,8 +104,6 @@
                 <div class="form-group">
                     <label for="maxLogEntries">Maximum Log Entries:</label>
                     <input type="number" id="maxLogEntries" name="maxLogEntries">
-                </div>
-                <div class="form-group">
                     <label for="messagePrefix">Message Prefix:</label>
                     <input type="text" id="messagePrefix" name="messagePrefix">
                 </div>
@@ -130,6 +128,14 @@
                     <label for="startWithWindows">Start with Windows</label>
                     <input type="checkbox" id="startMinimized" name="startMinimized" disabled>
                     <label for="startMinimized">Start Minimized</label>
+                </div>
+                <div class="form-group">
+                    <span class="section-label">Footer Message:</span>
+                    <input type="checkbox" id="showLastLogInFooter" name="showLastLogInFooter">
+                    <label for="showLastLogInFooter">Show Latest Log Entry</label>
+                    <label for="footerMessageDisplaySeconds" class="display-for-label">Display for</label>
+                    <input type="number" id="footerMessageDisplaySeconds" name="footerMessageDisplaySeconds" min="1" max="10">
+                    <label for="footerMessageDisplaySeconds">seconds</label>
                 </div>
             </div>
 

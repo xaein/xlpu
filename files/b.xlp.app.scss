@@ -615,16 +615,78 @@ body {
     }
 }
 
+.footer-left-section {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 15%;
+}
+
 .footer-left {
     display: flex;
     align-items: center;
     margin-left: 6px;
 }
 
+.footer-center-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-width: 0;
+}
+
+.footer-right-section {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 15%;
+}
+
 .footer-right {
     display: flex;
     align-items: center;
     margin-right: 6px;
+}
+
+.last-log-message {
+    background-color: $background-color;
+    border-left: 1px solid $border-color;
+    border-right: 1px solid $border-color;
+    border-top: none;
+    border-bottom: none;
+    border-radius: 0;
+    padding: 4px 8px;
+    font-size: 1em;
+    font-family: monospace;
+    color: $text-color;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 1;
+    transition: color 0.5s ease;
+
+    &.log-normal {
+        color: $greenbutton-background-color;
+    }
+
+    &.log-error {
+        color: $redbutton-background-color;
+    }
+
+    &:empty {
+        color: transparent;
+    }
 }
 
 // Button styles
