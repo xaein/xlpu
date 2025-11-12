@@ -43,7 +43,9 @@ export const AppState = {
     update: {
         state: null,
         lastFile: null,
-        progressHandler: null
+        progressHandler: null,
+        patchDelay: 250,
+        fileDelay: 200
     },
     data: {
         rowInfo: []

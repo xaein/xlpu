@@ -7,8 +7,6 @@
 // Update state variables
 //   Tracks update delays, progress handler, and update state
 //   Manages patch delay, file delay, progress handler, last file, and last state
-const patchDelay = 250;  
-const fileDelay = 200;   
 window.updateState = {
     progressHandler: null,
     lastFile: '',
@@ -190,7 +188,7 @@ async function downloadAndApplyFiles(onProgress) {
                     await e.Api.invoke('ensure-directory', targetDir);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
                     if (onProgress) onProgress(`${currentPath}/${file}`);
-                    await new Promise(resolve => setTimeout(resolve, fileDelay));
+                    await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
                 }
             }
 
@@ -211,9 +209,9 @@ async function downloadAndApplyFiles(onProgress) {
             const targetPath = xlp.joinPath(tmpDir, file);
             if (onProgress) onProgress(file);
             await e.Api.invoke('download-file', fileUrl, targetPath);
-            await new Promise(resolve => setTimeout(resolve, fileDelay / 2));
+            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
             if (onProgress) onProgress(file);
-            await new Promise(resolve => setTimeout(resolve, fileDelay));
+            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
         }
         
         const directoryZips = [];
@@ -230,13 +228,13 @@ async function downloadAndApplyFiles(onProgress) {
 
             if (onProgress) onProgress(zipName);
             await e.Api.invoke('download-file', zipUrl, zipPath, true);
-            await new Promise(resolve => setTimeout(resolve, fileDelay / 2));
+            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
             if (onProgress) onProgress(zipName);
             await e.Api.invoke('ensure-directory', targetPath);
             await e.Api.invoke('extract-zip', zipPath, targetPath);
             await e.Api.invoke('remove-file', zipPath);
             if (onProgress) onProgress(zipName);
-            await new Promise(resolve => setTimeout(resolve, fileDelay));
+            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
         }
 
         if (versionInfo.rem && versionInfo.rem.length > 0) {
@@ -493,6 +491,13 @@ export async function handleUpdateProcess(updateInfo) {
                     
                     if (currentCount > 0) {
                         if (currentCount === 1) {
+                            const lines = newText.split('\n');
+                            const lineIndex = lines.findIndex(line => line.match(countPattern));
+                            if (lineIndex !== -1) {
+                                const displayPath = file.replace(`${rootDir}/`, '');
+                                lines.splice(lineIndex + 1, 0, `    Updating: ${displayPath}`);
+                                newText = lines.join('\n');
+                            }
                             newText = newText.replace(countPattern, `  ${rootDir} ✓ Complete`);
                         } else {
                             const newCount = currentCount - 1;
@@ -569,7 +574,7 @@ export async function updateFiles(onProgress) {
             for (const patchType of updateInfo.updatePath) {
                 await downloadAndApplyUpdate(patchType, onProgress);
                 const displayType = patchType === 'patch' ? 'regular' : patchType;
-                await new Promise(resolve => setTimeout(resolve, patchDelay));
+                await new Promise(resolve => setTimeout(resolve, xlp.getState('update.patchDelay')));
             }
         }
 

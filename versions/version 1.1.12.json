@@ -1,7 +1,7 @@
 {
-  "version": "1.1.13",
+  "version": "1.1.12",
   "patch": 10,
-  "comment": "Update: Fixing small display issues with the update progress in the updater section\n\n\nAll previous updates included from 1.1.10 to current.",
+  "comment": "Small Update:\n Fixing XLU helper app theme recompile code still.",
   "files": {
     "files": {
       "files": [
@@ -46,13 +46,13 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 2,
-    "xlauncherpluseapi.js": 2,
-    "xlauncherplusfs.js": 2
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
-    "help.zip": 2,
-    "node_modules.zip": 2
+    "help.zip": 1,
+    "node_modules.zip": 1
   },
   "rem": [],
   "lastFullUpdate": false,
