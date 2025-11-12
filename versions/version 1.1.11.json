@@ -1,7 +1,7 @@
 {
   "version": "1.1.11",
   "patch": 10,
-  "comment": "Updated application:\n Added new options in configuration general, Footer Message, to display the last log message in the footer\n between the left and right buttons, this will display after the launch dialog has closed or on mouse over\n after the timeout has finished.\n\nFixed: Fixed XLU to compile themes if they have changed\n\nUpdating from anything before update 1.1.10 should get patch update 1st and then update newest files.",
+  "comment": "Updated application:\n Added new options in configuration general, Footer Message, to display the last log message in the footer\n between the left and right buttons, this will display after the launch dialog has closed or on mouse over\n after the timeout has finished.\n\n\n\nUpdating from anything before update 1.1.10 should get patch update 1st and then update newest files.",
   "files": {
     "files": {
       "files": [
@@ -38,11 +38,6 @@
           ]
         }
       }
-    },
-    "utils": {
-      "files": [
-        "xlu.exe"
-      ]
     }
   },
   "mainFiles": {
