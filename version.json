@@ -1,7 +1,7 @@
 {
-  "version": "1.1.11",
+  "version": "1.1.12",
   "patch": 10,
-  "comment": "Updated application:\n Added new options in configuration general, Footer Message, to display the last log message in the footer\n between the left and right buttons, this will display after the launch dialog has closed or on mouse over\n after the timeout has finished.\n\nFixed: Fixed XLU to compile themes if they have changed\n\nUpdating from anything before update 1.1.10 should get patch update 1st and then update newest files.",
+  "comment": "Small Update:\n Fixing XLU helper app theme recompile code still.",
   "files": {
     "files": {
       "files": [
@@ -46,13 +46,13 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 0,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
-    "help.zip": 0,
-    "node_modules.zip": 0
+    "help.zip": 1,
+    "node_modules.zip": 1
   },
   "rem": [],
   "lastFullUpdate": false,
