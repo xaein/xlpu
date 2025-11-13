@@ -1,7 +1,7 @@
 {
-  "version": "1.1.15",
+  "version": "1.1.14",
   "patch": 10,
-  "comment": "Update: Fixed the error in the xlaunch helper app causing it not to launch apps\n\n\n\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
+  "comment": "Update: Fixing some more UI inconsistencies.\n  Log Messages not updating correctly when config is changed.\n  Checkmarks now use theme styling to keep them consistent.\n  Improved Footer Message section to disable the number box when it is not enabled.\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
   "files": {
     "files": {
       "files": [
@@ -47,14 +47,11 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 4,
-    "xlauncherpluseapi.js": 4,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 3,
+    "xlauncherpluseapi.js": 3,
+    "xlauncherplusfs.js": 0
   },
-  "directoryZips": {
-    "node_modules.zip": 0,
-    "help.zip": 0
-  },
+  "directoryZips": {},
   "rem": [],
   "lastFullUpdate": false,
   "dependencies": {
