@@ -188,6 +188,7 @@ async function downloadAndApplyFiles(onProgress) {
                     await e.Api.invoke('ensure-directory', targetDir);
                     if (onProgress) onProgress(`${currentPath}/${file}`);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
+                    await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
                     if (onProgress) onProgress(`${currentPath}/${file}`);
                     await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
                 }
@@ -275,9 +276,11 @@ async function downloadAndApplyUpdate(updateType, onProgress) {
         await e.Api.invoke('ensure-directory', tmpDir);
         if (onProgress) onProgress(zipName);
         await e.Api.invoke('download-file', zipUrl, zipPath, true);
+        await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
         if (onProgress) onProgress(zipName);
         await e.Api.invoke('extract-zip', zipPath, tmpDir);
         await e.Api.invoke('remove-file', zipPath);
+        await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
         
         return true;
     } catch (error) {
