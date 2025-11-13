@@ -141,6 +141,10 @@ export const sectionUIConfig = {
             const footerMessageDisplaySeconds = xlp.getElement('footerMessageDisplaySeconds');
             if (footerMessageDisplaySeconds) {
                 footerMessageDisplaySeconds.value = systemConfig.footerMessageDisplaySeconds ?? 5;
+                const showLastLogInFooter = xlp.getElement('showLastLogInFooter');
+                if (showLastLogInFooter) {
+                    footerMessageDisplaySeconds.disabled = !showLastLogInFooter.checked;
+                }
             }
 
             const showTray = xlp.getElement('showTray');
@@ -235,10 +239,10 @@ export const sectionUpdateConfig = {
                 dateFormat: xlp.getElement('dateFormat')?.value ?? '',
                 timeFormat: xlp.getElement('timeFormat')?.value ?? '',
                 construct: xlp.getElement('construct')?.value === '1' ? 'timeFormat dateFormat' : 'dateFormat timeFormat',
-                leftEncapsule: `'${xlp.getElement('leftEncapsule')?.value ?? ''}'`,
-                rightEncapsule: `'${xlp.getElement('rightEncapsule')?.value ?? ''}'`,
-                messageSeperator: `'${xlp.getElement('messageSeperator')?.value ?? ''}'`,
-                messagePrefix: `'${xlp.getElement('messagePrefix')?.value ?? ''}'`,
+                leftEncapsule: xlp.getElement('leftEncapsule')?.value ?? '',
+                rightEncapsule: xlp.getElement('rightEncapsule')?.value ?? '',
+                messageSeperator: xlp.getElement('messageSeperator')?.value ?? '',
+                messagePrefix: xlp.getElement('messagePrefix')?.value ?? '',
                 maxLogEntries: xlp.getElement('maxLogEntries')?.value ?? ''
             };
             const stateChanged = JSON.stringify(newConfig) !== JSON.stringify(tempState.xlaunchConfig);

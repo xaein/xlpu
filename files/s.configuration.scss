@@ -159,6 +159,11 @@ $dropdown-arrow-svg: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
         }
     }
 
+    input[type="checkbox"] {
+        cursor: pointer;
+        accent-color: $greenbutton-background-color;
+    }
+
     input[type="checkbox"]:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -685,6 +690,8 @@ select {
     input[type="checkbox"] {
       margin-right: 5px;
       margin-left: 10px;
+      cursor: pointer;
+      accent-color: $greenbutton-background-color;
     }
   }
 }

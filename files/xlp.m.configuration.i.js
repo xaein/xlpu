@@ -311,6 +311,11 @@ export function initializeDocumentChangeHandler() {
                         if (startMinimized && showTray) {
                             startMinimized.disabled = !(target.checked && showTray.checked);
                         }
+                    } else if (target.id === 'showLastLogInFooter') {
+                        const footerMessageDisplaySeconds = xlp.getElement('footerMessageDisplaySeconds');
+                        if (footerMessageDisplaySeconds) {
+                            footerMessageDisplaySeconds.disabled = !target.checked;
+                        }
                     }
                 } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
                     xlp.updateConfigTemp('update');

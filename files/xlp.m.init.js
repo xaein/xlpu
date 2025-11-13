@@ -201,11 +201,15 @@ export function parseConfigFile(configData) {
     const config = {};
     const lines = configData.split('\n');
     for (const line of lines) {
-        const [key, ...valueParts] = line.split('=').map(item => item.trim());
+        const trimmedLine = line.trim();
+        if (!trimmedLine || !trimmedLine.includes('=')) {
+            continue;
+        }
+        const [key, ...valueParts] = trimmedLine.split('=');
         if (key && valueParts.length > 0) {
-            let value = valueParts.join('=');
-            value = value.replace(/^['"](.*)['"]$/, '$1');
-            config[key] = value;
+            let value = valueParts.join('=').trim();
+            value = value.replace(/^['"]+|['"]+$/g, '');
+            config[key.trim()] = value;
         }
     }
     return config;

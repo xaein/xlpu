@@ -186,6 +186,7 @@ async function downloadAndApplyFiles(onProgress) {
                     const targetPath = xlp.joinPath(targetDir, file);
                     const isBinary = binaryExtensions.some(ext => file.endsWith(ext)) ?? false;
                     await e.Api.invoke('ensure-directory', targetDir);
+                    if (onProgress) onProgress(`${currentPath}/${file}`);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
                     if (onProgress) onProgress(`${currentPath}/${file}`);
                     await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
@@ -476,6 +477,7 @@ export async function handleUpdateProcess(updateInfo) {
             if (fileMatch) {
                 const rootDir = fileMatch.path.split('/')[0];
                 const countPattern = new RegExp(`^  ${rootDir} \\((\\d+) files?\\)$`, 'm');
+                const completePattern = new RegExp(`^  ${rootDir} ✓ Complete$`, 'm');
                 const updatingPattern = new RegExp(`^    Updating: .*\\n?`, 'gm');
                 
                 const updatePreview = xlp.getElement('updateInfoPreview') || window[window.domCacheName]?.updateInfoPreview;
@@ -484,33 +486,57 @@ export async function handleUpdateProcess(updateInfo) {
                 }
                 
                 const match = newText.match(countPattern);
+                const completeMatch = newText.match(completePattern);
+                
                 if (match) {
                     const currentCount = parseInt(match[1]);
+                    const displayPath = file.replace(`${rootDir}/`, '');
+                    const updatingLine = `    Updating: ${displayPath}`;
+                    const lines = newText.split('\n');
+                    const dirLineIndex = lines.findIndex(line => line.match(countPattern));
                     
-                    newText = newText.replace(updatingPattern, '').replace(/\n\n\n+/g, '\n\n');
+                    if (dirLineIndex !== -1) {
+                        const nextLineIndex = dirLineIndex + 1;
+                        const hasUpdatingLine = nextLineIndex < lines.length && lines[nextLineIndex].trim() === updatingLine.trim();
+                        
+                        if (currentCount > 0) {
+                            if (currentCount === 1) {
+                                if (!hasUpdatingLine) {
+                                    lines.splice(nextLineIndex, 0, updatingLine);
+                                    newText = lines.join('\n');
+                                } else {
+                                    lines.splice(nextLineIndex, 1);
+                                    lines[dirLineIndex] = `  ${rootDir} ✓ Complete`;
+                                    newText = lines.join('\n');
+                                }
+                            } else {
+                                const newCount = currentCount - 1;
+                                const countText = `  ${rootDir} (${newCount} ${newCount === 1 ? 'file' : 'files'})`;
+                                lines[dirLineIndex] = countText;
+                                
+                                const otherUpdatingPattern = new RegExp(`^    Updating: .*\\n?`, 'gm');
+                                newText = lines.join('\n').replace(otherUpdatingPattern, '').replace(/\n\n\n+/g, '\n\n');
+                                
+                                const updatedLines = newText.split('\n');
+                                const updatedLineIndex = updatedLines.findIndex(line => line === countText);
+                                if (updatedLineIndex !== -1) {
+                                    updatedLines.splice(updatedLineIndex + 1, 0, updatingLine);
+                                    newText = updatedLines.join('\n');
+                                }
+                            }
+                        }
+                    }
+                } else if (completeMatch) {
+                    const displayPath = file.replace(`${rootDir}/`, '');
+                    const updatingLine = `    Updating: ${displayPath}`;
+                    const lines = newText.split('\n');
+                    const completeLineIndex = lines.findIndex(line => line.match(completePattern));
                     
-                    if (currentCount > 0) {
-                        if (currentCount === 1) {
-                            const lines = newText.split('\n');
-                            const lineIndex = lines.findIndex(line => line.match(countPattern));
-                            if (lineIndex !== -1) {
-                                const displayPath = file.replace(`${rootDir}/`, '');
-                                lines.splice(lineIndex + 1, 0, `    Updating: ${displayPath}`);
-                                newText = lines.join('\n');
-                            }
-                            newText = newText.replace(countPattern, `  ${rootDir} ✓ Complete`);
-                        } else {
-                            const newCount = currentCount - 1;
-                            const countText = `  ${rootDir} (${newCount} ${newCount === 1 ? 'file' : 'files'})`;
-                            newText = newText.replace(countPattern, countText);
-                            
-                            const lines = newText.split('\n');
-                            const lineIndex = lines.findIndex(line => line === countText);
-                            if (lineIndex !== -1) {
-                                const displayPath = file.replace(`${rootDir}/`, '');
-                                lines.splice(lineIndex + 1, 0, `    Updating: ${displayPath}`);
-                                newText = lines.join('\n');
-                            }
+                    if (completeLineIndex !== -1) {
+                        const nextLineIndex = completeLineIndex + 1;
+                        if (nextLineIndex < lines.length && lines[nextLineIndex].trim() === updatingLine.trim()) {
+                            lines.splice(nextLineIndex, 1);
+                            newText = lines.join('\n');
                         }
                     }
                 }

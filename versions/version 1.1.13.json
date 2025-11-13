@@ -1,7 +1,7 @@
 {
-  "version": "1.1.14",
+  "version": "1.1.13",
   "patch": 10,
-  "comment": "Update: Fixing some more UI inconsistencies.\n  Log Messages not updating correctly when config is changed.\n  Checkmarks now use theme styling to keep them consistent.\n  Improved Footer Message section to disable the number box when it is not enabled.\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
+  "comment": "Update: Fixing small display issues with the update progress in the updater section\n\n\nAll previous updates included from 1.1.10 to current.",
   "files": {
     "files": {
       "files": [
@@ -41,17 +41,19 @@
     },
     "utils": {
       "files": [
-        "xlu.exe",
-        "xlaunch.exe"
+        "xlu.exe"
       ]
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 3,
-    "xlauncherpluseapi.js": 3,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 2,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
-  "directoryZips": {},
+  "directoryZips": {
+    "help.zip": 2,
+    "node_modules.zip": 2
+  },
   "rem": [],
   "lastFullUpdate": false,
   "dependencies": {

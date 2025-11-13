@@ -264,13 +264,7 @@ class FileSystemOperations {
                 if (key in configData && configData[key] !== undefined) {
                     let value = configData[key];
                     if (quoteKeys.includes(key)) {
-                        // Check if the value already has quotes
-                        if (value.startsWith("'") && value.endsWith("'")) {
-                            // Already has quotes, use as is
-                        } else {
-                            // No quotes, add them
-                            value = `'${value}'`;
-                        }
+                        value = `'${value}'`;
                     }
                     content += `${key}=${value}\n`;
                 }
