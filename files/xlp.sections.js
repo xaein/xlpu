@@ -192,7 +192,10 @@ export const sectionUIConfig = {
 
             if (updateElements.checkUpdate) updateElements.checkUpdate.checked = updateConfig.autoCheck;
             if (updateElements.periodicUpdateCheck) updateElements.periodicUpdateCheck.checked = updateConfig.periodic?.enable ?? false;
-            if (updateElements.updateFrequency) updateElements.updateFrequency.value = updateConfig.periodic?.interval ?? 24;
+            if (updateElements.updateFrequency) {
+                updateElements.updateFrequency.value = updateConfig.periodic?.interval ?? 24;
+                updateElements.updateFrequency.disabled = !(updateConfig.periodic?.enable ?? false);
+            }
 
             if (updateElements.updateInfoPreview) {
                 updateElements.updateInfoPreview.innerHTML = 'Checking for updates. Please wait...\n\n';

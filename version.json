@@ -1,7 +1,7 @@
 {
   "version": "1.1.15",
   "patch": 10,
-  "comment": "Update: Fixed the error in the xlaunch helper app causing it not to launch apps\n\n\n\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
+  "comment": "Update: Fixed the error in the xlaunch helper app causing it not to launch apps\n  Fixed a small error in the update section of the configuration, was not enabling the periodic update\n  check dropdown box when enabling the periodic update check\n\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
   "files": {
     "files": {
       "files": [

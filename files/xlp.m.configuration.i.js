@@ -319,6 +319,12 @@ export function initializeDocumentChangeHandler() {
                     }
                 } else if (target.id.match(/^(checkUpdate|periodicUpdateCheck)$/)) {
                     xlp.updateConfigTemp('update');
+                    if (target.id === 'periodicUpdateCheck') {
+                        const updateFrequency = xlp.getElement('updateFrequency');
+                        if (updateFrequency) {
+                            updateFrequency.disabled = !target.checked;
+                        }
+                    }
                 }
             }
             else if (target.tagName === 'SELECT') {
