@@ -47,9 +47,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 4,
-    "xlauncherpluseapi.js": 4,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
   },
   "directoryZips": {
     "node_modules.zip": 0,
