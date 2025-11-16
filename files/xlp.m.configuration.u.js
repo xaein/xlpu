@@ -239,20 +239,29 @@ async function downloadAndApplyFiles(onProgress) {
             await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
         }
 
-        if (versionInfo.rem && versionInfo.rem.length > 0) {
-            const xldbuPath = xlp.joinPath(appDir, xlp.dirVar('utils'), 'xldbu.json');
-            let updateData = {};
-            try {
-                const existingData = await e.Api.invoke('read-file', xldbuPath);
-                updateData = JSON.parse(existingData);
-            } catch (error) {
-            }
-            updateData.FilesToRemove = versionInfo.rem;
-            if (!updateData.RemovedDependencies) {
-                updateData.RemovedDependencies = [];
-            }
-            await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
+        const xldbuPath = xlp.joinPath(appDir, xlp.dirVar('utils'), 'xldbu.json');
+        let updateData = {};
+        try {
+            const existingData = await e.Api.invoke('read-file', xldbuPath);
+            updateData = JSON.parse(existingData);
+        } catch (error) {
         }
+
+        if (versionInfo.rem && versionInfo.rem.length > 0) {
+            updateData.FilesToRemove = versionInfo.rem;
+        }
+        if (!updateData.RemovedDependencies) {
+            updateData.RemovedDependencies = [];
+        }
+
+        if (versionInfo.version && versionInfo.dependencies) {
+            updateData.versionInfo = {
+                version: versionInfo.version,
+                dependencies: versionInfo.dependencies
+            };
+        }
+
+        await e.Api.invoke('write-file', xldbuPath, JSON.stringify(updateData, null, 2));
 
         return true;
     } catch (error) {

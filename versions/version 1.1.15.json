@@ -1,7 +1,7 @@
 {
-  "version": "1.1.16",
+  "version": "1.1.15",
   "patch": 10,
-  "comment": "Update:\n Updated themes section in configuration to have similar dialog to the rest of the section when applying themes.\n Updated help to use newer images then it had, moved the themes into the configuration section in the help file.\n Updated various helper files to keep version information for modules and main app correct in various locations.\n\n\nIncludes all previous updates",
+  "comment": "Update: Fixed the error in the xlaunch helper app causing it not to launch apps\n  Fixed a small error in the update section of the configuration, was not enabling the periodic update\n  check dropdown box when enabling the periodic update check\n\n\n\n  \n\nAll previous updates included from 1.1.10 to current.",
   "files": {
     "files": {
       "files": [
@@ -47,9 +47,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 1,
-    "xlauncherplusfs.js": 1
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 0,
+    "xlauncherplusfs.js": 0
   },
   "directoryZips": {
     "node_modules.zip": 0,

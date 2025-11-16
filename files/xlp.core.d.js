@@ -557,10 +557,20 @@ export async function showConfigChangeDialog(section) {
 export function showConfigSaveDialog(section) {
     const dialog = xlp.getElement('id', 'configsaveDialog');
     if (!dialog) return;
-    const sectionSpan = xlp.getElement('rqs', '#configSaveSection', dialog);
+    const headerLabel = xlp.getElement('rqs', '.app-name-label', dialog);
+    const messageParagraph = xlp.getElement('rqs', 'p', dialog);
     const okButton = xlp.getElement('rqs', '.ok-button', dialog);
 
-    sectionSpan.textContent = section;
+    if (section === 'themes') {
+        headerLabel.textContent = 'Theme Applied';
+        messageParagraph.textContent = 'Your Theme has been applied.';
+    } else {
+        headerLabel.textContent = 'Configuration Saved';
+        messageParagraph.innerHTML = 'Your changes in the <span id="configSaveSection"></span> section have been saved.';
+        const sectionSpan = xlp.getElement('rqs', '#configSaveSection', dialog);
+        sectionSpan.textContent = section;
+    }
+
     dialog.classList.remove('dialog-hidden');
 
     const handleOk = () => {

@@ -105,7 +105,6 @@ export const configSectionConfig = {
             if (xlp.applySelectedTheme) {
                 await xlp.applySelectedTheme();
             }
-            return true;
         }
     }
 };

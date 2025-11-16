@@ -381,7 +381,7 @@ export async function loadRowSelectors() {
 //   Constructs help file path and opens it using Electron external API
 export function openHelpFile() {
     const helpDir = xlp.dirVar('help');
-    const helpFilePath = `${helpDir}/xlauncher_plus_help.html`;
+    const helpFilePath = `${helpDir}/help.html`;
     e.Api.invoke('open-external', helpFilePath);
 }
 
