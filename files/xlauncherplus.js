@@ -210,13 +210,21 @@ safeIpc('launch-app', async (event, appName) => {
 });
 
 // Open help file
-// Opens files or URLs in the default browser
+// Opens files or URLs in the default browser, or launches executables
 safeIpc('open-external', (event, targetPath) => {
     if (targetPath.startsWith('http://') || targetPath.startsWith('https://')) {
         require('electron').shell.openExternal(targetPath);
     } else {
         const fullPath = path.join(__dirname, targetPath);
-        require('electron').shell.openExternal(`file://${fullPath}`);
+        if (targetPath.endsWith('.exe') || fullPath.endsWith('.exe')) {
+            exec(`"${fullPath}"`, (error) => {
+                if (error) {
+                    console.error('Failed to launch executable:', error);
+                }
+            });
+        } else {
+            require('electron').shell.openExternal(`file://${fullPath}`);
+        }
     }
 });
 

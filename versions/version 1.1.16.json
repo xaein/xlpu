@@ -1,7 +1,7 @@
 {
-  "version": "1.1.17",
+  "version": "1.1.16",
   "patch": 10,
-  "comment": "Update: Updated the Help to have a small python application to host the html help instead of launching in a new browser window, this also updates some other parts of the main application code so that things will launch this help app.\n\n\n\nIncludes updates from previous update",
+  "comment": "Update:\n Updated themes section in configuration to have similar dialog to the rest of the section when applying themes.\n Updated help to use newer images then it had, moved the themes into the configuration section in the help file.\n Updated various helper files to keep version information for modules and main app correct in various locations.\n\n\nIncludes all previous updates",
   "files": {
     "files": {
       "files": [
@@ -47,9 +47,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 2,
-    "xlauncherplusfs.js": 2
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 1,
+    "xlauncherplusfs.js": 1
   },
   "directoryZips": {
     "node_modules.zip": 0,

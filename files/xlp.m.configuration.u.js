@@ -186,9 +186,7 @@ async function downloadAndApplyFiles(onProgress) {
                     const targetPath = xlp.joinPath(targetDir, file);
                     const isBinary = binaryExtensions.some(ext => file.endsWith(ext)) ?? false;
                     await e.Api.invoke('ensure-directory', targetDir);
-                    if (onProgress) onProgress(`${currentPath}/${file}`);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
-                    await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
                     if (onProgress) onProgress(`${currentPath}/${file}`);
                     await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
                 }

@@ -377,12 +377,12 @@ export async function loadRowSelectors() {
 }
 
 // Documentation Display Handler
-//   Opens application help documentation in the default system browser
+//   Opens application help documentation using the help viewer application
 //   Constructs help file path and opens it using Electron external API
 export function openHelpFile() {
     const helpDir = xlp.dirVar('help');
-    const helpFilePath = `${helpDir}/help.html`;
-    e.Api.invoke('open-external', helpFilePath);
+    const helpExePath = `${helpDir}/help.exe`;
+    e.Api.invoke('open-external', helpExePath);
 }
 
 // Remove Tracked Event Listeners
