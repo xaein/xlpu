@@ -14,7 +14,8 @@
           "xlp.core.g.js",
           "xlp.core.v.js",
           "xlp.m.configuration.i.js",
-          "xlp.m.configuration.u.js"
+          "xlp.m.configuration.u.js",
+          "xlp.m.configuration.t.js"
         ],
         "config": {
           "files": [

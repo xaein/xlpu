@@ -264,7 +264,9 @@ function setupThemeControls() {
         checkboxes.forEach((checkbox, index) => {
             checkbox.onchange = async (event) => {
                 const theme = window.themes[index];
-                const themePath = xlp.joinPath('files', xlp.dirVar('themes'), `${theme.name}.thm`);
+                const appDir = await e.Api.invoke('get-app-dir');
+                const themesDir = xlp.dirVar('themes');
+                const themePath = xlp.joinPath(appDir, 'files', themesDir, `${theme.name}.thm`);
                 const success = await e.Api.invoke('toggle-theme-readonly', themePath, event.target.checked);
                 if (!success) {
                     event.target.checked = !event.target.checked;

@@ -231,9 +231,10 @@ export function initializeDocumentClickHandler() {
 
                     xlp.setupDialogButton('themedelete', async () => {
                         try {
+                            const appDir = await e.Api.invoke('get-app-dir');
                             const themesDir = xlp.dirVar('themes');
                             const themeFile = `${window.selectedTheme}.thm`;
-                            const themePath = xlp.joinPath('files', themesDir, themeFile);
+                            const themePath = xlp.joinPath(appDir, 'files', themesDir, themeFile);
                             const success = await e.Api.invoke('remove-file', themePath);
                             
                             if (success && xlp.initializeThemes) {
@@ -248,6 +249,12 @@ export function initializeDocumentClickHandler() {
                             }
                         }
                     });
+                    
+                    xlp.setupDialogButton('themedelete', () => {
+                        if (xlp.closeDialog) {
+                            xlp.closeDialog('themedelete');
+                        }
+                    }, '.close-button');
                 }
             }
         }
