@@ -45,7 +45,7 @@ export const AppState = {
         lastFile: null,
         progressHandler: null,
         patchDelay: 250,
-        fileDelay: 200
+        fileDelay: 350
     },
     data: {
         rowInfo: []

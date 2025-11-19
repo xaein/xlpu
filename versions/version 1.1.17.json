@@ -1,7 +1,7 @@
 {
-  "version": "1.1.18",
+  "version": "1.1.17",
   "patch": 10,
-  "comment": "Fixing Update display, have been seeing it saying twice a file was downloaded.\nFixed the display of the last file launched in the footer to only show on launch list section.\n\nIncludes all previous updates",
+  "comment": "Update: Updated the Help to have a small python application to host the html help instead of launching in a new browser window, this also updates some other parts of the main application code so that things will launch this help app.\n\n\n\nIncludes updates from previous update",
   "files": {
     "files": {
       "files": [
@@ -47,9 +47,9 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 1,
-    "xlauncherpluseapi.js": 3,
-    "xlauncherplusfs.js": 3
+    "xlauncherplus.js": 0,
+    "xlauncherpluseapi.js": 2,
+    "xlauncherplusfs.js": 2
   },
   "directoryZips": {
     "node_modules.zip": 0,
@@ -63,7 +63,7 @@
     "electron-window-state": "^5.0.3",
     "fs-extra": "^11.3.2",
     "node-fetch": "^3.3.2",
-    "sass": "^1.94.1",
+    "sass": "^1.94.0",
     "windows-shortcuts": "^0.1.6"
   }
 }

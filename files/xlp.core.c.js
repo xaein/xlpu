@@ -641,6 +641,15 @@ export async function updateFooterLogMessage() {
         return;
     }
 
+    if (window.state?.currentSection !== 'launchlist') {
+        const messageElement = xlp.getElement('lastLogMessage');
+        if (messageElement) {
+            messageElement.textContent = '';
+            messageElement.style.color = 'transparent';
+        }
+        return;
+    }
+
     const messageElement = xlp.getElement('lastLogMessage');
     if (!messageElement) {
         return;

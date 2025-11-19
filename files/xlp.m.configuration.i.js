@@ -107,13 +107,9 @@ export function initializeDocumentClickHandler() {
 
                 xlp.showUpdateOverlay();
                 await xlp.handleUpdateProcess(updateInfo);
-                const success = await xlp.updateFiles((file) => {
+                const success = await xlp.updateFiles(async (file) => {
                     if (window.updateState.progressHandler) {
-                        const newText = window.updateState.progressHandler(file);
-                        const updateInfoPreview = xlp.getElement('updateInfoPreview');
-                        if (updateInfoPreview && newText) {
-                            updateInfoPreview.innerHTML = newText;
-                        }
+                        await window.updateState.progressHandler(file);
                     }
                 });
 

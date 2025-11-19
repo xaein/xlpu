@@ -187,8 +187,7 @@ async function downloadAndApplyFiles(onProgress) {
                     const isBinary = binaryExtensions.some(ext => file.endsWith(ext)) ?? false;
                     await e.Api.invoke('ensure-directory', targetDir);
                     await e.Api.invoke('download-file', fileUrl, targetPath, isBinary);
-                    if (onProgress) onProgress(`${currentPath}/${file}`);
-                    await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
+                    if (onProgress) await onProgress(`${currentPath}/${file}`);
                 }
             }
 
@@ -207,11 +206,9 @@ async function downloadAndApplyFiles(onProgress) {
         for (const [file] of Object.entries(versionInfo.mainFiles ?? {})) {
             const fileUrl = `${window.xldbv.uurl}/files/${file}`;
             const targetPath = xlp.joinPath(tmpDir, file);
-            if (onProgress) onProgress(file);
+            if (onProgress) await onProgress(file);
             await e.Api.invoke('download-file', fileUrl, targetPath);
-            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
-            if (onProgress) onProgress(file);
-            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
+            if (onProgress) await onProgress(file);
         }
         
         const directoryZips = [];
@@ -226,15 +223,13 @@ async function downloadAndApplyFiles(onProgress) {
             const dirName = zipName.replace('.zip', '');
             const targetPath = xlp.joinPath(tmpDir, dirName);
 
-            if (onProgress) onProgress(zipName);
+            if (onProgress) await onProgress(zipName);
             await e.Api.invoke('download-file', zipUrl, zipPath, true);
-            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
-            if (onProgress) onProgress(zipName);
+            if (onProgress) await onProgress(zipName);
             await e.Api.invoke('ensure-directory', targetPath);
             await e.Api.invoke('extract-zip', zipPath, targetPath);
             await e.Api.invoke('remove-file', zipPath);
-            if (onProgress) onProgress(zipName);
-            await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
+            if (onProgress) await onProgress(zipName);
         }
 
         const xldbuPath = xlp.joinPath(appDir, xlp.dirVar('utils'), 'xldbu.json');
@@ -281,13 +276,11 @@ async function downloadAndApplyUpdate(updateType, onProgress) {
         const zipPath = xlp.joinPath(tmpDir, zipName);
 
         await e.Api.invoke('ensure-directory', tmpDir);
-        if (onProgress) onProgress(zipName);
+        if (onProgress) await onProgress(zipName);
         await e.Api.invoke('download-file', zipUrl, zipPath, true);
-        await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay') / 2));
-        if (onProgress) onProgress(zipName);
+        if (onProgress) await onProgress(zipName);
         await e.Api.invoke('extract-zip', zipPath, tmpDir);
         await e.Api.invoke('remove-file', zipPath);
-        await new Promise(resolve => setTimeout(resolve, xlp.getState('update.fileDelay')));
         
         return true;
     } catch (error) {
@@ -421,18 +414,21 @@ async function getUpdatePath(currentVersion, targetVersion) {
 //   Manages complete update installation with progress tracking system
 //   Creates progress handler that updates update preview display with file status
 export async function handleUpdateProcess(updateInfo) {
-    const onProgress = (file) => {
+    const onProgress = async (file) => {
         const domCacheName = xlp.getState('ui.domCacheName');
-        if (!(xlp.getElement('updateInfoPreview') || (domCacheName && window[domCacheName]?.updateInfoPreview))) {
+        const updatePreview = xlp.getElement('updateInfoPreview') || (domCacheName && window[domCacheName]?.updateInfoPreview);
+        if (!updatePreview) {
             return;
         }
-        const currentText = (xlp.getElement('updateInfoPreview') || (domCacheName && window[domCacheName]?.updateInfoPreview))?.textContent;
+        const currentText = updatePreview.textContent;
         
         if (file !== window.updateState.lastFile) {
             window.updateState.lastFile = file;
         }
 
         let newText = currentText;
+        let shouldDelay = false;
+        let delayAmount = 0;
 
         if (file && file.match(/^(major|minor|patch)\.zip$/)) {
             const type = file.replace('.zip', '');
@@ -449,6 +445,8 @@ export async function handleUpdateProcess(updateInfo) {
                 }
                 newText = newText.replace(patchPattern, `Applying patch: ${currentPath}`);
             }
+            shouldDelay = true;
+            delayAmount = xlp.getState('update.patchDelay');
         } else if (updateInfo.mainFiles.includes(file)) {
             const baseLine = `  ${file}${getPadding(file, updateInfo)}`;
             const pattern = new RegExp(`^  ${file}\\s+(-|✓|- Updating...)$`, 'm');
@@ -459,6 +457,8 @@ export async function handleUpdateProcess(updateInfo) {
                     newText = newText.replace(pattern, `${baseLine}- Updating...`);
                 } else if (match[1] === '- Updating...') {
                     newText = newText.replace(pattern, `${baseLine}✓`);
+                    shouldDelay = true;
+                    delayAmount = xlp.getState('update.fileDelay');
                 }
             }
         } else if (file.endsWith('.zip')) {
@@ -474,12 +474,18 @@ export async function handleUpdateProcess(updateInfo) {
                 if (match[1] === '-') {
                     newText = newText.replace(pattern, `${baseLine}- Downloading...`);
                     window.updateState.lastState[file] = 'downloading';
+                    shouldDelay = true;
+                    delayAmount = xlp.getState('update.patchDelay');
                 } else if (match[1] === '- Downloading...' && window.updateState.lastState[file] === 'downloading') {
                     newText = newText.replace(pattern, `${baseLine}- Extracting...`);
                     window.updateState.lastState[file] = 'extracting';
+                    shouldDelay = true;
+                    delayAmount = xlp.getState('update.patchDelay');
                 } else if (match[1] === '- Extracting...' && window.updateState.lastState[file] === 'extracting') {
                     newText = newText.replace(pattern, `${baseLine}✓`);
                     window.updateState.lastState[file] = 'complete';
+                    shouldDelay = true;
+                    delayAmount = xlp.getState('update.patchDelay');
                 }
             }
         } else {
@@ -487,7 +493,6 @@ export async function handleUpdateProcess(updateInfo) {
             if (fileMatch) {
                 const rootDir = fileMatch.path.split('/')[0];
                 const countPattern = new RegExp(`^  ${rootDir} \\((\\d+) files?\\)$`, 'm');
-                const completePattern = new RegExp(`^  ${rootDir} ✓ Complete$`, 'm');
                 const updatingPattern = new RegExp(`^    Updating: .*\\n?`, 'gm');
                 
                 const updatePreview = xlp.getElement('updateInfoPreview') || window[window.domCacheName]?.updateInfoPreview;
@@ -496,64 +501,39 @@ export async function handleUpdateProcess(updateInfo) {
                 }
                 
                 const match = newText.match(countPattern);
-                const completeMatch = newText.match(completePattern);
-                
                 if (match) {
                     const currentCount = parseInt(match[1]);
-                    const displayPath = file.replace(`${rootDir}/`, '');
-                    const updatingLine = `    Updating: ${displayPath}`;
-                    const lines = newText.split('\n');
-                    const dirLineIndex = lines.findIndex(line => line.match(countPattern));
                     
-                    if (dirLineIndex !== -1) {
-                        const nextLineIndex = dirLineIndex + 1;
-                        const hasUpdatingLine = nextLineIndex < lines.length && lines[nextLineIndex].trim() === updatingLine.trim();
-                        
-                        if (currentCount > 0) {
-                            if (currentCount === 1) {
-                                if (!hasUpdatingLine) {
-                                    lines.splice(nextLineIndex, 0, updatingLine);
-                                    newText = lines.join('\n');
-                                } else {
-                                    lines.splice(nextLineIndex, 1);
-                                    lines[dirLineIndex] = `  ${rootDir} ✓ Complete`;
-                                    newText = lines.join('\n');
-                                }
-                            } else {
-                                const newCount = currentCount - 1;
-                                const countText = `  ${rootDir} (${newCount} ${newCount === 1 ? 'file' : 'files'})`;
-                                lines[dirLineIndex] = countText;
-                                
-                                const otherUpdatingPattern = new RegExp(`^    Updating: .*\\n?`, 'gm');
-                                newText = lines.join('\n').replace(otherUpdatingPattern, '').replace(/\n\n\n+/g, '\n\n');
-                                
-                                const updatedLines = newText.split('\n');
-                                const updatedLineIndex = updatedLines.findIndex(line => line === countText);
-                                if (updatedLineIndex !== -1) {
-                                    updatedLines.splice(updatedLineIndex + 1, 0, updatingLine);
-                                    newText = updatedLines.join('\n');
-                                }
+                    newText = newText.replace(updatingPattern, '').replace(/\n\n\n+/g, '\n\n');
+                    
+                    if (currentCount > 0) {
+                        if (currentCount === 1) {
+                            newText = newText.replace(countPattern, `  ${rootDir} ✓ Complete`);
+                        } else {
+                            const newCount = currentCount - 1;
+                            const countText = `  ${rootDir} (${newCount} ${newCount === 1 ? 'file' : 'files'})`;
+                            newText = newText.replace(countPattern, countText);
+                            
+                            const lines = newText.split('\n');
+                            const lineIndex = lines.findIndex(line => line === countText);
+                            if (lineIndex !== -1) {
+                                const displayPath = file.replace(`${rootDir}/`, '');
+                                lines.splice(lineIndex + 1, 0, `    Updating: ${displayPath}`);
+                                newText = lines.join('\n');
                             }
-                        }
-                    }
-                } else if (completeMatch) {
-                    const displayPath = file.replace(`${rootDir}/`, '');
-                    const updatingLine = `    Updating: ${displayPath}`;
-                    const lines = newText.split('\n');
-                    const completeLineIndex = lines.findIndex(line => line.match(completePattern));
-                    
-                    if (completeLineIndex !== -1) {
-                        const nextLineIndex = completeLineIndex + 1;
-                        if (nextLineIndex < lines.length && lines[nextLineIndex].trim() === updatingLine.trim()) {
-                            lines.splice(nextLineIndex, 1);
-                            newText = lines.join('\n');
                         }
                     }
                 }
             }
+            shouldDelay = true;
+            delayAmount = xlp.getState('update.fileDelay');
         }
 
-        return newText;
+        updatePreview.textContent = newText;
+
+        if (shouldDelay && delayAmount > 0) {
+            await new Promise(resolve => setTimeout(resolve, delayAmount));
+        }
     };
     
     window.updateState.progressHandler = onProgress;
