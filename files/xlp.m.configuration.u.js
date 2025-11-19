@@ -504,36 +504,44 @@ export async function handleUpdateProcess(updateInfo) {
                 if (match) {
                     const currentCount = parseInt(match[1]);
                     
-                    newText = newText.replace(updatingPattern, '').replace(/\n\n\n+/g, '\n\n');
-                    
                     if (currentCount > 0) {
                         if (currentCount === 1) {
+                            const delayBefore = xlp.getState('update.fileDelay');
+                            if (delayBefore > 0) {
+                                await new Promise(resolve => setTimeout(resolve, delayBefore));
+                            }
+                            newText = newText.replace(updatingPattern, '').replace(/\n\n\n+/g, '\n\n');
                             newText = newText.replace(countPattern, `  ${rootDir} ✓ Complete`);
                         } else {
                             const newCount = currentCount - 1;
                             const countText = `  ${rootDir} (${newCount} ${newCount === 1 ? 'file' : 'files'})`;
+                            const displayPath = file.replace(`${rootDir}/`, '');
+                            const updatingLine = `    Updating: ${displayPath}`;
+                            
+                            newText = newText.replace(updatingPattern, '').replace(/\n\n\n+/g, '\n\n');
                             newText = newText.replace(countPattern, countText);
                             
                             const lines = newText.split('\n');
                             const lineIndex = lines.findIndex(line => line === countText);
                             if (lineIndex !== -1) {
-                                const displayPath = file.replace(`${rootDir}/`, '');
-                                lines.splice(lineIndex + 1, 0, `    Updating: ${displayPath}`);
+                                lines.splice(lineIndex + 1, 0, updatingLine);
                                 newText = lines.join('\n');
                             }
+                            
+                            updatePreview.textContent = newText;
+                            
+                            const delayAfter = xlp.getState('update.fileDelay');
+                            if (delayAfter > 0) {
+                                await new Promise(resolve => setTimeout(resolve, delayAfter));
+                            }
+                            return;
                         }
                     }
                 }
             }
-            shouldDelay = true;
-            delayAmount = xlp.getState('update.fileDelay');
         }
 
         updatePreview.textContent = newText;
-
-        if (shouldDelay && delayAmount > 0) {
-            await new Promise(resolve => setTimeout(resolve, delayAmount));
-        }
     };
     
     window.updateState.progressHandler = onProgress;
