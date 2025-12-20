@@ -1,7 +1,7 @@
 {
-  "version": "1.1.19",
+  "version": "1.1.18",
   "patch": 10,
-  "comment": "Updated some utility apps to rust from python, smaller file sized, fixed some bugs for people with TriggerCMD installed\n\nAll previous updates included",
+  "comment": "Fixing Update display, have been seeing it saying twice a file was downloaded.\nFixed the display of the last file launched in the footer to only show on launch list section.\n\nIncludes all previous updates",
   "files": {
     "files": {
       "files": [
@@ -43,15 +43,14 @@
     "utils": {
       "files": [
         "xlu.exe",
-        "xlaunch.exe",
-        "xltb.exe"
+        "xlaunch.exe"
       ]
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 2,
-    "xlauncherpluseapi.js": 4,
-    "xlauncherplusfs.js": 4
+    "xlauncherplus.js": 1,
+    "xlauncherpluseapi.js": 3,
+    "xlauncherplusfs.js": 3
   },
   "directoryZips": {
     "node_modules.zip": 0,
@@ -63,9 +62,9 @@
     "@vscode/sudo-prompt": "^9.3.1",
     "adm-zip": "^0.5.16",
     "electron-window-state": "^5.0.3",
-    "fs-extra": "^11.3.3",
+    "fs-extra": "^11.3.2",
     "node-fetch": "^3.3.2",
-    "sass": "^1.97.1",
+    "sass": "^1.94.1",
     "windows-shortcuts": "^0.1.6"
   }
 }
