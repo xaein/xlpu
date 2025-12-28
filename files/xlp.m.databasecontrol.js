@@ -205,7 +205,7 @@ function setupTempDataProxy() {
 // Update Category Button States
 //   Enables or disables category-related buttons based on category availability
 //   Controls add, rename, and remove category button states when no categories exist
-function updateCategoryButtonStates(hasCategories) {
+export function updateCategoryButtonStates(hasCategories) {
     const addRowButton = xlp.getElement('addRowButton') || window[window.domCacheName]?.addRowButton;
     const renameCategoryButton = xlp.getElement('renameCategoryButton') || window[window.domCacheName]?.renameCategoryButton;
     const removeCategoryButton = xlp.getElement('removeCategoryButton') || window[window.domCacheName]?.removeCategoryButton;

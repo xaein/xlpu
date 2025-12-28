@@ -51,11 +51,51 @@ async function generateTriggerCMDFile(xldbv) {
     await new Promise(resolve => setTimeout(resolve, dbSaveDelay));
 }
 
+// Check Database Has Items
+//   Determines if database contains real entries beyond placeholder data
+//   Checks all database files in tempData for entries that are not empty or placeholder values
+function databaseHasItems() {
+    const tempData = window.tempData ?? {};
+    const xldbv = xlp.getData('xldbv') || window.xldbv;
+    const xldbFiles = xldbv?.xldbFiles ?? [];
+    
+    for (const fileName of xldbFiles) {
+        const fileData = tempData[fileName];
+        if (!fileData) {
+            continue;
+        }
+        
+        try {
+            const parsedData = JSON.parse(fileData);
+            const keys = Object.keys(parsedData);
+            
+            if (keys.length === 0) {
+                continue;
+            }
+            
+            if (keys.length === 1 && keys[0] === ' ' && parsedData[' '] === ' ') {
+                continue;
+            }
+            
+            return true;
+        } catch (error) {
+            continue;
+        }
+    }
+    
+    return false;
+}
+
 // Handle First Run Completion
 //   Handles first run completion logic and navigation setup
 //   Validates xldbv structure, updates variables, and sets up header navigation if first run
+//   Only completes first run if database contains real items
 async function handleFirstRunCompletion(xldbv) {
     if (!isSaveProcessActive || xldbv.firstRun !== 2) {
+        return;
+    }
+    
+    if (!databaseHasItems()) {
         return;
     }
     
@@ -196,8 +236,10 @@ export async function saveDatabase() {
             xlp.closeDialog('databasecontrolsave');
 
             if (window.xldbv?.firstRun === 2) {
-                window.xldbv.firstRun = 0;
-                xlp.setData('xldbv', window.xldbv);
+                if (databaseHasItems()) {
+                    window.xldbv.firstRun = 0;
+                    xlp.setData('xldbv', window.xldbv);
+                }
             }
         } else {
             const preloadedData = xlp.getData('preloadedData') ?? {};

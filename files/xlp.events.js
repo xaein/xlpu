@@ -294,6 +294,8 @@ export const configurationEventListenerConfig = [
                                 updateFrequency.disabled = !target.checked;
                             }
                         }
+                    } else if (target.id.match(/^(autoGenerateTriggerCMD|addToPath)$/)) {
+                        xlp.updateConfigTemp('triggercmd');
                     }
                 }
                 else if (target.tagName === 'SELECT') {

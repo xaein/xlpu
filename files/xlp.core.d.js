@@ -32,6 +32,10 @@ export async function categoryAdd() {
 
             xlp.updateVariables('addCategory', fileName);
 
+            if (xlp.updateCategoryButtonStates) {
+                xlp.updateCategoryButtonStates(true);
+            }
+
             closeDialog('databasecontrolcatadd');
 
             const tabList = xlp.getElement('tabList');

@@ -252,6 +252,10 @@ export async function loadSection(sectionId) {
             return;
         }
 
+        if (sectionId === 'launchlist' && window.xldbv?.firstRun !== 0) {
+            return;
+        }
+
         if (sectionId === 'initialization' || sectionId === 'welcome') {
             await showSection(sectionId);
             return;
