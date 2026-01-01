@@ -619,6 +619,10 @@ export async function updateFiles(onProgress) {
         const baseDir = await e.Api.invoke('get-app-dir');
         const utilsDir = xlp.dirVar('utils');
 
+        if (xlp.reorderXldbvKeys) {
+            window.xldbv = xlp.reorderXldbvKeys(window.xldbv);
+        }
+
         xlp.setData('xldbv', window.xldbv);
         if (xlp.validateXldbvJson(window.xldbv)) {
             const xldbvPath = xlp.joinPath(baseDir, utilsDir, 'xldbv.json');

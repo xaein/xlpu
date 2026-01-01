@@ -154,6 +154,107 @@ function convertXldbf(data) {
     }
 }
 
+// Reorder Xldbv Keys
+//   Reorders xldbv.json keys to match the correct format
+//   Ensures keys are in the proper order: version, config, logfile, mainXLFC, uurl, favourite_symbols, updtico, firstRun, directories, configOpts, coreScripts, xldbFiles
+export function reorderXldbvKeys(data) {
+    if (typeof data !== 'object' || data === null) {
+        return data;
+    }
+
+    const keyOrder = [
+        'version',
+        'config',
+        'logfile',
+        'mainXLFC',
+        'uurl',
+        'favourite_symbols',
+        'updtico',
+        'firstRun',
+        'directories',
+        'configOpts',
+        'coreScripts',
+        'xldbFiles'
+    ];
+
+    const directoriesOrder = ['xldb', 'help', 'utils', 'include', 'themes'];
+    const themesOrder = ['root', 'base', 'compiled'];
+    const utilsOrder = ['root', 'update'];
+    const configOptsOrder = ['theme', 'system', 'triggercmd', 'updates'];
+
+    const reordered = {};
+
+    for (const key of keyOrder) {
+        if (key in data) {
+            if (key === 'directories' && typeof data[key] === 'object') {
+                const dirReordered = {};
+                for (const dirKey of directoriesOrder) {
+                    if (dirKey in data[key]) {
+                        if (dirKey === 'themes' && typeof data[key][dirKey] === 'object') {
+                            const themesReordered = {};
+                            for (const themeKey of themesOrder) {
+                                if (themeKey in data[key][dirKey]) {
+                                    themesReordered[themeKey] = data[key][dirKey][themeKey];
+                                }
+                            }
+                            for (const themeKey in data[key][dirKey]) {
+                                if (!themesOrder.includes(themeKey)) {
+                                    themesReordered[themeKey] = data[key][dirKey][themeKey];
+                                }
+                            }
+                            dirReordered[dirKey] = themesReordered;
+                        } else if (dirKey === 'utils' && typeof data[key][dirKey] === 'object') {
+                            const utilsReordered = {};
+                            for (const utilKey of utilsOrder) {
+                                if (utilKey in data[key][dirKey]) {
+                                    utilsReordered[utilKey] = data[key][dirKey][utilKey];
+                                }
+                            }
+                            for (const utilKey in data[key][dirKey]) {
+                                if (!utilsOrder.includes(utilKey)) {
+                                    utilsReordered[utilKey] = data[key][dirKey][utilKey];
+                                }
+                            }
+                            dirReordered[dirKey] = utilsReordered;
+                        } else {
+                            dirReordered[dirKey] = data[key][dirKey];
+                        }
+                    }
+                }
+                for (const dirKey in data[key]) {
+                    if (!directoriesOrder.includes(dirKey)) {
+                        dirReordered[dirKey] = data[key][dirKey];
+                    }
+                }
+                reordered[key] = dirReordered;
+            } else if (key === 'configOpts' && typeof data[key] === 'object') {
+                const configOptsReordered = {};
+                for (const configKey of configOptsOrder) {
+                    if (configKey in data[key]) {
+                        configOptsReordered[configKey] = data[key][configKey];
+                    }
+                }
+                for (const configKey in data[key]) {
+                    if (!configOptsOrder.includes(configKey)) {
+                        configOptsReordered[configKey] = data[key][configKey];
+                    }
+                }
+                reordered[key] = configOptsReordered;
+            } else {
+                reordered[key] = data[key];
+            }
+        }
+    }
+
+    for (const key in data) {
+        if (!keyOrder.includes(key)) {
+            reordered[key] = data[key];
+        }
+    }
+
+    return reordered;
+}
+
 // Convert Variables File
 //   Transforms configuration variables into current version structure
 //   Migrates old configuration format to new structure with configOpts and directories
@@ -242,7 +343,8 @@ function convertXldbv(data) {
             variables.xldbFiles = [];
         }
 
-        return JSON.stringify(variables, null, 2);
+        const reordered = reorderXldbvKeys(variables);
+        return JSON.stringify(reordered, null, 2);
     } catch (error) {
         throw error;
     }

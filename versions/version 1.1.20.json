@@ -1,7 +1,7 @@
 {
   "version": "1.1.20",
   "patch": 10,
-  "comment": "Fixed new install issue with not being able to add apps once a category has been created.\nFixed some minor issues with configuration files being ordered incorrectly\n\nAll previous updates included",
+  "comment": "Fixed new install issue with not being able to add apps once a category has been created.\n\nAll previous updates included",
   "files": {
     "files": {
       "files": [
