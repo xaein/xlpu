@@ -1,7 +1,7 @@
 {
-  "version": "1.1.20",
-  "patch": 10,
-  "comment": "Fixed new install issue with not being able to add apps once a category has been created.\nFixed some minor issues with configuration files being ordered incorrectly\n\nAll previous updates included",
+  "version": "1.1.21",
+  "patch": 20,
+  "comment": "Fixed an issue with the tray icon not being able to launch applications.",
   "files": {
     "files": {
       "files": [
@@ -15,10 +15,7 @@
           "xlp.core.v.js",
           "xlp.m.configuration.i.js",
           "xlp.m.configuration.u.js",
-          "xlp.m.configuration.t.js",
-          "xlp.app.js",
-          "xlp.m.databasecontrol.js",
-          "xlp.m.databasecontrol.s.js"
+          "xlp.m.configuration.t.js"
         ],
         "config": {
           "files": [
@@ -52,7 +49,7 @@
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 3
+    "xlauncherplus.js": 4
   },
   "directoryZips": {
     "node_modules.zip": 0,

@@ -191,7 +191,7 @@ safeIpc('toggle-theme-readonly', async (event, themePath, readonly) => {
 
 // Launch app
 // Executes specified application with appropriate privileges
-safeIpc('launch-app', async (event, appName) => {
+async function launchApp(appName) {
     try {
         const xlaunchPath = path.join(appDirs.utilsDir, 'xlaunch.exe');
         const command = `"${xlaunchPath}" "${appName}"`;
@@ -207,7 +207,9 @@ safeIpc('launch-app', async (event, appName) => {
     } catch (error) {
         return false;
     }
-});
+}
+
+safeIpc('launch-app', async (event, appName) => launchApp(appName));
 
 // Open help file
 // Opens files or URLs in the default browser, or launches executables
@@ -504,7 +506,7 @@ function updateTrayMenu(recentApps) {
             submenu: recentApps.length > 0 ? recentApps.map(app => ({
                 label: app.name,
                 click: () => {
-                    safeIpc('launch-app', app.name);
+                    launchApp(app.name).catch(() => {});
                 }
             })) : [{ label: 'No recent apps', enabled: false }]
         },
