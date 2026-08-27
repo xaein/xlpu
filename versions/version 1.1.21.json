@@ -1,7 +1,7 @@
 {
-  "version": "1.1.11",
-  "patch": 10,
-  "comment": "Updated application:\n Added new options in configuration general, Footer Message, to display the last log message in the footer\n between the left and right buttons, this will display after the launch dialog has closed or on mouse over\n after the timeout has finished.\n\nFixed: Fixed XLU to compile themes if they have changed\n\nUpdating from anything before update 1.1.10 should get patch update 1st and then update newest files.",
+  "version": "1.1.21",
+  "patch": 20,
+  "comment": "Fixed an issue with the tray icon not being able to launch applications.",
   "files": {
     "files": {
       "files": [
@@ -14,7 +14,8 @@
           "xlp.core.g.js",
           "xlp.core.v.js",
           "xlp.m.configuration.i.js",
-          "xlp.m.configuration.u.js"
+          "xlp.m.configuration.u.js",
+          "xlp.m.configuration.t.js"
         ],
         "config": {
           "files": [
@@ -41,18 +42,18 @@
     },
     "utils": {
       "files": [
-        "xlu.exe"
+        "xlu.exe",
+        "xlaunch.exe",
+        "xltb.exe"
       ]
     }
   },
   "mainFiles": {
-    "xlauncherplus.js": 0,
-    "xlauncherpluseapi.js": 0,
-    "xlauncherplusfs.js": 0
+    "xlauncherplus.js": 4
   },
   "directoryZips": {
-    "help.zip": 0,
-    "node_modules.zip": 0
+    "node_modules.zip": 0,
+    "help.zip": 0
   },
   "rem": [],
   "lastFullUpdate": false,
@@ -60,9 +61,9 @@
     "@vscode/sudo-prompt": "^9.3.1",
     "adm-zip": "^0.5.16",
     "electron-window-state": "^5.0.3",
-    "fs-extra": "^11.3.2",
+    "fs-extra": "^11.3.3",
     "node-fetch": "^3.3.2",
-    "sass": "^1.94.0",
+    "sass": "^1.97.1",
     "windows-shortcuts": "^0.1.6"
   }
 }
